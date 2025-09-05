@@ -1,0 +1,30 @@
+# Secrets
+.env
+# config/used.json
+
+# Outputs
+downloads/
+thumbnails/
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/

@@ -1,0 +1,16 @@
+subreddits:
+  - rarepuppers
+  - WhatsWrongWithYourDog
+  - AnimalsBeingDerps
+  - dogvideos
+  - aww
+  - Awww
+  - AnimalsBeingBros
+  - AnimalsBeingFunny
+
+final_target_duration: 12 # minutes. Final duration of stitched video
+post:
+  min_duration: 2 # seconds. Minimum duration of each sourced clip
+  max_duration: 20 # seconds. Max duration of each sourced clip
+  min_score: 100 # upvotes - downvotes
+  min_ratio: 0.80 # minimum upvote / downvotes ratio
