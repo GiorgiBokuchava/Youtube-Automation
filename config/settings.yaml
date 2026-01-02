@@ -1,3 +1,7 @@
+final_target_duration: 3   # minutes
+
+used_horizon_days: 60
+
 subreddits:
   - rarepuppers
   - WhatsWrongWithYourDog
@@ -7,10 +11,21 @@ subreddits:
   - Awww
   - AnimalsBeingBros
   - AnimalsBeingFunny
+  - sploot
+  - Animal
+  - AnimalPorn
+  - dogpictures
 
-final_target_duration: 12 # minutes. Final duration of stitched video
 post:
-  min_duration: 2 # seconds. Minimum duration of each sourced clip
-  max_duration: 20 # seconds. Max duration of each sourced clip
+  min_duration: 5 # seconds. Minimum duration of each sourced clip
+  max_duration: 120 # seconds. Max duration of each sourced clip
   min_score: 100 # upvotes - downvotes
-  min_ratio: 0.80 # minimum upvote / downvotes ratio
+  min_ratio: 0.8 # minimum upvote / downvotes ratio
+
+thumbnail:
+  min_width: 1280
+  min_height: 720
+  min_score: 1000
+  min_ratio: 0.85
+  allow_nsfw: false
+  max_tries: 25

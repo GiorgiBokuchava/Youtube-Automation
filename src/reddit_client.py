@@ -41,7 +41,10 @@ THUMBS.mkdir(exist_ok=True)
 # --------------------------
 try:
     from PIL import Image
-    _PIL_RESAMPLE = getattr(getattr(Image, "Resampling", Image), "LANCZOS", Image.BICUBIC)
+
+    _PIL_RESAMPLE = getattr(
+        getattr(Image, "Resampling", Image), "LANCZOS", Image.BICUBIC
+    )
 except ImportError:
     Image = None
     _PIL_RESAMPLE = None
@@ -121,9 +124,13 @@ def _ensure_ffmpeg() -> Optional[str]:
         if ffmpeg_bin.exists() and ffprobe_bin.exists():
             return ffdir
     from shutil import which
+
     if which("ffmpeg") and which("ffprobe"):
         return None
-    print("[fatal] ffmpeg/ffprobe not found. Install and add to PATH, or set FFMPEG_DIR.", file=sys.stderr)
+    print(
+        "[fatal] ffmpeg/ffprobe not found. Install and add to PATH, or set FFMPEG_DIR.",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 
@@ -145,7 +152,9 @@ def _guess_ext_from_headers(headers) -> Optional[str]:
     return None
 
 
-def _pick_preview_still_with_dims(submission) -> Tuple[Optional[str], Optional[int], Optional[int]]:
+def _pick_preview_still_with_dims(
+    submission,
+) -> Tuple[Optional[str], Optional[int], Optional[int]]:
     try:
         if getattr(submission, "preview", None):
             imgs = submission.preview.get("images", [])
@@ -155,7 +164,11 @@ def _pick_preview_still_with_dims(submission) -> Tuple[Optional[str], Optional[i
                 w = src.get("width")
                 h = src.get("height")
                 if url:
-                    return url.replace("&amp;", "&"), int(w) if w else None, int(h) if h else None
+                    return (
+                        url.replace("&amp;", "&"),
+                        int(w) if w else None,
+                        int(h) if h else None,
+                    )
                 res = imgs[0].get("resolutions", [])
                 if res:
                     best = res[-1]
@@ -163,7 +176,11 @@ def _pick_preview_still_with_dims(submission) -> Tuple[Optional[str], Optional[i
                     w = best.get("width")
                     h = best.get("height")
                     if url:
-                        return url.replace("&amp;", "&"), int(w) if w else None, int(h) if h else None
+                        return (
+                            url.replace("&amp;", "&"),
+                            int(w) if w else None,
+                            int(h) if h else None,
+                        )
     except Exception:
         pass
     try:
@@ -205,7 +222,9 @@ def _download_image(url: str, dest_path: Path) -> Optional[Path]:
         return None
 
 
-def _make_youtube_thumb(src_path: Path, out_path: Path, size=(1280, 720)) -> Optional[Path]:
+def _make_youtube_thumb(
+    src_path: Path, out_path: Path, size=(1280, 720)
+) -> Optional[Path]:
     """
     Accept only images that are already ~16:9 and at least the target size.
     No cropping, no upscaling. Downscale to exactly 1280x720 if larger.
@@ -247,7 +266,7 @@ def source_thumbnail() -> Optional[dict]:
 
     # Stricter, thumbnail-specific defaults (override via settings['thumbnail'])
     thumb_cfg = settings.get("thumbnail", {})
-    min_w = int(thumb_cfg.get("min_width", 1920))     # prefer native 1080p+
+    min_w = int(thumb_cfg.get("min_width", 1920))  # prefer native 1080p+
     min_h = int(thumb_cfg.get("min_height", 1080))
     min_score = int(thumb_cfg.get("min_score", 200))
     min_ratio = float(thumb_cfg.get("min_ratio", 0.90))
@@ -260,7 +279,7 @@ def source_thumbnail() -> Optional[dict]:
         subreddit_name = random.choice(subs_list)
         subreddit = reddit.subreddit(subreddit_name)
 
-        for submission in _fetch_feed(subreddit, "hot", 50):
+        for submission in _fetch_feed(subreddit, "hot", 200):
             if submission.is_self or submission.id in used_thumb_ids:
                 continue
             if not allow_nsfw and getattr(submission, "over_18", False):
@@ -268,7 +287,11 @@ def source_thumbnail() -> Optional[dict]:
             if getattr(submission, "score", 0) < min_score:
                 continue
             try:
-                ratio_val = float(submission.upvote_ratio) if submission.upvote_ratio is not None else 0.0
+                ratio_val = (
+                    float(submission.upvote_ratio)
+                    if submission.upvote_ratio is not None
+                    else 0.0
+                )
                 if ratio_val < min_ratio:
                     continue
             except Exception:
@@ -290,7 +313,9 @@ def source_thumbnail() -> Optional[dict]:
             if not original_path:
                 continue
 
-            yt_jpg_path = _make_youtube_thumb(original_path, THUMBS / f"{submission.id}_yt")
+            yt_jpg_path = _make_youtube_thumb(
+                original_path, THUMBS / f"{submission.id}_yt"
+            )
             if not yt_jpg_path:
                 try:
                     original_path.unlink(missing_ok=True)
@@ -298,7 +323,9 @@ def source_thumbnail() -> Optional[dict]:
                     pass
                 continue
 
-            print(f"[thumb] saved YouTube-ready: {yt_jpg_path}  (src: {submission.subreddit.display_name})")
+            print(
+                f"[thumb] saved YouTube-ready: {yt_jpg_path}  (src: {submission.subreddit.display_name})"
+            )
             return {
                 "submission_id": submission.id,
                 "path": str(yt_jpg_path),
@@ -315,7 +342,11 @@ def source_thumbnail() -> Optional[dict]:
 # --------------------------
 def _get_reddit_video_duration(submission) -> Optional[int]:
     try:
-        if submission.is_video and submission.media and "reddit_video" in submission.media:
+        if (
+            submission.is_video
+            and submission.media
+            and "reddit_video" in submission.media
+        ):
             return int(submission.media["reddit_video"].get("duration"))
     except Exception as e:
         print("Error extracting post duration: " + str(e))
@@ -354,7 +385,9 @@ def _compute_timeout_seconds(duration_sec: int) -> int:
     return max(30, min(180, int(duration_sec * 3)))
 
 
-def _download_reddit_video_mp4(submission, ffmpeg_location=None, timeout_sec=None) -> str:
+def _download_reddit_video_mp4(
+    submission, ffmpeg_location=None, timeout_sec=None
+) -> str:
     stem = submission.id
     permalink = submission.permalink
     ydl_opts = {
@@ -376,7 +409,9 @@ def _download_reddit_video_mp4(submission, ffmpeg_location=None, timeout_sec=Non
         "keep_fragments": False,
     }
     q = Queue()
-    p = Process(target=_yt_dlp_worker, args=(permalink, stem, ffmpeg_location, ydl_opts, q))
+    p = Process(
+        target=_yt_dlp_worker, args=(permalink, stem, ffmpeg_location, ydl_opts, q)
+    )
     p.daemon = True
     p.start()
     p.join(timeout=timeout_sec or 120)
@@ -413,10 +448,16 @@ def _with_timeout(fn, name: str, what: str, timeout=20, retries=2, backoff=2.0):
             return out
         except concurrent.futures.TimeoutError as e:
             last_err = e
-            print(f"[timeout] fetch {what} r/{name} >{timeout}s (attempt {attempt}/{retries+1})", flush=True)
+            print(
+                f"[timeout] fetch {what} r/{name} >{timeout}s (attempt {attempt}/{retries+1})",
+                flush=True,
+            )
         except Exception as e:
             last_err = e
-            print(f"[warn] fetch {what} r/{name} failed: {e} (attempt {attempt}/{retries+1})", flush=True)
+            print(
+                f"[warn] fetch {what} r/{name} failed: {e} (attempt {attempt}/{retries+1})",
+                flush=True,
+            )
         time.sleep(min(8.0, backoff ** (attempt - 1)))
     print(f"[skip] listing r/{name} due to: {last_err}", flush=True)
     return []
@@ -425,13 +466,23 @@ def _with_timeout(fn, name: str, what: str, timeout=20, retries=2, backoff=2.0):
 def _fetch_feed(subreddit, mode: str, limit: int) -> List:
     name = subreddit.display_name
     if mode == "new":
-        return _with_timeout(lambda: list(subreddit.new(limit=limit)), name, f"new({limit})")
+        return _with_timeout(
+            lambda: list(subreddit.new(limit=limit)), name, f"new({limit})"
+        )
     if mode == "hot":
-        return _with_timeout(lambda: list(subreddit.hot(limit=limit)), name, f"hot({limit})")
+        return _with_timeout(
+            lambda: list(subreddit.hot(limit=limit)), name, f"hot({limit})"
+        )
     if mode == "rising":
-        return _with_timeout(lambda: list(subreddit.rising(limit=limit)), name, f"rising({limit})")
+        return _with_timeout(
+            lambda: list(subreddit.rising(limit=limit)), name, f"rising({limit})"
+        )
     if mode == "top_day":
-        return _with_timeout(lambda: list(subreddit.top(time_filter="day", limit=limit)), name, f"top(day,{limit})")
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="day", limit=limit)),
+            name,
+            f"top(day,{limit})",
+        )
     return []
 
 
@@ -498,12 +549,21 @@ def source_videos() -> dict:
                         print(f"[skip] {submission.id} not_video", flush=True)
                         continue
                     if submission.score < post_min_score:
-                        print(f"[skip] {submission.id} low_score={submission.score}", flush=True)
+                        print(
+                            f"[skip] {submission.id} low_score={submission.score}",
+                            flush=True,
+                        )
                         continue
                     try:
-                        ratio = float(submission.upvote_ratio) if submission.upvote_ratio is not None else 0.0
+                        ratio = (
+                            float(submission.upvote_ratio)
+                            if submission.upvote_ratio is not None
+                            else 0.0
+                        )
                         if ratio < post_min_ratio:
-                            print(f"[skip] {submission.id} low_ratio={ratio}", flush=True)
+                            print(
+                                f"[skip] {submission.id} low_ratio={ratio}", flush=True
+                            )
                             continue
                     except Exception as e:
                         print(f"[skip] {submission.id} ratio_err={e}", flush=True)
@@ -514,7 +574,10 @@ def source_videos() -> dict:
                         print(f"[skip] {submission.id} no_duration", flush=True)
                         continue
                     if not (post_min_duration <= duration <= post_max_duration):
-                        print(f"[skip] {submission.id} bad_duration={duration}", flush=True)
+                        print(
+                            f"[skip] {submission.id} bad_duration={duration}",
+                            flush=True,
+                        )
                         continue
 
                     per_video_timeout = _compute_timeout_seconds(duration)
@@ -525,7 +588,11 @@ def source_videos() -> dict:
                             timeout_sec=per_video_timeout,
                         )
                     except Exception as e:
-                        print(f"[skip: download error] {submission.id} {e}", file=sys.stderr, flush=True)
+                        print(
+                            f"[skip: download error] {submission.id} {e}",
+                            file=sys.stderr,
+                            flush=True,
+                        )
                         time.sleep(random.uniform(0.25, 0.35))
                         continue
 
@@ -561,7 +628,9 @@ def source_videos() -> dict:
 
         if not round_progress:
             rounds_no_progress += 1
-            print(f"[info] No progress this round ({rounds_no_progress}/6).", flush=True)
+            print(
+                f"[info] No progress this round ({rounds_no_progress}/6).", flush=True
+            )
             time.sleep(0.75)
             if rounds_no_progress >= 6:
                 print(
@@ -583,7 +652,9 @@ def source_videos() -> dict:
 # --------------------------
 # Session write helper
 # --------------------------
-def _write_session(accepted_clips: List[dict], achieved_duration_sec: int, thumb_info: Optional[dict]) -> None:
+def _write_session(
+    accepted_clips: List[dict], achieved_duration_sec: int, thumb_info: Optional[dict]
+) -> None:
     sessions = _load_used_sessions()
     session_obj = {
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -621,7 +692,10 @@ def run_videos():
     try:
         thumb_info = source_thumbnail()
     except KeyboardInterrupt:
-        print("\n[warn] Interrupted during thumbnail sourcing. Saving session without thumbnail.", flush=True)
+        print(
+            "\n[warn] Interrupted during thumbnail sourcing. Saving session without thumbnail.",
+            flush=True,
+        )
 
     _write_session(clips, achieved, thumb_info)
 
