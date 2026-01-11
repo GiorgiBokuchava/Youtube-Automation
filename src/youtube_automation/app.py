@@ -35,7 +35,7 @@ def main() -> None:
                 "num_clips": 0,
             }
         )
-        save_session(session)
+        save_session(session, settings)
         print(thumb)
         return
 
@@ -47,7 +47,7 @@ def main() -> None:
                 "num_clips": len(clips),
             }
         )
-        save_session(session)
+        save_session(session, settings)
         return
 
     clips = source_videos(settings)
@@ -60,7 +60,7 @@ def main() -> None:
             "num_clips": len(clips),
         }
     )
-    save_session(session)
+    save_session(session, settings)
 
 
 if __name__ == "__main__":

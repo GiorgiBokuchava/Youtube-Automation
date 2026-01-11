@@ -5,7 +5,6 @@ import time
 import random
 import concurrent.futures
 from multiprocessing import Process, Queue
-from pathlib import Path
 from typing import List, Tuple, Optional
 
 from yt_dlp import YoutubeDL
@@ -184,13 +183,17 @@ def source_videos(settings: dict) -> List[dict]:
 
                     if not getattr(submission, "is_video", False):
                         continue
-                    if submission.score < min_score:
-                        continue
                     if float(submission.upvote_ratio or 0.0) < min_ratio:
                         continue
 
                     duration = _get_reddit_video_duration(submission)
                     if duration is None or not (min_dur <= duration <= max_dur):
+                        continue
+
+                    duration_factor = 50  # Additional score required per second
+                    required_score = min_score + int(duration_factor * duration)
+
+                    if submission.score < required_score:
                         continue
 
                     timeout = _compute_timeout_seconds(duration)

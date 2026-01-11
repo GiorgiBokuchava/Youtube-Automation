@@ -1,9 +1,8 @@
-import os
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 
 def load_env() -> None:

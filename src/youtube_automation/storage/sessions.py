@@ -21,9 +21,15 @@ def load_sessions() -> List[dict]:
         return []
 
 
-def save_session(session: dict) -> None:
+def save_session(session: dict, settings: Optional[dict] = None) -> None:
     sessions = load_sessions()
     sessions.append(session)
+
+    # Prune old sessions if settings provide horizon
+    if settings:
+        cutoff = _cutoff_from_settings(settings)
+        if cutoff:
+            sessions = [s for s in sessions if _is_session_after_cutoff(s, cutoff)]
 
     USED_PATH.parent.mkdir(exist_ok=True)
     with open(USED_PATH, "w", encoding="utf-8") as f:
@@ -35,6 +41,14 @@ def new_session(payload: dict) -> dict:
         "created_at": datetime.now(timezone.utc).isoformat(),
         **payload,
     }
+
+
+def _is_session_after_cutoff(session: dict, cutoff: datetime) -> bool:
+    try:
+        created = datetime.fromisoformat(session.get("created_at", ""))
+        return created >= cutoff
+    except Exception:
+        return True
 
 
 def _cutoff_from_settings(settings: dict) -> Optional[datetime]:

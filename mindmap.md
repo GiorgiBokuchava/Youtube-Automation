@@ -1,7 +1,3 @@
-import src.reddit_client
-
-
-def main():
     # Source videos from Reddit and place them in something like vector
     # src.reddit_client.source_videos()
     src.reddit_client.source_thumbnail()
@@ -13,5 +9,4 @@ def main():
     # For thumbnail, use most upvoted image of the day from one of the specified subreddits (add half transparent padding on sides if needed)
 
 
-if __name__ == "__main__":
-    main()
+<!-- TODO: Add other keys for gemini. Try to use MistralAI. Add fallback to OpenRouter AIs that use content from the sourced video (using ID to go to post and source them or refactor existing reddit sourcing logic) to get post title, description and top comments and infer commentary from them -->

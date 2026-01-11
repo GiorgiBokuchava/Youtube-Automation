@@ -1,6 +1,6 @@
 final_target_duration: 3   # minutes
 
-used_horizon_days: 60
+used_horizon_days: 90
 
 subreddits:
   - rarepuppers
@@ -15,17 +15,83 @@ subreddits:
   - Animal
   - AnimalPorn
   - dogpictures
+  - FunnyAnimals
+  - funnycats
+  - FunnyDogVideos
+  - NatureIsFuckingLit
+  - funnypets
+  - tuckedinkitties
+  - dogpictures
+  - PuppySmiles
+  - babyelephantgifs
+  - BearCubGIFs
+  - babyrhinogifs
+  - babybigcatgifs
+  - AnimalsBeingMoms
+  - babyduckgifs
+  - Rabbits
+  - ferrets
+  - StartledCats
+  - animalslookingatfood
+  - AnimalsBeingJerks
+  - Blep
+  - CatsAllDay
+  - pimpcats
+  - CalicoKittys
+  - catbellies
+  - PetsareAmazing
+  - CatsStandingUp
+  - CatsAreAssholes
+  - BorderCollie
+  - WiggleButts
+  - corgi
+  - animalssmiling
+  - DogSmiles
 
 post:
-  min_duration: 5 # seconds. Minimum duration of each sourced clip
-  max_duration: 120 # seconds. Max duration of each sourced clip
-  min_score: 100 # upvotes - downvotes
+  min_duration: 1 # seconds. Minimum duration of each sourced clip
+  max_duration: 25 # seconds. Max duration of each sourced clip
+  min_score: 350 # upvotes - downvotes
   min_ratio: 0.8 # minimum upvote / downvotes ratio
 
 thumbnail:
-  min_width: 1280
-  min_height: 720
   min_score: 1000
   min_ratio: 0.85
   allow_nsfw: false
-  max_tries: 25
+  max_tries: 50
+  target_width: 1920
+  target_height: 1080
+  aspect_ratio_tolerance: 0.4
+  banned_words:
+    - spider
+    - nsfw
+    - kill
+    - death
+    - die
+    - murder
+    - suicide
+    - dead
+    - dying
+    - killed
+    - killing
+    - fatal
+    - fatality
+    - gore
+    - blood
+    - bloody
+    - violence
+    - violent
+    - abuse
+    - abusive
+    - torture
+    - painful
+    - pain
+    - hurt
+    - injury
+    - injured
+    - accident
+    - disaster
+    - tragedy
+    - tragic
+  max_title_words: 15
+  max_description_words: 50
