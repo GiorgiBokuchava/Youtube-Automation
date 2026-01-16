@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Optional, Any
 
 
@@ -15,3 +16,11 @@ class TTSRequest:
         self.text = text
         self.voice = voice
         self.params = params or {}
+
+
+@dataclass(frozen=True)
+class TTSAudio:
+    data: bytes
+    ext: str  # ".mp3" or ".wav"
+    provider: str
+    model: str

@@ -1,0 +1,17 @@
+final_target_duration: 3   # minutes
+used_horizon_days: 90
+
+video_normalization:
+  target_width: 1920
+  target_height: 1080
+  padding_method: black
+
+commentary:
+  every_nth: 3
+  preferred_video_model: gemini-2.5-flash
+  preferred_tts_model: gemini-2.5-flash-preview-tts
+
+thumbnail:
+  target_width: 1920
+  target_height: 1080
+  aspect_ratio_tolerance: 0.4

@@ -1,0 +1,28 @@
+channel:
+  name: animals
+  youtube_channel_id: UCXXXX
+
+subreddits:
+  - rarepuppers
+  - AnimalsBeingDerps
+  - FunnyAnimals
+
+post:
+  min_duration: 1
+  max_duration: 25
+  min_score: 350
+  min_ratio: 0.8
+
+commentary:
+  every_nth: 3
+  tts_voices:
+    gemini: Kore
+    edge: en-US-AvaMultilingualNeural
+
+thumbnail:
+  min_score: 1000
+  min_ratio: 0.85
+  banned_words:
+    - gore
+    - blood
+    - violence

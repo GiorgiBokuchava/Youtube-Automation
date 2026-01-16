@@ -1,0 +1,21 @@
+channel:
+  name: dashcam
+  youtube_channel_id: UCYYYY
+
+subreddits:
+  - Dashcam
+  - IdiotsInCars
+
+post:
+  min_duration: 5
+  max_duration: 60
+  min_score: 800
+  min_ratio: 0.9
+
+commentary:
+  every_nth: 1
+  tts_voices:
+    edge: en-US-BrianMultilingualNeural
+
+thumbnail:
+  allow_nsfw: false

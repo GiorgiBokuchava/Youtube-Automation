@@ -1,8 +1,11 @@
 from typing import Optional
 import time
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 from youtube_automation.ai.text.registry import (
     get_models_by_capabilities,
@@ -44,13 +47,17 @@ class TextService:
                             model=preferred_model, request=request
                         )
                     except Exception as e:
-                        print(f"Preferred model {preferred_model} failed: {e}")
+                        logger.debug(
+                            "Preferred model %s failed: %s", preferred_model, e
+                        )
                         # Fall back to automatic selection
 
                     elapsed = time.time() - start
                     if elapsed > self.MAX_MODEL_TIME:
-                        print(
-                            f"[warn] Preferred model {preferred_model} exceeded {self.MAX_MODEL_TIME}s, skipping"
+                        logger.debug(
+                            "Preferred model %s exceeded %ss, skipping",
+                            preferred_model,
+                            self.MAX_MODEL_TIME,
                         )
                         # Fall back to automatic selection
 
@@ -87,13 +94,15 @@ class TextService:
                     result = provider.generate(model=model["model"], request=request)
                 except Exception as e:
                     last_error = e
-                    print(f"Model {model['model']} failed: {e}")
+                    logger.debug("Model %s failed: %s", model["model"], e)
                     continue  # Try next model in same provider
 
                 elapsed = time.time() - start
                 if elapsed > self.MAX_MODEL_TIME:
-                    print(
-                        f"[warn] Model {model['model']} exceeded {self.MAX_MODEL_TIME}s, skipping"
+                    logger.debug(
+                        "Model %s exceeded %ss, skipping",
+                        model["model"],
+                        self.MAX_MODEL_TIME,
                     )
                     continue
 

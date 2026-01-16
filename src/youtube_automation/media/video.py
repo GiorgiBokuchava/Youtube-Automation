@@ -43,6 +43,33 @@ def _compute_timeout_seconds(duration_sec: int) -> int:
     return max(30, min(180, int(duration_sec * 3)))
 
 
+def _extract_top_comments(submission, limit: int = 5, max_len: int = 180) -> list[str]:
+    try:
+        submission.comment_sort = "top"
+        submission.comments.replace_more(limit=0)
+
+        comments = []
+        for c in submission.comments.list():
+            body = getattr(c, "body", None)
+            if not body:
+                continue
+
+            body = body.strip()
+            if not body or body in ("[deleted]", "[removed]"):
+                continue
+
+            if len(body) > max_len:
+                body = body[: max_len - 1] + "…"
+
+            comments.append(body)
+            if len(comments) >= limit:
+                break
+
+        return comments
+    except Exception:
+        return []
+
+
 # yt-dlp worker
 def _yt_dlp_worker(
     permalink: str, sid: str, ffmpeg_location: Optional[str], retq: Queue
@@ -153,6 +180,11 @@ def source_videos(settings: dict) -> List[dict]:
     min_score = post_cfg.get("min_score", 0)
     min_ratio = post_cfg.get("min_ratio", 0.0)
 
+    context_cfg = settings.get("post_context", {})
+    comments_limit = int(context_cfg.get("top_comments", 5))
+    comment_max_len = int(context_cfg.get("comment_max_len", 180))
+    include_selftext = bool(context_cfg.get("include_selftext", True))
+
     used_ids = get_used_video_ids(settings)
     accepted: List[dict] = []
     total_duration = 0
@@ -207,10 +239,18 @@ def source_videos(settings: dict) -> List[dict]:
                     total_duration += duration
                     round_progress = True
 
+                    top_comments = _extract_top_comments(
+                        submission, limit=comments_limit, max_len=comment_max_len
+                    )
+
                     accepted.append(
                         {
                             "id": submission.id,
                             "title": submission.title or "",
+                            "selftext": (
+                                (submission.selftext or "") if include_selftext else ""
+                            ),
+                            "top_comments": top_comments,
                             "permalink": f"https://www.reddit.com{submission.permalink}",
                             "source_url": submission.url,
                             "subreddit": submission.subreddit.display_name,

@@ -54,6 +54,24 @@ post:
   min_score: 350 # upvotes - downvotes
   min_ratio: 0.8 # minimum upvote / downvotes ratio
 
+video_normalization:
+  target_width: 1920
+  target_height: 1080
+  padding_method: "black"  # "black" or "blur"
+
+post_context:
+  top_comments: 5
+  comment_max_len: 180
+  include_selftext: true
+
+commentary:
+  every_nth: 3
+  tts_voices:
+    gemini: "Kore"  # Gemini TTS supported voices: achernar, achird, algenib, algieba, alnilam, aoede, autonoe, callirrhoe, charon, despina, enceladus, erinome, fenrir, gacrux, iapetus, kore, laomedeia, leda, orus, puck, pulcherrima, rasalgethi, sadachbia, sadaltager, schedar, sulafat, umbriel, vindemiatrix, zephyr, zubenelgenubi
+    edge: "en-US-AvaMultilingualNeural"  # Edge TTS supports many voices
+  preferred_video_model: gemini-2.5-flash
+  preferred_tts_model: gemini-2.5-flash-preview-tts
+
 thumbnail:
   min_score: 1000
   min_ratio: 0.85
@@ -93,5 +111,5 @@ thumbnail:
     - disaster
     - tragedy
     - tragic
-  max_title_words: 15
-  max_description_words: 50
+  max_title_words: 10
+  max_description_words: 10

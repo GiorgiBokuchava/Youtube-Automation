@@ -1,0 +1,22 @@
+channel:
+  name: test
+  youtube_channel_id: UCZZZZ
+
+subreddits:
+  - rarepuppers
+  - AnimalsBeingDerps
+
+post:
+  min_duration: 1
+  max_duration: 15
+  min_score: 100
+  min_ratio: 0.7
+
+commentary:
+  every_nth: 2
+  tts_voices:
+    gemini: Kore
+
+thumbnail:
+  min_score: 500
+  min_ratio: 0.8

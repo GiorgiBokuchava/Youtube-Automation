@@ -2,6 +2,7 @@ import os
 from typing import List
 
 from youtube_automation.ai.text.types import TextRequest
+from youtube_automation.ai.errors import QuotaExhaustedError
 from google import genai
 from google.genai import types
 
@@ -76,4 +77,4 @@ class GeminiProvider:
             if last_error and not self._is_quota_error(last_error):
                 continue
 
-        raise RuntimeError("All Gemini models and API keys exhausted")
+        raise QuotaExhaustedError("All Gemini models and API keys exhausted")

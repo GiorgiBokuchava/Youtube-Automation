@@ -31,3 +31,6 @@ Thumbs.db
 
 # Debug files
 project_dump.txt
+
+# pytest cache
+.pytest_cache/

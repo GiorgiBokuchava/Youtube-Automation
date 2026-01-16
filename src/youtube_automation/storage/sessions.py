@@ -22,6 +22,10 @@ def load_sessions() -> List[dict]:
 
 
 def save_session(session: dict, settings: Optional[dict] = None) -> None:
+    # Add channel information to session if available
+    if settings and "channel" in settings:
+        session["channel"] = settings["channel"].get("name")
+
     sessions = load_sessions()
     sessions.append(session)
 
@@ -66,8 +70,13 @@ def get_used_video_ids(settings: dict) -> Set[str]:
     used_ids: Set[str] = set()
 
     cutoff = _cutoff_from_settings(settings)
+    channel_name = settings.get("channel", {}).get("name")
 
     for session in sessions:
+        # Filter by channel if specified
+        if channel_name and session.get("channel") != channel_name:
+            continue
+
         if cutoff:
             try:
                 created = datetime.fromisoformat(session.get("created_at", ""))

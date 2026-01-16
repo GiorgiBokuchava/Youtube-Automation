@@ -1,0 +1,39 @@
+name: Publish video
+
+on:
+  schedule:
+    - cron: "0 6 */3 * *"
+  workflow_dispatch:
+    inputs:
+      channel:
+        required: true
+        type: choice
+        options:
+          - animals
+          - dashcam
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        channel: [animals, dashcam]
+
+    env:
+      CHANNEL: ${{ matrix.channel }}
+      CHANNEL_UPPER: ${{ matrix.channel | upper }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - run: |
+          python -m src.youtube_automation.app \
+            --mode pipeline \
+            --channel $CHANNEL

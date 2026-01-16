@@ -14,7 +14,7 @@ class TTSModelSpec(TypedDict):
 TTS_MODELS: list[TTSModelSpec] = [
     {
         "provider": "gemini",
-        "model": "gemini-2.5-flash-tts",
+        "model": "gemini-2.5-flash-preview-tts",
         "capabilities": {"text_in", "audio_out"},
         "free": True,
     },
@@ -23,6 +23,12 @@ TTS_MODELS: list[TTSModelSpec] = [
         "model": "edge-tts",
         "capabilities": {"text_in", "audio_out"},
         "free": False,
+    },
+    {
+        "provider": "text_generator",
+        "model": "text-generator-tts",
+        "capabilities": {"text_in", "audio_out"},
+        "free": True,
     },
 ]
 
@@ -36,7 +42,7 @@ def get_models_by_provider(provider: str) -> list[TTSModelSpec]:
 
 
 def get_model_spec(model: str) -> TTSModelSpec | None:
-    for model in TTS_MODELS:
-        if model["model"] == model:
-            return model
+    for spec in TTS_MODELS:
+        if spec["model"] == model:
+            return spec
     return None
