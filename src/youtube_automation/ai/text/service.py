@@ -24,8 +24,12 @@ class TextService:
     def __init__(self):
         self._providers: dict[str, object] = {
             "gemini": GeminiProvider(),
-            "openrouter": OpenRouterProvider(),
         }
+
+        try:
+            self._providers["openrouter"] = OpenRouterProvider()
+        except Exception as e:
+            logger.warning(f"OpenRouter disabled: {e}")
 
     def generate(
         self, request: TextRequest, preferred_model: Optional[str] = None

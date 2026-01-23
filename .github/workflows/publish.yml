@@ -28,6 +28,21 @@ jobs:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
       YT_PRIVACY: private # TODO: remove once tested
 
+      # Reddit
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+      REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+
+      # YouTube
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+
+      # AI providers
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
+      TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
+
     steps:
       - uses: actions/checkout@v4
 

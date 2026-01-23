@@ -15,7 +15,7 @@ class GeminiProvider:
         self._keys: List[str] = [k.strip() for k in raw.split(",") if k.strip()]
 
         if not self._keys:
-            raise RuntimeError("GEMINI_API_KEYS is empty or missing")
+            raise QuotaExhaustedError("Gemini disabled (no API keys)")
 
     def get_available_models(self) -> list[str]:
         from youtube_automation.ai.text.registry import get_models_by_provider
@@ -35,6 +35,9 @@ class GeminiProvider:
         )
 
     def generate(self, *, model: str, request: TextRequest) -> str:
+        if not self._keys:
+            raise QuotaExhaustedError("Gemini disabled (no API keys)")
+
         contents = []
 
         if request.video:
