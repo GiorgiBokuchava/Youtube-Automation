@@ -28,10 +28,14 @@ jobs:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
       YT_PRIVACY: private # TODO: remove once tested
 
-      # Reddit
+      # Reddit (API)
       REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
       REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
       REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+
+      # Reddit (yt-dlp cookies)
+      REDDIT_COOKIES_B64: ${{ secrets.REDDIT_COOKIES_B64 }}
+      REDDIT_COOKIES_FILE: reddit_cookies.txt
 
       # YouTube
       YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
@@ -42,7 +46,6 @@ jobs:
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
       TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
-      REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
 
     steps:
       - uses: actions/checkout@v4
@@ -63,9 +66,14 @@ jobs:
 
       - name: Write Reddit cookies
         run: |
-          printf "%s\n" "$REDDIT_COOKIES" > reddit_cookies.txt
-        env:
-          REDDIT_COOKIES_FILE: reddit_cookies.txt
+          echo "$REDDIT_COOKIES_B64" | base64 --decode > "$REDDIT_COOKIES_FILE"
+
+      - name: Debug Reddit cookies (sanity check)
+        run: |
+          echo "=== Cookie file header ==="
+          head -n 5 "$REDDIT_COOKIES_FILE"
+          echo "=== Cookie file size ==="
+          wc -c "$REDDIT_COOKIES_FILE"
 
       - name: Run pipeline
         run: |
