@@ -63,7 +63,9 @@ jobs:
 
       - name: Write Reddit cookies
         run: |
-          echo "${REDDIT_COOKIES}" > reddit_cookies.txt
+          printf "%s\n" "$REDDIT_COOKIES" > reddit_cookies.txt
+        env:
+          REDDIT_COOKIES_FILE: reddit_cookies.txt
 
       - name: Run pipeline
         run: |

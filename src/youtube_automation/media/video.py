@@ -7,6 +7,7 @@ import concurrent.futures
 import logging
 from multiprocessing import Process, Queue
 from typing import List, Tuple, Optional
+from pathlib import Path
 
 from yt_dlp import YoutubeDL
 
@@ -79,6 +80,7 @@ def _yt_dlp_worker(
 ):
     try:
         url = f"https://www.reddit.com{permalink}"
+        cookie_path = os.getenv("REDDIT_COOKIES_FILE")
         opts = {
             "quiet": False,
             "noplaylist": True,
@@ -90,8 +92,10 @@ def _yt_dlp_worker(
             "extractor_retries": 2,
             "noprogress": True,
             "outtmpl": str(DOWNLOADS / f"{sid}.%(ext)s"),
-            "cookies": "reddit_cookies.txt",
         }
+
+        if cookie_path and Path(cookie_path).exists():
+            opts["cookiefile"] = cookie_path
 
         if ffmpeg_location:
             opts["ffmpeg_location"] = ffmpeg_location
