@@ -18,6 +18,8 @@ jobs:
   run:
     runs-on: ubuntu-latest
 
+    environment: ${{ github.event.inputs.channel || 'animals' }}
+
     concurrency:
       group: youtube-${{ github.event.inputs.channel || 'animals' }}
       cancel-in-progress: false
