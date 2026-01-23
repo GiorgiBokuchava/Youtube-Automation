@@ -54,3 +54,4 @@ scripts/get_youtube_token.py
 
 # Client secrets
 client_secret.json
+reddit_cookies.txt

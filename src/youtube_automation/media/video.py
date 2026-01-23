@@ -90,6 +90,7 @@ def _yt_dlp_worker(
             "extractor_retries": 2,
             "noprogress": True,
             "outtmpl": str(DOWNLOADS / f"{sid}.%(ext)s"),
+            "cookies": "reddit_cookies.txt",
         }
 
         if ffmpeg_location:
