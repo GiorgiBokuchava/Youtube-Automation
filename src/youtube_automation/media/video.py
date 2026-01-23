@@ -4,15 +4,18 @@ import os
 import time
 import random
 import concurrent.futures
+import logging
 from multiprocessing import Process, Queue
 from typing import List, Tuple, Optional
 
 from yt_dlp import YoutubeDL
 
-from src.youtube_automation.media.ffmpeg import ensure_ffmpeg
-from src.youtube_automation.reddit.client import create_reddit_client
-from src.youtube_automation.storage.sessions import get_used_video_ids
-from src.youtube_automation.utils.paths import DOWNLOADS
+from youtube_automation.media.ffmpeg import ensure_ffmpeg
+from youtube_automation.reddit.client import create_reddit_client
+from youtube_automation.storage.sessions import get_used_video_ids
+from youtube_automation.utils.paths import DOWNLOADS
+
+logger = logging.getLogger(__name__)
 
 
 # Helpers
@@ -199,6 +202,14 @@ def source_videos(settings: dict) -> List[dict]:
         ("rising", 80),
     ]
 
+    logger.info(
+        f"Starting video sourcing for {final_target_minutes} minutes of content"
+    )
+    logger.info(f"Targeting subreddits: {', '.join(subs)}")
+    logger.info(
+        f"Requirements: {min_dur}-{max_dur}s duration, score>{min_score}, ratio>{min_ratio}"
+    )
+
     rounds_no_progress = 0
 
     while total_duration < final_target_seconds:
@@ -208,7 +219,9 @@ def source_videos(settings: dict) -> List[dict]:
             subreddit = reddit.subreddit(sub)
 
             for mode, limit in feed_plan:
-                for submission in _fetch_feed(subreddit, mode, limit):
+                submissions = _fetch_feed(subreddit, mode, limit)
+
+                for submission in submissions:
                     if submission.id in used_ids:
                         continue
                     used_ids.add(submission.id)
@@ -254,6 +267,11 @@ def source_videos(settings: dict) -> List[dict]:
                             "permalink": f"https://www.reddit.com{submission.permalink}",
                             "source_url": submission.url,
                             "subreddit": submission.subreddit.display_name,
+                            "author": (
+                                getattr(submission.author, "name", "unknown")
+                                if submission.author
+                                else "unknown"
+                            ),
                             "duration_sec": int(duration),
                             "local_path": path,
                             "overlay_title": len(submission.title or "") <= 75,
@@ -272,9 +290,8 @@ def source_videos(settings: dict) -> List[dict]:
 
         if not round_progress:
             rounds_no_progress += 1
-            if rounds_no_progress >= 6:
-                break
-        else:
-            rounds_no_progress = 0
 
+    logger.info(
+        f"Video sourcing complete: {len(accepted)} clips, {total_duration}s total duration"
+    )
     return accepted

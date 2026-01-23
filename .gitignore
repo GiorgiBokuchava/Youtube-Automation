@@ -32,5 +32,25 @@ Thumbs.db
 # Debug files
 project_dump.txt
 
+# FFmpeg / media temp artifacts
+pipe
+pipe.*
+*.concat.txt
+*.music.m4a
+*.music.txt
+*.rendered.mp4
+
 # pytest cache
 .pytest_cache/
+
+# Output directories
+/out
+
+# Music folder metadata
+assets/music/.DS_Store
+
+# Script files
+scripts/get_youtube_token.py
+
+# Client secrets
+client_secret.json

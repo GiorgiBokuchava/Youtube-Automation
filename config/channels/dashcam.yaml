@@ -2,6 +2,8 @@ channel:
   name: dashcam
   youtube_channel_id: UCYYYY
 
+final_target_duration: 5
+
 subreddits:
   - Dashcam
   - IdiotsInCars
@@ -9,13 +11,17 @@ subreddits:
 post:
   min_duration: 5
   max_duration: 60
-  min_score: 800
-  min_ratio: 0.9
+  min_score: 1000
+  min_ratio: 0.85
 
 commentary:
+  theme: dramatic
   every_nth: 1
   tts_voices:
     edge: en-US-BrianMultilingualNeural
 
 thumbnail:
-  allow_nsfw: false
+  allow_nsfw: true
+
+music:
+  tags: ["cinematic", "tension", "driving"]

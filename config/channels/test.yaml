@@ -2,8 +2,10 @@ channel:
   name: test
   youtube_channel_id: UCZZZZ
 
+final_target_duration: 2
+
 subreddits:
-  - rarepuppers
+  - testrarepuppers
   - AnimalsBeingDerps
 
 post:
@@ -13,6 +15,7 @@ post:
   min_ratio: 0.7
 
 commentary:
+  theme: funny
   every_nth: 2
   tts_voices:
     gemini: Kore

@@ -45,6 +45,7 @@ def render_clip(
     commentary_audio: Optional[Path] = None,
     commentary_offset_sec: float = 0.45,
     ducking_db: float = -12.0,
+    commentary_gain: float = 1.0,
 ) -> Path:
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
@@ -55,31 +56,55 @@ def render_clip(
             "-y",
             "-i",
             str(input_video),
-            "-c",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "20",
+            "-r",
+            "30",
+            "-c:a",
             "copy",
             str(output_video),
         ]
-        p = subprocess.run(cmd, capture_output=True, text=True)
-        if p.returncode != 0:
-            raise RuntimeError(f"ffmpeg copy failed: {p.stderr}")
+        try:
+            p = subprocess.run(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
+            )
+            if p.returncode != 0:
+                raise RuntimeError(f"ffmpeg copy failed: {p.stderr}")
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("ffmpeg copy timed out")
         return output_video
 
     com_dur = _probe_duration_seconds(commentary_audio)
     if not com_dur:
         com_dur = 2.0
 
+    video_dur = _probe_duration_seconds(input_video)
+    if not video_dur:
+        video_dur = 99999.0  # fallback, but usually ffprobe works
+
     start = max(0.0, commentary_offset_sec)
     end = start + max(0.1, com_dur)
 
     duck_factor = 10 ** (ducking_db / 20.0)
+    delay_ms = int(max(0.0, commentary_offset_sec) * 1000)
 
-    delay_ms = int(start * 1000)
-
+    # Base audio: duck only during commentary window, then trim to video length
+    # Commentary: delay, boost, trim to video length
+    # Mix, then trim again for safety
     filter_complex = (
-        f"[0:a]volume=enable='between(t,{start:.3f},{end:.3f})':volume={duck_factor:.6f}"
-        f"[a0];"
-        f"[1:a]adelay={delay_ms}|{delay_ms},volume=1.0[a1];"
-        f"[a0][a1]amix=inputs=2:normalize=0:dropout_transition=0[aout]"
+        f"[0:a]"
+        f"volume={duck_factor},"
+        f"aresample=48000,asetpts=N/SR/TB[a0];"
+        f"[1:a]"
+        f"adelay={delay_ms}|{delay_ms},"
+        f"volume={commentary_gain},"
+        f"aresample=48000,asetpts=N/SR/TB[a1];"
+        f"[a0][a1]"
+        f"amix=inputs=2:weights=1 4:duration=shortest:dropout_transition=0[aout]"
     )
 
     cmd = [
@@ -97,16 +122,30 @@ def render_clip(
         "-map",
         "[aout]",
         "-c:v",
-        "copy",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "20",
+        "-r",
+        "30",
         "-c:a",
         "aac",
         "-b:a",
         "192k",
+        "-ar",
+        "48000",
+        # "-shortest",
         str(output_video),
     ]
 
-    p = subprocess.run(cmd, capture_output=True, text=True)
-    if p.returncode != 0:
-        raise RuntimeError(f"ffmpeg mix failed: {p.stderr}")
+    try:
+        p = subprocess.run(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
+        )
+        if p.returncode != 0:
+            raise RuntimeError(f"ffmpeg mix failed: {p.stderr}")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("ffmpeg mix timed out")
 
     return output_video

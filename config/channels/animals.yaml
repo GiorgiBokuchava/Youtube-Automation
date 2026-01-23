@@ -2,27 +2,138 @@ channel:
   name: animals
   youtube_channel_id: UCXXXX
 
+final_target_duration: 3
+
 subreddits:
   - rarepuppers
+  - WhatsWrongWithYourDog
   - AnimalsBeingDerps
+  - dogvideos
+  - aww
+  - Awww
+  - AnimalsBeingBros
+  - AnimalsBeingFunny
+  - sploot
+  - Animal
+  - AnimalPorn
+  - dogpictures
   - FunnyAnimals
+  - funnycats
+  - FunnyDogVideos
+  # - NatureIsFuckingLit
+  - funnypets
+  - tuckedinkitties
+  - dogpictures
+  - PuppySmiles
+  - babyelephantgifs
+  - BearCubGIFs
+  - babyrhinogifs
+  - babybigcatgifs
+  - AnimalsBeingMoms
+  - babyduckgifs
+  - Rabbits
+  - ferrets
+  - StartledCats
+  - animalslookingatfood
+  - AnimalsBeingJerks
+  - Blep
+  - CatsAllDay
+  - pimpcats
+  - CalicoKittys
+  - catbellies
+  - PetsareAmazing
+  - CatsStandingUp
+  - CatsAreAssholes
+  - BorderCollie
+  - WiggleButts
+  - corgi
+  - animalssmiling
+  - DogSmiles
 
 post:
   min_duration: 1
-  max_duration: 25
+  max_duration: 15
   min_score: 350
   min_ratio: 0.8
 
 commentary:
+  theme: funny
   every_nth: 3
+  ducking_db: -24        # original a bit quieter during commentary (~6%)
+  commentary_gain: 1.6   # slightly lower commentary level
   tts_voices:
-    gemini: Kore
-    edge: en-US-AvaMultilingualNeural
+    gemini:
+      - Kore  # Female
+      - Joren  # Male
+    text_generator:
+      - af_sarah  # Female
+      - am_adam   # Male
+    edge:
+      - en-US-AvaMultilingualNeural    # Female
+      - en-US-BrianMultilingualNeural  # Male
 
 thumbnail:
   min_score: 1000
   min_ratio: 0.85
   banned_words:
+    - spider
+    - nsfw
+    - kill
+    - death
+    - die
+    - murder
+    - suicide
+    - dead
+    - dying
+    - killed
+    - killing
+    - fatal
+    - fatality
     - gore
     - blood
+    - bloody
     - violence
+    - violent
+    - abuse
+    - abusive
+    - torture
+    - painful
+    - pain
+    - hurt
+    - injury
+    - injured
+    - accident
+    - disaster
+    - tragedy
+    - tragic
+
+youtube:
+  title_template: "Cute Animals Compilation | Reddit"
+  description_template: |
+    Best animal clips from Reddit.
+
+    Credits:
+    {credits}
+  tags:
+    - animals
+    - funny animals
+    - cute
+    - pets
+  category_id: "15"
+  privacy_status: private
+
+music:
+  tags: ["fun", "upbeat", "cute"]
+  enabled: true
+  music_volume_db: -14  # Music present but below narration
+  original_duck_db: 0   # Do not globally attenuate main audio (includes commentary)
+  fade_in_sec: 0.8
+  fade_out_sec: 0.8
+  track_gap_sec: 2.5  # Gap between music tracks
+  max_track_repeats: 1  # Don't repeat same track in one video
+
+publishing:
+  ai_metadata:
+    tone: fun
+    audience: animal lovers
+    call_to_action: subscribe

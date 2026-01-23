@@ -6,15 +6,20 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Set, Optional
 
 
-USED_PATH = Path("config/used.json")
+def _used_path(settings: dict | None):
+    if settings and "channel" in settings:
+        name = settings["channel"]["name"]
+        return Path(f"config/used_{name}.json")
+    return Path("config/used.json")
 
 
-def load_sessions() -> List[dict]:
-    if not USED_PATH.exists():
+def load_sessions(settings: Optional[dict] = None) -> List[dict]:
+    used_path = _used_path(settings)
+    if not used_path.exists():
         return []
 
     try:
-        with open(USED_PATH, "r", encoding="utf-8") as f:
+        with open(used_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data if isinstance(data, list) else []
     except Exception:
@@ -26,7 +31,7 @@ def save_session(session: dict, settings: Optional[dict] = None) -> None:
     if settings and "channel" in settings:
         session["channel"] = settings["channel"].get("name")
 
-    sessions = load_sessions()
+    sessions = load_sessions(settings)
     sessions.append(session)
 
     # Prune old sessions if settings provide horizon
@@ -35,8 +40,9 @@ def save_session(session: dict, settings: Optional[dict] = None) -> None:
         if cutoff:
             sessions = [s for s in sessions if _is_session_after_cutoff(s, cutoff)]
 
-    USED_PATH.parent.mkdir(exist_ok=True)
-    with open(USED_PATH, "w", encoding="utf-8") as f:
+    used_path = _used_path(settings)
+    used_path.parent.mkdir(exist_ok=True)
+    with open(used_path, "w", encoding="utf-8") as f:
         json.dump(sessions, f, indent=2)
 
 
@@ -66,7 +72,7 @@ def _cutoff_from_settings(settings: dict) -> Optional[datetime]:
 
 def get_used_video_ids(settings: dict) -> Set[str]:
     # Returns all video submission IDs that were already used, respecting `used_horizon_days` if configured.
-    sessions = load_sessions()
+    sessions = load_sessions(settings)
     used_ids: Set[str] = set()
 
     cutoff = _cutoff_from_settings(settings)
@@ -93,12 +99,18 @@ def get_used_video_ids(settings: dict) -> Set[str]:
     return used_ids
 
 
-def get_used_thumbnail_ids() -> Set[str]:
-    # Returns all submission IDs that already produced thumbnails.
-    sessions = load_sessions()
+def get_used_thumbnail_ids(settings: Optional[dict] = None) -> Set[str]:
+    sessions = load_sessions(settings)
     thumb_ids: Set[str] = set()
 
+    channel_name = None
+    if settings:
+        channel_name = settings.get("channel", {}).get("name")
+
     for session in sessions:
+        if channel_name and session.get("channel") != channel_name:
+            continue
+
         thumb = session.get("thumbnail", {})
         sid = thumb.get("submission_id")
         if sid:

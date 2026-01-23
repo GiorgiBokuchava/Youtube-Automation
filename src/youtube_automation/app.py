@@ -1,11 +1,11 @@
 import argparse
 import logging
 
-from src.youtube_automation.config.loader import load_env, load_settings
-from src.youtube_automation.media.thumbnail import source_thumbnail
-from src.youtube_automation.media.video import source_videos
-from src.youtube_automation.storage.sessions import save_session, new_session
-from src.youtube_automation.pipeline import run_pipeline
+from youtube_automation.config.loader import load_env, load_settings
+from youtube_automation.pipeline import run_pipeline
+from youtube_automation.media.thumbnail import source_thumbnail
+from youtube_automation.media.video import source_videos
+from youtube_automation.storage.sessions import save_session, new_session
 
 
 def setup_logging(debug: bool) -> None:
@@ -36,6 +36,16 @@ def main() -> None:
         "--debug",
         action="store_true",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip YouTube upload (for testing)",
+    )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Clean up generated files after pipeline run",
+    )
     args = parser.parse_args()
 
     settings = load_settings(args.channel)
@@ -55,8 +65,12 @@ def main() -> None:
         print(f"Sourced {len(clips)} clips.")
         return
 
-    session = run_pipeline(settings)
+    session = run_pipeline(settings, dry_run=args.dry_run, cleanup=args.cleanup)
     print(f"Pipeline complete. Clips: {session.get('num_clips', 0)}")
+    if args.dry_run:
+        print("DRY RUN: Skipped YouTube upload")
+    if args.cleanup:
+        print("CLEANUP: Generated files removed")
 
 
 if __name__ == "__main__":

@@ -12,13 +12,13 @@ from typing import Optional, List
 import requests
 from PIL import Image
 
-from src.youtube_automation.reddit.client import create_reddit_client
-from src.youtube_automation.storage.sessions import (
+from youtube_automation.reddit.client import create_reddit_client
+from youtube_automation.storage.sessions import (
     get_used_thumbnail_ids,
     save_session,
     new_session,
 )
-from src.youtube_automation.utils.paths import THUMBS
+from youtube_automation.utils.paths import THUMBS
 
 
 logger = logging.getLogger(__name__)
@@ -216,11 +216,10 @@ def _fetch_feed(subreddit, mode: str, limit: int) -> List:
 
 def source_thumbnail(settings: dict) -> Optional[dict]:
     reddit = create_reddit_client()
-    used_ids = get_used_thumbnail_ids()
+    used_ids = get_used_thumbnail_ids(settings)
 
     subs = settings.get("subreddits", [])
     if not subs:
-        logger.warning("No subreddits configured for thumbnails")
         return None
 
     cfg = settings.get("thumbnail", {})
@@ -239,37 +238,13 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
 
     random.shuffle(subs)
 
-    logger.info("Starting thumbnail search")
-    logger.debug(
-        "Search criteria: score>=%d, ratio>=%.2f, tolerance=%.2f",
-        min_score,
-        min_ratio,
-        tolerance,
-    )
-    logger.debug(
-        "Target dimensions: %dx%d (ratio: %.2f)", target_w, target_h, target_ratio
-    )
-    logger.debug("Banned words: %s", banned_words)
-    logger.debug(
-        "Max title words: %d, Max description words: %d",
-        max_title_words,
-        max_description_words,
-    )
-
     for stage_name, limit in search_stages:
-        logger.info("Stage %s (%d)", stage_name, limit)
 
         for sub in subs:
             subreddit = reddit.subreddit(sub)
 
             try:
                 submissions = _fetch_feed(subreddit, stage_name, limit)
-                logger.debug(
-                    "Found %d posts in r/%s (%s)",
-                    len(submissions),
-                    subreddit.display_name,
-                    stage_name,
-                )
 
                 posts_checked = 0
                 posts_skipped = 0
@@ -278,35 +253,18 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                     posts_checked += 1
 
                     if submission.is_self or submission.id in used_ids:
-                        logger.debug(
-                            "Skip %s: self post or already used", submission.id
-                        )
                         posts_skipped += 1
                         continue
                     if getattr(submission, "is_video", False):
-                        logger.debug("Skip %s: video post", submission.id)
                         posts_skipped += 1
                         continue
                     if not allow_nsfw and getattr(submission, "over_18", False):
-                        logger.debug("Skip %s: NSFW content", submission.id)
                         posts_skipped += 1
                         continue
                     if submission.score < min_score:
-                        logger.debug(
-                            "Skip %s: score %d < %d",
-                            submission.id,
-                            submission.score,
-                            min_score,
-                        )
                         posts_skipped += 1
                         continue
                     if float(submission.upvote_ratio or 0.0) < min_ratio:
-                        logger.debug(
-                            "Skip %s: ratio %.2f < %.2f",
-                            submission.id,
-                            submission.upvote_ratio,
-                            min_ratio,
-                        )
                         posts_skipped += 1
                         continue
 
@@ -352,7 +310,6 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                         continue
                     url = _pick_image_url(submission)
                     if not url:
-                        logger.debug("Skip %s: no valid image URL", submission.id)
                         posts_skipped += 1
                         continue
 
@@ -387,28 +344,19 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                     }
 
             except Exception as e:
-                logger.debug("Failed subreddit %s: %s", sub, e)
+                pass
 
     if target_ratio > 1.0:
-        logger.info("Attempting composite fallback with stricter criteria")
         portraits = []
         fallback_used_ids = set()
 
-        # Use stricter criteria for fallback (double the normal requirements)
+        # Use stricter criteria for fallback (double normal requirements)
         fallback_min_score = min_score * 1.5
-        fallback_min_ratio = min_ratio  # 10% higher ratio, max 95%
-        logger.debug(
-            "Fallback criteria: score>=%d, ratio>=%.2f (double normal)",
-            fallback_min_score,
-            fallback_min_ratio,
-        )
+        fallback_min_ratio = min_ratio
 
         for stage_name, limit in FALLBACK_SEARCH_STAGES:
             for sub in subs:
                 subreddit = reddit.subreddit(sub)
-                logger.debug(
-                    "Fallback scan: r/%s (%s)", subreddit.display_name, stage_name
-                )
 
                 try:
                     submissions = _fetch_feed(subreddit, stage_name, limit)
@@ -424,31 +372,14 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                         if not allow_nsfw and getattr(submission, "over_18", False):
                             continue
                         if submission.score < fallback_min_score:
-                            logger.debug(
-                                "Fallback skip %s: score %d < %d (fallback)",
-                                submission.id,
-                                submission.score,
-                                fallback_min_score,
-                            )
                             continue
                         if float(submission.upvote_ratio or 0.0) < fallback_min_ratio:
-                            logger.debug(
-                                "Fallback skip %s: ratio %.2f < %.2f (fallback)",
-                                submission.id,
-                                submission.upvote_ratio,
-                                fallback_min_ratio,
-                            )
                             continue
                         if _contains_banned_words(submission.title or "", banned_words):
                             continue
                         if max_title_words > 0 and _exceeds_max_words(
                             submission.title or "", max_title_words
                         ):
-                            logger.debug(
-                                "Fallback skip %s: title exceeds %d words",
-                                submission.id,
-                                max_title_words,
-                            )
                             continue
                         if (
                             max_description_words > 0
@@ -458,11 +389,6 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                             if _exceeds_max_words(
                                 submission.selftext, max_description_words
                             ):
-                                logger.debug(
-                                    "Fallback skip %s: description exceeds %d words",
-                                    submission.id,
-                                    max_description_words,
-                                )
                                 continue
 
                         url = _pick_image_url(submission)
@@ -479,12 +405,6 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                                 if im.width / im.height < 1.0:
                                     portraits.append(im.copy())
                                     fallback_used_ids.add(submission.id)
-                                    logger.debug(
-                                        "Found portrait image: %s (%dx%d)",
-                                        submission.id,
-                                        im.width,
-                                        im.height,
-                                    )
                         finally:
                             original.unlink(missing_ok=True)
 

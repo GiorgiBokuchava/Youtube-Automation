@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import io
+import random
 import struct
 import time
 import wave
 import logging
-from typing import Optional
+from typing import Optional, Union, List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,12 @@ class TTSService:
     MAX_MODEL_TIME = 30
 
     def __init__(self) -> None:
-        self._provider_factories: dict[str, type] = {
+        self._provider_factories: Dict[str, type] = {
             "gemini": GeminiTTSProvider,
             "text_generator": TextGeneratorTTSProvider,
             "edge": EdgeTTSProvider,
         }
-        self._providers: dict[str, object] = {}
+        self._providers: Dict[str, object] = {}
 
     def _get_provider(self, name: str):
         if name not in self._providers:
@@ -49,7 +50,7 @@ class TTSService:
         self,
         request: TTSRequest,
         preferred_model: Optional[str] = None,
-        tts_voices: Optional[dict[str, str]] = None,
+        tts_voices: Optional[Dict[str, Union[str, List[str]]]] = None,
     ) -> TTSAudio:
         required_caps = {"text_in", "audio_out"}
 
@@ -127,13 +128,24 @@ class TTSService:
         provider_name: str,
         model_name: str,
         request: TTSRequest,
-        tts_voices: Optional[dict[str, str]],
+        tts_voices: Optional[Dict[str, Union[str, List[str]]]] = None,
     ) -> TTSAudio:
         start = time.time()
 
         voice = None
         if tts_voices and provider_name in tts_voices:
-            voice = tts_voices[provider_name]
+            voices_config = tts_voices[provider_name]
+            # Handle both string (single voice) and list (multiple voices)
+            if isinstance(voices_config, list):
+                # Randomly select from available voices
+                voice = random.choice(voices_config)
+                logger.debug(
+                    f"Randomly selected voice '{voice}' from {len(voices_config)} options for {provider_name}"
+                )
+            else:
+                # Single voice (backward compatibility)
+                voice = voices_config
+                logger.debug(f"Using configured voice '{voice}' for {provider_name}")
 
         voice_request = TTSRequest(
             text=request.text,
