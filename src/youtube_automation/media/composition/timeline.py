@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 import logging
@@ -19,18 +20,40 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(__name__)
-    logger.info("🎬 Stitching %d clips → %s", len(clip_paths), output_path)
+    clip_count = len(clip_paths)
 
+    logger.info("🎬 Stitching %d clips → %s", clip_count, output_path)
+
+    # Build concat file
     list_file = output_path.parent / f"{output_path.stem}_concat.txt"
     list_file.write_text(
         "\n".join(f"file '{p.resolve().as_posix()}'" for p in clip_paths) + "\n",
         encoding="utf-8",
     )
 
+    base_timeout = int(os.getenv("FFMPEG_BASE_TIMEOUT", "1800"))
+    per_clip_timeout = int(os.getenv("FFMPEG_PER_CLIP_TIMEOUT", "30"))
+    timeout = base_timeout + clip_count * per_clip_timeout
+
+    preset = os.getenv("FFMPEG_PRESET", "veryfast")
+    crf = os.getenv("FFMPEG_CRF", "20")
+
+    logger.info(
+        "FFmpeg timeout=%ss preset=%s crf=%s",
+        timeout,
+        preset,
+        crf,
+    )
+
     cmd = [
         _ffmpeg_bin(),
         "-hide_banner",
         "-y",
+        # Show progress in CI logs
+        "-loglevel",
+        "info",
+        "-stats",
+        # Concat demuxer
         "-fflags",
         "+genpts",
         "-f",
@@ -44,15 +67,15 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         "cfr",
         "-r",
         "30",
-        # Re-encode video & audio (prevents drift / weird seek behavior)
+        # Re-encode (safe, drift-free)
         "-c:v",
         "libx264",
         "-pix_fmt",
         "yuv420p",
         "-preset",
-        "veryfast",
+        preset,
         "-crf",
-        "20",
+        str(crf),
         "-c:a",
         "aac",
         "-b:a",
@@ -67,16 +90,21 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
     ]
 
     try:
-        p = subprocess.run(
+        subprocess.run(
             cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=300,
+            check=True,
+            timeout=timeout,
         )
-        if p.returncode != 0:
-            logger.error("FFmpeg concat failed")
-            raise RuntimeError("ffmpeg concat failed")
     except subprocess.TimeoutExpired:
-        logger.error("FFmpeg concat timed out")
+        logger.error(
+            "FFmpeg concat timed out after %ss (%d clips)",
+            timeout,
+            clip_count,
+        )
         raise RuntimeError("ffmpeg concat timed out")
+    except subprocess.CalledProcessError as e:
+        logger.error("FFmpeg concat failed with return code %s", e.returncode)
+        raise RuntimeError("ffmpeg concat failed")
+
+    logger.info("✅ Stitching completed successfully")
     return output_path
