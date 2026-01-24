@@ -2,7 +2,7 @@ name: Publish video
 
 on:
   schedule:
-    - cron: "0 6 */3 * *"   # every 3 days
+    - cron: "0 6 */3 * *" # every 3 days
   workflow_dispatch:
     inputs:
       channel:
@@ -28,14 +28,10 @@ jobs:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
       YT_PRIVACY: private # TODO: remove once tested
 
-      # Reddit (API)
+      # Reddit API (PRAW)
       REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
       REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
       REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
-
-      # Reddit (yt-dlp cookies)
-      REDDIT_COOKIES_B64: ${{ secrets.REDDIT_COOKIES_B64 }}
-      REDDIT_COOKIES_FILE: reddit_cookies.txt
 
       # YouTube
       YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
@@ -46,6 +42,10 @@ jobs:
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
       TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
+
+      # Cookies (base64 stored inside REDDIT_COOKIES secret)
+      REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
+      REDDIT_COOKIES_FILE: reddit_cookies.txt
 
     steps:
       - uses: actions/checkout@v4
@@ -64,16 +64,32 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Write Reddit cookies
+      - name: Write Reddit cookies (decode secret)
         run: |
-          echo "$REDDIT_COOKIES_B64" | base64 --decode > "$REDDIT_COOKIES_FILE"
+          # REDDIT_COOKIES is base64 text stored in GitHub Secrets
+          echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
 
-      - name: Debug Reddit cookies (sanity check)
+      - name: Debug Reddit cookies (detailed)
         run: |
-          echo "=== Cookie file header ==="
-          head -n 5 "$REDDIT_COOKIES_FILE"
-          echo "=== Cookie file size ==="
-          wc -c "$REDDIT_COOKIES_FILE"
+          echo "=== Cookie file exists? ==="
+          ls -lh "$REDDIT_COOKIES_FILE" || echo "File not found"
+          echo ""
+          echo "=== First 10 lines (raw; shows hidden chars) ==="
+          head -n 10 "$REDDIT_COOKIES_FILE" | cat -A
+          echo ""
+          echo "=== File encoding ==="
+          file "$REDDIT_COOKIES_FILE"
+          echo ""
+          echo "=== First line must be Netscape header ==="
+          head -n 1 "$REDDIT_COOKIES_FILE"
+
+      - name: Preflight - test cookies with yt-dlp
+        run: |
+          yt-dlp --version
+          echo "Testing cookie auth against a known Reddit post (skip download)..."
+          yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
+            "https://www.reddit.com/r/StartledCats/comments/17cn6g6/" \
+            -v
 
       - name: Run pipeline
         run: |
