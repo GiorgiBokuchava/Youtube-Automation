@@ -21,7 +21,7 @@ music:
   enabled: true
   library_root: "assets/music"
 
-  music_volume_db: -18
+  music_volume_db: -12
   original_duck_db: -8
 
   fade_in_sec: 0.8

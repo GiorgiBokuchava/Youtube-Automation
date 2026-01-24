@@ -59,8 +59,8 @@ post:
 commentary:
   theme: funny
   every_nth: 3
-  ducking_db: -24        # original a bit quieter during commentary (~6%)
-  commentary_gain: 1.6   # slightly lower commentary level
+  ducking_db: -30
+  commentary_gain: 1.6
   tts_voices:
     gemini:
       - Kore  # Female
