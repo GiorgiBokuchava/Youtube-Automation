@@ -94,6 +94,14 @@ def _yt_dlp_worker(
             "outtmpl": str(DOWNLOADS / f"{sid}.%(ext)s"),
         }
 
+        opts.update(
+            {
+                "sleep_interval": 1.5,
+                "max_sleep_interval": 4.0,
+                "sleep_interval_requests": 1,
+            }
+        )
+
         if cookie_path and Path(cookie_path).exists():
             opts["cookiefile"] = cookie_path
 
