@@ -45,8 +45,13 @@ Clip titles:
 {context}
 
 TASKS:
-1. Generate ONE catchy YouTube title (max 90 characters).
-2. Generate a compelling description (2–3 short paragraphs).
+1. Generate ONE descriptive YouTube title (max 90 characters). Avoid overly corny or repetitive phrases. Prefer clean, generic titles like:
+   - "Animal Compilation"
+   - "Cute Animals"
+   - "Funny Animal"
+   - "Pet Moments"
+   Do NOT use patterns like "&" chains, "Cutest," "Best," or "for Animal Lovers."
+2. Generate a compelling description (2-3 short paragraphs).
 3. Add ONE clear call-to-action line ({call_to_action}).
 4. Generate up to {max_hashtags} relevant hashtags (no emojis).
 

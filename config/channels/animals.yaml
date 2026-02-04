@@ -122,7 +122,7 @@ youtube:
     - cute
     - pets
   category_id: "15"
-  privacy_status: private
+  privacy_status: public
 
 music:
   tags: ["fun", "upbeat", "cute"]
