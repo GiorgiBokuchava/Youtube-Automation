@@ -44,18 +44,33 @@ def render_clip(
     output_video: Path,
     commentary_audio: Optional[Path] = None,
     commentary_offset_sec: float = 0.45,
-    ducking_db: float = -12.0,
+    original_volume_db: float = 0.0,
     commentary_gain: float = 1.0,
 ) -> Path:
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
     if not commentary_audio or not commentary_audio.exists():
+        orig_factor = 10 ** (original_volume_db / 20.0)
+        print(
+            f"[render_clip] no-commentary original_volume_db={original_volume_db}, factor={orig_factor}"
+        )
+
+        filter_complex = (
+            f"[0:a]" f"volume={orig_factor}," f"aresample=48000,asetpts=N/SR/TB[aout]"
+        )
+
         cmd = [
             _ffmpeg_bin(),
             "-hide_banner",
             "-y",
             "-i",
             str(input_video),
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "0:v:0",
+            "-map",
+            "[aout]",
             "-c:v",
             "libx264",
             "-preset",
@@ -65,7 +80,11 @@ def render_clip(
             "-r",
             "30",
             "-c:a",
-            "copy",
+            "aac",
+            "-b:a",
+            "192k",
+            "-ar",
+            "48000",
             str(output_video),
         ]
         try:
@@ -73,9 +92,9 @@ def render_clip(
                 cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
             )
             if p.returncode != 0:
-                raise RuntimeError(f"ffmpeg copy failed: {p.stderr}")
+                raise RuntimeError(f"ffmpeg mix (no commentary) failed: {p.stderr}")
         except subprocess.TimeoutExpired:
-            raise RuntimeError("ffmpeg copy timed out")
+            raise RuntimeError("ffmpeg mix (no commentary) timed out")
         return output_video
 
     com_dur = _probe_duration_seconds(commentary_audio)
@@ -89,7 +108,10 @@ def render_clip(
     start = max(0.0, commentary_offset_sec)
     end = start + max(0.1, com_dur)
 
-    duck_factor = 10 ** (ducking_db / 20.0)
+    orig_factor = 10 ** (original_volume_db / 20.0)
+    print(
+        f"[render_clip] with-commentary original_volume_db={original_volume_db}, factor={orig_factor}"
+    )
     delay_ms = int(max(0.0, commentary_offset_sec) * 1000)
 
     # Base audio: duck only during commentary window, then trim to video length
@@ -97,7 +119,7 @@ def render_clip(
     # Mix, then trim again for safety
     filter_complex = (
         f"[0:a]"
-        f"volume={duck_factor},"
+        f"volume={orig_factor},"
         f"aresample=48000,asetpts=N/SR/TB[a0];"
         f"[1:a]"
         f"adelay={delay_ms}|{delay_ms},"

@@ -151,12 +151,14 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                 voiceover = clip.get("voiceover_path")
                 voiceover_path = Path(voiceover) if voiceover else None
 
+                orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
+
                 rendered = render_clip(
                     input_video=in_path,
                     output_video=out_path,
                     commentary_audio=voiceover_path,
                     commentary_offset_sec=0.45,
-                    ducking_db=settings.get("commentary", {}).get("ducking_db", -12.0),
+                    original_volume_db=orig_vol,
                     commentary_gain=settings.get("commentary", {}).get(
                         "commentary_gain", 1.0
                     ),

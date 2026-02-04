@@ -40,6 +40,12 @@ TEXT_MODELS: list[TextModelSpec] = [
         "capabilities": {"text_in", "text_out", "video_in"},
         "free": True,
     },
+    {
+        "provider": "gemini",
+        "model": "gemini-3-flash",
+        "capabilities": {"text_in", "text_out"},
+        "free": True,
+    },
 ]
 
 

@@ -56,10 +56,12 @@ post:
   min_score: 350
   min_ratio: 0.8
 
+audio:
+  original_clip_volume_db: -18
+
 commentary:
   theme: funny
   every_nth: 3
-  ducking_db: -30
   commentary_gain: 1.6
   tts_voices:
     gemini:

@@ -110,12 +110,14 @@ def main() -> None:
             commentary.name if commentary else "NO",
         )
 
+        orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
+
         render_clip(
             input_video=video,
             output_video=out,
             commentary_audio=commentary,
             commentary_offset_sec=0.45,
-            ducking_db=settings.get("commentary", {}).get("ducking_db", -12.0),
+            original_volume_db=orig_vol,
             commentary_gain=settings.get("commentary", {}).get("commentary_gain", 1.0),
         )
 
