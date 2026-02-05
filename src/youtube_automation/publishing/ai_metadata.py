@@ -9,53 +9,91 @@ from youtube_automation.ai.text.registry import get_models_by_capabilities
 
 SYSTEM_RULES = """
 You are generating YouTube metadata.
-Do NOT mention Reddit.
-Do NOT mention AI.
-Do NOT use emojis excessively (max 2).
-Do NOT include hashtags inside description body.
-Write natural, human-like marketing copy.
+
+Rules:
+- Do NOT mention Reddit.
+- Do NOT mention AI or automation.
+- Do NOT include hashtags inside the description body.
+- Avoid generic titles like "Compilation", "Best Clips", or "Top Moments".
+Write natural, human-sounding YouTube copy that matches the channel tone.
 """
+
+
+def _extract_channel_context(channel_cfg: dict) -> dict:
+    """
+    Extracts dynamic channel context without assuming tone or genre.
+    """
+    channel = channel_cfg.get("channel", {})
+    youtube = channel_cfg.get("youtube", {})
+    publishing = channel_cfg.get("publishing", {}).get("ai_metadata", {})
+
+    niche = (
+        channel.get("niche")
+        or channel.get("name")
+        or ", ".join(youtube.get("tags", [])[:2])
+        or "general content"
+    )
+
+    tone = publishing.get("tone", "neutral")
+    audience = publishing.get("audience", "general viewers")
+
+    return {
+        "niche": niche,
+        "tone": tone,
+        "audience": audience,
+        "tags": youtube.get("tags", []),
+    }
 
 
 def _build_prompt(
     *,
     clips: List[dict],
-    tone: str,
-    audience: str,
     call_to_action: str,
     max_hashtags: int,
+    channel_cfg: dict,
 ) -> str:
-    titles = [c.get("title", "") for c in clips if c.get("title")]
-    subreddits = {c.get("subreddit") for c in clips if c.get("subreddit")}
+    ctx = _extract_channel_context(channel_cfg)
 
-    context = "\n".join(f"- {t}" for t in titles[:10])
+    titles = [c.get("title", "") for c in clips if c.get("title")]
+    sources = sorted({c.get("subreddit") for c in clips if c.get("subreddit")})
+
+    clip_context = "\n".join(f"- {t}" for t in titles[:12])
 
     return f"""
 {SYSTEM_RULES}
 
-Generate YouTube metadata for a compilation video.
+CHANNEL CONTEXT:
+- Niche: {ctx["niche"]}
+- Tone: {ctx["tone"]}
+- Audience: {ctx["audience"]}
+- Tags: {ctx["tags"]}
+- Source themes: {sources}
 
-Tone: {tone}
-Audience: {audience}
+CLIP TITLES USED IN THIS VIDEO:
+{clip_context}
 
-Source themes:
-{subreddits}
+Write YouTube metadata that matches the channel context above.
 
-Clip titles:
-{context}
+TITLE GUIDELINES:
+- Be specific and descriptive
+- Reflect the niche and tone accurately
+- Focus on moments, ideas, or situations shown in the video
+- Avoid generic phrasing (compilation, clips, top 10)
+- Keep under 90 characters
+
+TITLE EXAMPLES (adapt style, not content):
+- When {ctx["niche"]} Take an Unexpected Turn
+- Moments That Defined {ctx["niche"]}
+- You Won’t Expect What Happens Next
+- A Closer Look at {ctx["niche"]}
 
 TASKS:
-1. Generate ONE descriptive YouTube title (max 90 characters). Avoid overly corny or repetitive phrases. Prefer clean, generic titles like:
-   - "Animal Compilation"
-   - "Cute Animals"
-   - "Funny Animal"
-   - "Pet Moments"
-   Do NOT use patterns like "&" chains, "Cutest," "Best," or "for Animal Lovers."
-2. Generate a compelling description (2-3 short paragraphs).
-3. Add ONE clear call-to-action line ({call_to_action}).
-4. Generate up to {max_hashtags} relevant hashtags (no emojis).
+1. Write ONE YouTube title.
+2. Write a description (2–3 short paragraphs).
+3. Add ONE call to action: "{call_to_action}".
+4. Add up to {max_hashtags} relevant hashtags.
 
-FORMAT STRICTLY AS:
+FORMAT EXACTLY AS:
 
 TITLE:
 <text>
@@ -64,19 +102,15 @@ DESCRIPTION:
 <text>
 
 HASHTAGS:
-#tag1 #tag2 #tag3
+#tag1 #tag2
 """.strip()
 
 
 def _pick_non_gemini_model() -> str:
-    """
-    Pick first available text-only model that is NOT Gemini.
-    """
     models = get_models_by_capabilities({"text_in", "text_out"})
     for m in models:
         if m["provider"] != "gemini":
             return m["model"]
-
     raise RuntimeError("No non-Gemini text models available")
 
 
@@ -86,17 +120,14 @@ def generate_ai_metadata(
     clips: List[dict],
 ) -> Dict[str, object]:
     pub_cfg = settings.get("publishing", {}).get("ai_metadata", {})
-    tone = pub_cfg.get("tone", "fun")
-    audience = pub_cfg.get("audience", "general viewers")
-    call_to_action = pub_cfg.get("call_to_action", "subscribe")
-    max_hashtags = int(pub_cfg.get("max_hashtags", 10))
+    call_to_action = pub_cfg.get("call_to_action", "Subscribe for more.")
+    max_hashtags = int(pub_cfg.get("max_hashtags", 6))
 
     prompt = _build_prompt(
         clips=clips,
-        tone=tone,
-        audience=audience,
         call_to_action=call_to_action,
         max_hashtags=max_hashtags,
+        channel_cfg=settings,
     )
 
     model = _pick_non_gemini_model()
@@ -108,43 +139,29 @@ def generate_ai_metadata(
         )
 
         parsed = _parse_response(raw)
+        ctx = _extract_channel_context(settings)
 
-        # Apply defensive fallbacks
         if not parsed.get("title"):
-            parsed["title"] = settings.get("youtube", {}).get(
-                "title_template", "Reddit Compilation"
-            )
+            parsed["title"] = f"Moments from {ctx['niche']}"
 
         if not parsed.get("description"):
             parsed["description"] = (
-                settings.get("youtube", {})
-                .get(
-                    "description_template",
-                    "Best clips from Reddit.\n\nCredits:\n{credits}",
-                )
-                .format(credits="")
+                f"This video explores moments related to {ctx['niche']}.\n\n"
+                f"{call_to_action}"
             )
 
-        # Enforce length limits
-        if parsed.get("title"):
-            parsed["title"] = parsed["title"][:90]
-
-        if parsed.get("hashtags"):
-            parsed["hashtags"] = parsed["hashtags"][:max_hashtags]
+        parsed["title"] = parsed["title"][:90]
+        parsed["hashtags"] = parsed.get("hashtags", [])[:max_hashtags]
 
         return parsed
 
-    except Exception as e:
-        # Fallback to template-based metadata
+    except Exception:
+        ctx = _extract_channel_context(settings)
         return {
-            "title": settings.get("youtube", {}).get(
-                "title_template", "Reddit Compilation"
+            "title": f"Moments from {ctx['niche']}",
+            "description": (
+                f"Selected moments related to {ctx['niche']}.\n\n" f"{call_to_action}"
             ),
-            "description": settings.get("youtube", {})
-            .get(
-                "description_template", "Best clips from Reddit.\n\nCredits:\n{credits}"
-            )
-            .format(credits=""),
             "hashtags": [],
         }
 
@@ -177,10 +194,8 @@ def _parse_response(text: str) -> Dict[str, object]:
         elif section == "hashtags":
             hashtags.extend(line.split())
 
-    hashtags = [h for h in hashtags if h.startswith("#")]
-
     return {
         "title": title.strip(),
         "description": description.strip(),
-        "hashtags": hashtags,
+        "hashtags": [h for h in hashtags if h.startswith("#")],
     }
