@@ -1,8 +1,11 @@
 name: Publish video
 
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: "0 6 */1 * *"
+    - cron: "0 6 */1 * *" # every day
   workflow_dispatch:
     inputs:
       channel:
@@ -49,6 +52,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -66,7 +71,6 @@ jobs:
 
       - name: Write Reddit cookies (decode secret)
         run: |
-          # REDDIT_COOKIES is base64 text stored in GitHub Secrets
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
 
       - name: Debug Reddit cookies (detailed)
@@ -96,3 +100,12 @@ jobs:
           python -m youtube_automation.app \
             --mode pipeline \
             --channel "$CHANNEL"
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add config/used_*.json || true
+          git commit -m "Update used content after pipeline run" || echo "Nothing to commit"
+          git push
