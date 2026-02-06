@@ -2,7 +2,7 @@ name: Publish video
 
 on:
   schedule:
-    - cron: "0 6 */3 * *" # every 3 days
+    - cron: "0 6 */1 * *"
   workflow_dispatch:
     inputs:
       channel:
