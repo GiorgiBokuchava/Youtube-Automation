@@ -84,7 +84,7 @@ def _yt_dlp_worker(
         opts = {
             "quiet": False,
             "noplaylist": True,
-            "format": "bv*+ba/b[acodec!=none]",
+            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
             "merge_output_format": "mp4",
             "socket_timeout": 15,
             "retries": 3,
@@ -303,6 +303,10 @@ def source_videos(settings: dict) -> List[dict]:
 
         if not round_progress:
             rounds_no_progress += 1
+
+        if rounds_no_progress >= 3:
+            logger.warning("No progress after 3 rounds, stopping sourcing")
+            break
 
     logger.info(
         f"Video sourcing complete: {len(accepted)} clips, {total_duration}s total duration"
