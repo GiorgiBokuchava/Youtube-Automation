@@ -29,7 +29,9 @@ jobs:
 
     env:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
-      YT_PRIVACY: private # TODO: remove once tested
+      # Repository variable YT_PRIVACY_STATUS overrides channel YAML when set
+      # (public | private | unlisted). Defaults to private for scheduled runs.
+      YT_PRIVACY: ${{ vars.YT_PRIVACY_STATUS || 'private' }}
 
       # Reddit API (PRAW)
       REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
@@ -69,31 +71,20 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
+      - name: Preflight — YouTube OAuth refresh token
+        run: |
+          python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
+
       - name: Write Reddit cookies (decode secret)
         run: |
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
-
-      - name: Debug Reddit cookies (detailed)
-        run: |
-          echo "=== Cookie file exists? ==="
-          ls -lh "$REDDIT_COOKIES_FILE" || echo "File not found"
-          echo ""
-          echo "=== First 10 lines (raw; shows hidden chars) ==="
-          head -n 10 "$REDDIT_COOKIES_FILE" | cat -A
-          echo ""
-          echo "=== File encoding ==="
-          file "$REDDIT_COOKIES_FILE"
-          echo ""
-          echo "=== First line must be Netscape header ==="
-          head -n 1 "$REDDIT_COOKIES_FILE"
+          test -s "$REDDIT_COOKIES_FILE"
 
       - name: Preflight - test cookies with yt-dlp
         run: |
           yt-dlp --version
-          echo "Testing cookie auth against a known Reddit post (skip download)..."
           yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
-            "https://www.reddit.com/r/StartledCats/comments/17cn6g6/" \
-            -v
+            "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
 
       - name: Run pipeline
         run: |

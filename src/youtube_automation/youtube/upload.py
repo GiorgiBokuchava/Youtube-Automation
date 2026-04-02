@@ -1,10 +1,11 @@
-import time
 import logging
+import time
 from pathlib import Path
 
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
-from google.oauth2.credentials import Credentials
 
 from youtube_automation.youtube.auth import load_credentials
 
@@ -59,18 +60,37 @@ def upload_video(
 
 
 def _execute_with_retry(request, max_retries=3):
-    """Execute request with exponential backoff retry logic."""
+    """Execute request with exponential backoff for transient failures only."""
     for attempt in range(max_retries):
         try:
             return request.execute()
+        except RefreshError:
+            raise
+        except HttpError as e:
+            status = getattr(getattr(e, "resp", None), "status", None)
+            if status is not None and 400 <= status < 500 and status != 429:
+                raise
+            if attempt == max_retries - 1:
+                raise
+            delay = 2**attempt
+            logging.warning(
+                "YouTube API request failed (attempt %s/%s): %s. Retrying in %ss...",
+                attempt + 1,
+                max_retries,
+                e,
+                delay,
+            )
+            time.sleep(delay)
         except Exception as e:
             if attempt == max_retries - 1:
                 raise e
-
-            # Exponential backoff: 1s, 2s, 4s
             delay = 2**attempt
             logging.warning(
-                f"YouTube API request failed (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s..."
+                "YouTube API request failed (attempt %s/%s): %s. Retrying in %ss...",
+                attempt + 1,
+                max_retries,
+                e,
+                delay,
             )
             time.sleep(delay)
 

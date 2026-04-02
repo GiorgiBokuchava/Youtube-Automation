@@ -15,14 +15,42 @@ from youtube_automation.media.video import source_videos
 from youtube_automation.media.video_processing import batch_normalize_videos
 from youtube_automation.media.music import add_background_music
 from youtube_automation.storage.sessions import new_session, save_session
+from youtube_automation.youtube.auth import ensure_youtube_refresh_token
 from youtube_automation.youtube.upload import upload_video
 from youtube_automation.publishing.metadata import build_metadata
 from youtube_automation.publishing.ai_metadata import generate_ai_metadata
 
 
+def _clip_ref(clip: dict) -> str:
+    return str(clip.get("id", "unknown"))
+
+
+def _record_error(
+    errors: list[dict],
+    *,
+    step: str,
+    exc: BaseException,
+    clip: dict | None = None,
+) -> None:
+    entry = {
+        "step": step,
+        "error": f"{type(exc).__name__}: {exc}",
+        "clip_id": _clip_ref(clip) if clip else None,
+    }
+    errors.append(entry)
+    cid = entry["clip_id"]
+    if cid:
+        logger.warning("%s failed for clip %s: %s", step, cid, exc)
+    else:
+        logger.warning("%s failed: %s", step, exc)
+
+
 def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -> dict:
     channel = settings.get("channel", {}).get("name", "default")
     base_out = Path("out") / channel
+
+    pipeline_errors: list[dict] = []
+    run_succeeded = False
 
     try:
         VOICEOVERS_DIR = base_out / "voiceovers"
@@ -32,6 +60,9 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         VOICEOVERS_DIR.mkdir(parents=True, exist_ok=True)
         RENDERED_DIR.mkdir(parents=True, exist_ok=True)
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+        if not dry_run:
+            ensure_youtube_refresh_token()
 
         clips = source_videos(settings)
         thumb = source_thumbnail(settings)
@@ -104,6 +135,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     clip["commentary_fallback"] = fallback_occurred
 
                 except Exception as e:
+                    _record_error(pipeline_errors, step="commentary", exc=e, clip=clip)
                     continue
 
                 audio = tts_service.synthesize(
@@ -119,6 +151,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                 clip["voiceover_provider"] = audio.provider
                 clip["voiceover_model"] = audio.model
             except Exception as e:
+                _record_error(pipeline_errors, step="commentary_tts", exc=e, clip=clip)
                 continue
 
         for clip in clips:
@@ -133,6 +166,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     "music_likely": analysis.music_likely,
                 }
             except Exception as e:
+                _record_error(pipeline_errors, step="audio_analysis", exc=e, clip=clip)
                 clip["audio_analysis"] = {
                     "has_audio": False,
                     "mean_volume_db": None,
@@ -167,6 +201,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                 clip["rendered_path"] = str(rendered)
                 rendered_paths.append(rendered)
             except Exception as e:
+                _record_error(pipeline_errors, step="render_clip", exc=e, clip=clip)
                 continue
 
         if not rendered_paths:
@@ -200,7 +235,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     meta["tags"] = ai_meta["hashtags"]
 
             except Exception as e:
-                pass
+                _record_error(pipeline_errors, step="ai_metadata", exc=e)
 
         url = None
         if not dry_run:
@@ -221,27 +256,28 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                 "thumbnail": thumb or {},
                 "output_path": str(final_with_music),
                 "youtube_url": url,
+                "pipeline_errors": pipeline_errors,
             }
         )
 
         save_session(session, settings)
-
+        run_succeeded = True
         return session
 
     finally:
-        # Always attempt to clean up generated media, even if the pipeline failed.
-        try:
-            _cleanup_generated_files(base_out)
-        except Exception as e:
-            logger.warning(f"Failed to clean up generated files under {base_out}: {e}")
+        if cleanup and run_succeeded:
+            try:
+                _cleanup_generated_files(base_out)
+            except Exception as e:
+                logger.warning(
+                    "Failed to clean up generated files under %s: %s", base_out, e
+                )
 
 
 def _cleanup_generated_files(base_out: Path) -> None:
     """Clean up generated media files while preserving session history."""
-    import shutil
-
     logger = logging.getLogger(__name__)
-    logger.info("🧹 Cleaning up generated files...")
+    logger.info("Cleaning up generated files...")
 
     # Directories to clean
     cleanup_dirs = [
@@ -270,4 +306,4 @@ def _cleanup_generated_files(base_out: Path) -> None:
                     except Exception as e:
                         logger.warning(f"Failed to delete {file_path}: {e}")
 
-    logger.info(f"✅ Cleaned up {cleaned_count} generated files")
+    logger.info("Cleaned up %s generated files", cleaned_count)

@@ -44,7 +44,12 @@ def main() -> None:
     parser.add_argument(
         "--cleanup",
         action="store_true",
-        help="Clean up generated files after pipeline run",
+        help=(
+            "After a full successful run only, delete generated media (voiceovers, renders, "
+            "normalized clips, outputs, thumbnail cache, downloads). Skipped if the "
+            "pipeline aborts so you can inspect intermediates. When omitted, files stay "
+            "under out/<channel>/."
+        ),
     )
     args = parser.parse_args()
 
@@ -67,10 +72,13 @@ def main() -> None:
 
     session = run_pipeline(settings, dry_run=args.dry_run, cleanup=args.cleanup)
     print(f"Pipeline complete. Clips: {session.get('num_clips', 0)}")
+    errs = session.get("pipeline_errors") or []
+    if errs:
+        print(f"Warnings: {len(errs)} pipeline step(s) logged issues (see logs).")
     if args.dry_run:
         print("DRY RUN: Skipped YouTube upload")
     if args.cleanup:
-        print("CLEANUP: Generated files removed")
+        print("Cleanup: generated media removed (see logs).")
 
 
 if __name__ == "__main__":
