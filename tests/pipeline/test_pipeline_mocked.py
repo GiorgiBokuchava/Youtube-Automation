@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from youtube_automation.media.composition import RenderClipResult
 from youtube_automation.pipeline import run_pipeline
 
 
@@ -61,7 +62,7 @@ def test_pipeline_end_to_end(mocker, minimal_settings, dummy_video, tmp_path):
 
     mocker.patch(
         "youtube_automation.pipeline.render_clip",
-        return_value=rendered,
+        return_value=RenderClipResult(output_path=rendered, path_kind="mock"),
     )
 
     final = tmp_path / "final.mp4"
@@ -138,7 +139,10 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
     rendered.write_bytes(b"x")
     final = tmp_path / "f.mp4"
     final.write_bytes(b"x")
-    mocker.patch("youtube_automation.pipeline.render_clip", return_value=rendered)
+    mocker.patch(
+        "youtube_automation.pipeline.render_clip",
+        return_value=RenderClipResult(output_path=rendered, path_kind="mock"),
+    )
     mocker.patch("youtube_automation.pipeline.stitch_clips", return_value=final)
     mocker.patch("youtube_automation.pipeline.add_background_music", return_value=final)
     mocker.patch("youtube_automation.pipeline.save_session")

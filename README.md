@@ -69,7 +69,7 @@ Partial failures (commentary, TTS, per-clip render, etc.) are logged and recorde
 
 `.github/workflows/publish.yml` runs the pipeline on a schedule or manually.
 
-1. Set the **Actions variable** `YT_PRIVACY_STATUS` to `public` or `unlisted` when you are ready for uploads to match that visibility (defaults to `private` if the variable is unset).
+1. Optional **Actions variable** `YT_PRIVACY_STATUS` (`public` \| `private` \| `unlisted`) overrides `youtube.privacy_status` in YAML when set. If unset, **channel YAML** controls visibility (same as local runs).
 2. Provide secrets as referenced in the workflow file (Reddit, YouTube OAuth, AI keys, base64-encoded Reddit cookies).
 
 Jobs target a GitHub **Environment** named after the channel (`animals`, `dashcam`). If you define secrets on those environments, they override repository secrets—keep `YT_*` values identical across environments unless you intend different channels per environment.
@@ -85,6 +85,22 @@ If CI logs show `invalid_grant` or `RefreshError` when refreshing the token:
 The workflow runs a **YouTube OAuth preflight** (and the pipeline does the same before any Reddit download when not in `--dry-run`) so a bad token fails in seconds instead of after a long render.
 
 The workflow does not print cookie file contents; the Reddit preflight only checks that yt-dlp can read metadata with the cookie file.
+
+## Troubleshooting
+
+### Some clips fail to render, but the final video still builds
+
+The pipeline renders **each** sourced clip; failures on individual clips are **skipped** (with a warning) as long as **at least one** clip renders successfully. The compilation step then stitches **only** the rendered outputs that succeeded.
+
+Check the saved session JSON (`config/used_<channel>.json`, last entry) under **`pipeline_errors`**. For render failures, entries include **`clip_id`**, **`local_path`**, **`output_path`**, whether **`commentary_present`** was expected, **`voiceover_path`**, and for FFmpeg failures **`ffmpeg_command`**, **`ffmpeg_returncode`**, **`ffmpeg_stderr`**, and **`full_error_text`**.
+
+Logs also include a line per clip such as `render_clip clip=… path_kind=…` showing which of the four paths ran (e.g. `no_commentary_source_has_audio`, `commentary_source_no_audio`).
+
+### Diagnosing FFmpeg issues
+
+- **Preflight** errors mean the input file was missing, empty, had no video stream, or ffprobe could not read it.
+- **ffmpeg** stage: the raised error string includes the **full command** and **complete stderr** from FFmpeg (stdout if any).
+- **output_validate** means FFmpeg exited 0 but the output file was missing, empty, or had no video stream after encoding.
 
 ## Project layout
 

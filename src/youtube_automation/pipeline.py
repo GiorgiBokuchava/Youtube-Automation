@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +10,11 @@ from youtube_automation.ai.text.commentary import generate_commentary_video_firs
 from youtube_automation.ai.tts.service import tts_service
 from youtube_automation.ai.tts.types import TTSRequest
 from youtube_automation.media.audio import analyze_clip_audio
-from youtube_automation.media.composition import render_clip, stitch_clips
+from youtube_automation.media.composition import (
+    RenderClipError,
+    render_clip,
+    stitch_clips,
+)
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.media.video import source_videos
 from youtube_automation.media.video_processing import batch_normalize_videos
@@ -26,23 +31,53 @@ def _clip_ref(clip: dict) -> str:
 
 
 def _record_error(
-    errors: list[dict],
+    errors: list[dict[str, Any]],
     *,
     step: str,
     exc: BaseException,
     clip: dict | None = None,
+    **extra: Any,
 ) -> None:
-    entry = {
+    entry: dict[str, Any] = {
         "step": step,
         "error": f"{type(exc).__name__}: {exc}",
-        "clip_id": _clip_ref(clip) if clip else None,
+        "full_error_text": str(exc),
     }
+    if clip is not None:
+        entry["clip_id"] = _clip_ref(clip)
+    if isinstance(exc, RenderClipError):
+        entry["ffmpeg_command"] = " ".join(exc.command) if exc.command else None
+        entry["ffmpeg_returncode"] = exc.returncode
+        entry["ffmpeg_stderr"] = exc.stderr
+        entry["ffmpeg_stdout"] = exc.stdout
+        entry["render_stage"] = exc.stage
+    entry.update(extra)
     errors.append(entry)
-    cid = entry["clip_id"]
+    cid = entry.get("clip_id")
     if cid:
         logger.warning("%s failed for clip %s: %s", step, cid, exc)
     else:
         logger.warning("%s failed: %s", step, exc)
+
+
+def _record_render_failure(
+    errors: list[dict[str, Any]],
+    clip: dict,
+    in_path: Path,
+    out_path: Path,
+    voiceover_path: Path | None,
+    exc: BaseException,
+) -> None:
+    _record_error(
+        errors,
+        step="render_clip",
+        exc=exc,
+        clip=clip,
+        local_path=str(in_path),
+        output_path=str(out_path),
+        commentary_present=bool(clip.get("voiceover_path")),
+        voiceover_path=clip.get("voiceover_path"),
+    )
 
 
 def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -> dict:
@@ -187,7 +222,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
                 orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
 
-                rendered = render_clip(
+                result = render_clip(
                     input_video=in_path,
                     output_video=out_path,
                     commentary_audio=voiceover_path,
@@ -196,12 +231,21 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     commentary_gain=settings.get("commentary", {}).get(
                         "commentary_gain", 1.0
                     ),
+                    clip_id=_clip_ref(clip),
                 )
 
-                clip["rendered_path"] = str(rendered)
-                rendered_paths.append(rendered)
+                clip["rendered_path"] = str(result.output_path)
+                clip["render_path_kind"] = result.path_kind
+                rendered_paths.append(result.output_path)
             except Exception as e:
-                _record_error(pipeline_errors, step="render_clip", exc=e, clip=clip)
+                _record_render_failure(
+                    pipeline_errors,
+                    clip,
+                    in_path,
+                    out_path,
+                    voiceover_path,
+                    e,
+                )
                 continue
 
         if not rendered_paths:

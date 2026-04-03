@@ -62,8 +62,7 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         "0",
         "-i",
         str(list_file),
-        # Force stable timing
-        "-vsync",
+        "-fps_mode",
         "cfr",
         "-r",
         "30",

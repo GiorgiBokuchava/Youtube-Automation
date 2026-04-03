@@ -29,9 +29,10 @@ jobs:
 
     env:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
-      # Repository variable YT_PRIVACY_STATUS overrides channel YAML when set
-      # (public | private | unlisted). Defaults to private for scheduled runs.
-      YT_PRIVACY: ${{ vars.YT_PRIVACY_STATUS || 'private' }}
+      # Optional: repository variable YT_PRIVACY_STATUS (public | private | unlisted)
+      # overrides youtube.privacy_status in YAML. If unset, leave empty so CI does
+      # not override channel config (same as before YT_PRIVACY was added to this file).
+      YT_PRIVACY: ${{ vars.YT_PRIVACY_STATUS }}
 
       # Reddit API (PRAW)
       REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}

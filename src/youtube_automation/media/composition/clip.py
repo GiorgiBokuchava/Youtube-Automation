@@ -1,10 +1,52 @@
 from __future__ import annotations
 
+import logging
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from youtube_automation.media.ffmpeg import ensure_ffmpeg
+from youtube_automation.media.ffprobe_streams import (
+    ContainerStreamInfo,
+    StreamProbeError,
+    probe_container_streams,
+)
+
+logger = logging.getLogger(__name__)
+
+# Path labels for logs and diagnostics
+NO_COMMENTARY_HAS_AUDIO = "no_commentary_source_has_audio"
+NO_COMMENTARY_NO_AUDIO = "no_commentary_source_no_audio"
+COMMENTARY_HAS_AUDIO = "commentary_source_has_audio"
+COMMENTARY_NO_AUDIO = "commentary_source_no_audio"
+
+
+@dataclass(frozen=True)
+class RenderClipResult:
+    output_path: Path
+    path_kind: str
+
+
+class RenderClipError(RuntimeError):
+    """Raised when render preflight, ffmpeg, or output validation fails."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        command: Optional[list[str]] = None,
+        returncode: Optional[int] = None,
+        stderr: str = "",
+        stdout: str = "",
+        stage: str = "ffmpeg",
+    ) -> None:
+        super().__init__(message)
+        self.command = command or []
+        self.returncode = returncode
+        self.stderr = stderr
+        self.stdout = stdout
+        self.stage = stage
 
 
 def _ffmpeg_bin() -> str:
@@ -12,30 +54,104 @@ def _ffmpeg_bin() -> str:
     return "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
 
 
-def _ffprobe_bin() -> str:
-    ffmpeg_dir = ensure_ffmpeg()
-    return "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
+def _preflight_media_path(path: Path, *, label: str) -> None:
+    if not path.exists():
+        raise RenderClipError(
+            f"{label} does not exist: {path}",
+            stage="preflight",
+        )
+    if path.stat().st_size == 0:
+        raise RenderClipError(
+            f"{label} is empty: {path}",
+            stage="preflight",
+        )
 
 
-def _probe_duration_seconds(media_path: Path) -> Optional[float]:
-    cmd = [
-        _ffprobe_bin(),
-        "-v",
-        "error",
-        "-show_entries",
-        "format=duration",
-        "-of",
-        "default=nk=1:nw=1",
-        str(media_path),
-    ]
-    p = subprocess.run(cmd, capture_output=True, text=True)
-    if p.returncode != 0:
-        return None
-
+def _preflight_input_video(path: Path) -> ContainerStreamInfo:
+    _preflight_media_path(path, label="Input video")
     try:
-        return float(p.stdout.strip())
-    except Exception:
-        return None
+        info = probe_container_streams(path)
+    except StreamProbeError as e:
+        raise RenderClipError(
+            f"Input video probe failed: {e}",
+            stage="preflight",
+        ) from e
+    if not info.has_video:
+        raise RenderClipError(
+            f"Input video has no video stream: {path}",
+            stage="preflight",
+        )
+    return info
+
+
+def _preflight_commentary_audio(path: Path) -> None:
+    _preflight_media_path(path, label="Commentary audio")
+    try:
+        info = probe_container_streams(path)
+    except StreamProbeError as e:
+        raise RenderClipError(
+            f"Commentary audio probe failed: {e}",
+            stage="preflight",
+        ) from e
+    if not info.has_audio:
+        raise RenderClipError(
+            f"Commentary file has no audio stream: {path}",
+            stage="preflight",
+        )
+
+
+def _validate_output_file(path: Path) -> None:
+    if not path.exists():
+        raise RenderClipError(
+            f"Expected output missing after ffmpeg: {path}",
+            stage="output_validate",
+        )
+    if path.stat().st_size == 0:
+        raise RenderClipError(
+            f"Expected output is empty after ffmpeg: {path}",
+            stage="output_validate",
+        )
+    try:
+        out_info = probe_container_streams(path)
+    except StreamProbeError as e:
+        raise RenderClipError(
+            f"Output file is not probe-readable: {path}: {e}",
+            stage="output_validate",
+        ) from e
+    if not out_info.has_video:
+        raise RenderClipError(
+            f"Output has no video stream: {path}",
+            stage="output_validate",
+        )
+
+
+def _format_ffmpeg_failure(cmd: list[str], p: subprocess.CompletedProcess[str]) -> str:
+    parts = [
+        f"ffmpeg exited with code {p.returncode}",
+        f"command: {' '.join(cmd)}",
+        f"stderr:\n{p.stderr or ''}",
+    ]
+    if p.stdout:
+        parts.append(f"stdout:\n{p.stdout}")
+    return "\n".join(parts)
+
+
+def _run_ffmpeg(cmd: list[str], *, timeout: float = 300.0) -> None:
+    p = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    if p.returncode != 0:
+        raise RenderClipError(
+            _format_ffmpeg_failure(cmd, p),
+            command=cmd,
+            returncode=p.returncode,
+            stderr=p.stderr or "",
+            stdout=p.stdout or "",
+            stage="ffmpeg",
+        )
 
 
 def render_clip(
@@ -46,128 +162,189 @@ def render_clip(
     commentary_offset_sec: float = 0.45,
     original_volume_db: float = 0.0,
     commentary_gain: float = 1.0,
-) -> Path:
+    clip_id: Optional[str] = None,
+) -> RenderClipResult:
+    """
+    Render a single clip with optional commentary. Handles four combinations of
+    commentary presence and source audio presence explicitly (no [0:a] unless present).
+    """
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
-    if not commentary_audio or not commentary_audio.exists():
+    src_info = _preflight_input_video(input_video)
+    has_source_audio = src_info.has_audio
+
+    use_commentary = bool(commentary_audio and commentary_audio.exists())
+    if use_commentary:
+        _preflight_commentary_audio(commentary_audio)  # type: ignore[arg-type]
+
+    if use_commentary:
+        assert commentary_audio is not None
+        delay_ms = int(max(0.0, commentary_offset_sec) * 1000)
         orig_factor = 10 ** (original_volume_db / 20.0)
-        print(
-            f"[render_clip] no-commentary original_volume_db={original_volume_db}, factor={orig_factor}"
-        )
 
-        filter_complex = (
-            f"[0:a]" f"volume={orig_factor}," f"aresample=48000,asetpts=N/SR/TB[aout]"
-        )
-
-        cmd = [
-            _ffmpeg_bin(),
-            "-hide_banner",
-            "-y",
-            "-i",
-            str(input_video),
-            "-filter_complex",
-            filter_complex,
-            "-map",
-            "0:v:0",
-            "-map",
-            "[aout]",
-            "-c:v",
-            "libx264",
-            "-preset",
-            "veryfast",
-            "-crf",
-            "20",
-            "-r",
-            "30",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-ar",
-            "48000",
-            str(output_video),
-        ]
-        try:
-            p = subprocess.run(
-                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
+        if has_source_audio:
+            path_kind = COMMENTARY_HAS_AUDIO
+            filter_complex = (
+                f"[0:a]volume={orig_factor},aresample=48000,asetpts=N/SR/TB[a0];"
+                f"[1:a]adelay={delay_ms}|{delay_ms},"
+                f"volume={commentary_gain},aresample=48000,asetpts=N/SR/TB[a1];"
+                f"[a0][a1]amix=inputs=2:weights=1 4:duration=shortest:dropout_transition=0[aout]"
             )
-            if p.returncode != 0:
-                raise RuntimeError(f"ffmpeg mix (no commentary) failed: {p.stderr}")
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("ffmpeg mix (no commentary) timed out")
-        return output_video
+            cmd = [
+                _ffmpeg_bin(),
+                "-hide_banner",
+                "-y",
+                "-i",
+                str(input_video),
+                "-i",
+                str(commentary_audio),
+                "-filter_complex",
+                filter_complex,
+                "-map",
+                "0:v:0",
+                "-map",
+                "[aout]",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "20",
+                "-r",
+                "30",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-ar",
+                "48000",
+                str(output_video),
+            ]
+        else:
+            path_kind = COMMENTARY_NO_AUDIO
+            filter_complex = (
+                f"[1:a]adelay={delay_ms}|{delay_ms},"
+                f"volume={commentary_gain},"
+                f"aresample=48000,asetpts=N/SR/TB[aout]"
+            )
+            cmd = [
+                _ffmpeg_bin(),
+                "-hide_banner",
+                "-y",
+                "-i",
+                str(input_video),
+                "-i",
+                str(commentary_audio),
+                "-filter_complex",
+                filter_complex,
+                "-map",
+                "0:v:0",
+                "-map",
+                "[aout]",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "20",
+                "-r",
+                "30",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-ar",
+                "48000",
+                str(output_video),
+            ]
+    else:
+        orig_factor = 10 ** (original_volume_db / 20.0)
+        if has_source_audio:
+            path_kind = NO_COMMENTARY_HAS_AUDIO
+            filter_complex = (
+                f"[0:a]volume={orig_factor},aresample=48000,asetpts=N/SR/TB[aout]"
+            )
+            cmd = [
+                _ffmpeg_bin(),
+                "-hide_banner",
+                "-y",
+                "-i",
+                str(input_video),
+                "-filter_complex",
+                filter_complex,
+                "-map",
+                "0:v:0",
+                "-map",
+                "[aout]",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "20",
+                "-r",
+                "30",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-ar",
+                "48000",
+                str(output_video),
+            ]
+        else:
+            path_kind = NO_COMMENTARY_NO_AUDIO
+            cmd = [
+                _ffmpeg_bin(),
+                "-hide_banner",
+                "-y",
+                "-i",
+                str(input_video),
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=channel_layout=stereo:sample_rate=48000",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "20",
+                "-r",
+                "30",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-ar",
+                "48000",
+                "-shortest",
+                str(output_video),
+            ]
 
-    com_dur = _probe_duration_seconds(commentary_audio)
-    if not com_dur:
-        com_dur = 2.0
-
-    video_dur = _probe_duration_seconds(input_video)
-    if not video_dur:
-        video_dur = 99999.0  # fallback, but usually ffprobe works
-
-    start = max(0.0, commentary_offset_sec)
-    end = start + max(0.1, com_dur)
-
-    orig_factor = 10 ** (original_volume_db / 20.0)
-    print(
-        f"[render_clip] with-commentary original_volume_db={original_volume_db}, factor={orig_factor}"
+    ctx = clip_id or input_video.name
+    logger.info(
+        "render_clip clip=%s path_kind=%s source_has_audio=%s commentary=%s -> %s",
+        ctx,
+        path_kind,
+        has_source_audio,
+        use_commentary,
+        output_video,
     )
-    delay_ms = int(max(0.0, commentary_offset_sec) * 1000)
-
-    # Base audio: duck only during commentary window, then trim to video length
-    # Commentary: delay, boost, trim to video length
-    # Mix, then trim again for safety
-    filter_complex = (
-        f"[0:a]"
-        f"volume={orig_factor},"
-        f"aresample=48000,asetpts=N/SR/TB[a0];"
-        f"[1:a]"
-        f"adelay={delay_ms}|{delay_ms},"
-        f"volume={commentary_gain},"
-        f"aresample=48000,asetpts=N/SR/TB[a1];"
-        f"[a0][a1]"
-        f"amix=inputs=2:weights=1 4:duration=shortest:dropout_transition=0[aout]"
-    )
-
-    cmd = [
-        _ffmpeg_bin(),
-        "-hide_banner",
-        "-y",
-        "-i",
-        str(input_video),
-        "-i",
-        str(commentary_audio),
-        "-filter_complex",
-        filter_complex,
-        "-map",
-        "0:v:0",
-        "-map",
-        "[aout]",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "20",
-        "-r",
-        "30",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "192k",
-        "-ar",
-        "48000",
-        # "-shortest",
-        str(output_video),
-    ]
 
     try:
-        p = subprocess.run(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
-        )
-        if p.returncode != 0:
-            raise RuntimeError(f"ffmpeg mix failed: {p.stderr}")
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("ffmpeg mix timed out")
+        _run_ffmpeg(cmd, timeout=300.0)
+    except subprocess.TimeoutExpired as e:
+        raise RenderClipError(
+            f"ffmpeg timed out after {e.timeout}s",
+            command=cmd,
+            stage="ffmpeg",
+        ) from e
 
-    return output_video
+    _validate_output_file(output_video)
+
+    return RenderClipResult(output_path=output_video, path_kind=path_kind)
