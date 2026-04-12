@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import os
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -12,136 +12,187 @@ logger = logging.getLogger(__name__)
 from .ffmpeg import ensure_ffmpeg
 
 
+def _find_font_path() -> Optional[str]:
+    system = platform.system()
+    if system == "Windows":
+        candidates = [
+            Path("C:/Windows/Fonts/arial.ttf"),
+            Path("C:/Windows/Fonts/segoeui.ttf"),
+        ]
+    elif system == "Darwin":
+        candidates = [
+            Path("/System/Library/Fonts/Helvetica.ttc"),
+            Path("/Library/Fonts/Arial.ttf"),
+        ]
+    else:
+        candidates = [
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
+            Path("/usr/share/fonts/truetype/freefont/FreeSans.ttf"),
+            Path("/usr/share/fonts/TTF/DejaVuSans.ttf"),
+        ]
+
+    for p in candidates:
+        if p.exists():
+            return str(p)
+    return None
+
+
+def _build_author_filter(author: str | None, target_height: int) -> str:
+    """Return a drawtext filter fragment, or empty string."""
+    if not author:
+        return ""
+    font_path = _find_font_path()
+    if not font_path:
+        logger.warning("No suitable font found; skipping author watermark")
+        return ""
+    font_size = max(16, int(target_height * 0.025))
+    escaped_author = author.replace("'", "\\'").replace(":", "\\:")
+    # Convert backslashes first, THEN escape colons for FFmpeg filter syntax.
+    # Wrong order would turn the escape `\:` back into `/:` via the backslash replacement.
+    escaped_font = font_path.replace("\\", "/").replace(":", "\\:")
+    return (
+        f"drawtext=text='{escaped_author}':fontcolor=white@0.8"
+        f":fontsize={font_size}:x=10:y=h-th-10"
+        f":fontfile='{escaped_font}'"
+    )
+
+
+def _probe_dimensions(
+    input_path: Path, ffprobe: str
+) -> tuple[int, int] | None:
+    cmd = [
+        ffprobe, "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "stream=width,height",
+        "-of", "csv=s=x:p=0", str(input_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    try:
+        out = result.stdout.strip()
+        if "x" not in out:
+            return None
+        w, h = map(int, out.split("x"))
+        return w, h
+    except (ValueError, AttributeError):
+        return None
+
+
 def normalize_video_aspect_ratio(
     input_path: Path,
     output_path: Path,
     target_width: int,
     target_height: int,
-    padding_method: str = "black",
+    padding_method: str = "blur",
     author: str = None,
 ) -> Path:
+    """Normalize video to target aspect ratio.
+
+    padding_method:
+        "blur"  – frosted-glass background (blurred + darkened copy of the
+                  source) with the sharp original centred on top.
+        "black" – plain black bars on the shorter axis.
     """
-    Normalize video to target aspect ratio with side padding only.
+    tw, th = target_width, target_height
+    target_ratio = tw / th
 
-    Args:
-        input_path: Input video file path
-        output_path: Output video file path
-        target_width: Target width in pixels
-        target_height: Target height in pixels
-        padding_method: "black" or "blur"
-        author: Author name to burn into bottom left corner
-
-    Returns:
-        Path to the normalized video file
-    """
-    target_ratio = target_width / target_height
-
-    # Get video info using ffprobe
     ffmpeg_dir = ensure_ffmpeg()
     ffprobe = "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
 
-    cmd = [
-        ffprobe,
-        "-v",
-        "error",
-        "-select_streams",
-        "v:0",
-        "-show_entries",
-        "stream=width,height",
-        "-of",
-        "csv=s=x:p=0",
-        str(input_path),
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        return input_path  # Return original if we can't get info
-
-    try:
-        out = result.stdout.strip()
-        if "x" not in out:
-            return input_path
-
-        width, height = map(int, out.split("x"))
-    except (ValueError, AttributeError):
+    dims = _probe_dimensions(input_path, ffprobe)
+    if dims is None:
         return input_path
 
-    current_ratio = width / height
+    src_w, src_h = dims
+    current_ratio = src_w / src_h
 
-    # If already within tolerance, copy to normalized folder
-    if abs(current_ratio - target_ratio) < 0.01:
+    if src_w == tw and src_h == th:
+        # Already the exact target resolution — just copy, no re-encode needed.
         output_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(input_path, output_path)
         return output_path
 
-    # Calculate padding for side-only mode
-    if current_ratio < target_ratio:
-        # Video is narrower than target - pad sides
-        new_height = target_height
-        new_width = int(new_height * current_ratio)
-        pad_width = target_width - new_width
-        pad_left = pad_width // 2
-        pad_right = pad_width - pad_left
-        pad_top = 0
-        pad_bottom = 0
-    else:
-        # Video is wider than target - crop to fit height, then pad sides if needed
-        new_height = target_height
-        new_width = int(new_height * current_ratio)
-
-        # If still wider than target after scaling, crop more
-        if new_width > target_width:
-            new_width = target_width
-            pad_width = 0
-        else:
-            pad_width = target_width - new_width
-
-        pad_left = pad_width // 2
-        pad_right = pad_width - pad_left
-        pad_top = 0
-        pad_bottom = 0
-
-    # Build ffmpeg command
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     ffmpeg = "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
+    author_filt = _build_author_filter(author, th)
 
-    # Create filter chain
-    filter_chain = [f"scale={new_width}:{new_height}"]
-
-    if pad_width > 0:
-        pad_color = "black" if padding_method == "black" else "0x00000000"
-        filter_chain.append(
-            f"pad={target_width}:{target_height}:{pad_left}:{pad_top}:color={pad_color}"
-        )
-
-    # Add author text overlay if provided
-    if author:
-        # Position text at bottom left with some padding
-        # Font size scaled to video resolution (about 2% of height)
-        font_size = max(16, int(target_height * 0.025))
-        # Escape special characters in author name for ffmpeg
-        escaped_author = author.replace("'", "\\'").replace(":", "\\:")
-        text_filter = f"drawtext=text='{escaped_author}':fontcolor=white@0.8:fontsize={font_size}:x=10:y=h-th-10:fontfile=/Windows/Fonts/arial.ttf"
-        filter_chain.append(text_filter)
-
-    filter_string = ",".join(filter_chain)
-
-    cmd = [
-        ffmpeg,
-        "-i",
-        str(input_path),
-        "-vf",
-        filter_string,
-        "-c:a",
-        "copy",  # Copy audio stream unchanged
-        "-y",  # Overwrite output file
-        str(output_path),
-    ]
+    if padding_method == "blur":
+        cmd = _blur_cmd(ffmpeg, input_path, output_path, tw, th, author_filt)
+    else:
+        cmd = _pad_cmd(ffmpeg, input_path, output_path, tw, th, author_filt)
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        return input_path  # Return original on failure
+        # Skip the FFmpeg version header lines; show the actual error lines.
+        error_lines = [
+            ln for ln in result.stderr.splitlines()
+            if any(kw in ln.lower() for kw in ("error", "invalid", "fail", "no option"))
+        ]
+        summary = "; ".join(error_lines[-3:]) if error_lines else result.stderr[-300:]
+        logger.warning(
+            "Normalization failed for %s (exit %d): %s",
+            input_path.name, result.returncode, summary,
+        )
+        return input_path
 
     return output_path
+
+
+def _blur_cmd(
+    ffmpeg: str,
+    input_path: Path,
+    output_path: Path,
+    tw: int,
+    th: int,
+    author_filt: str,
+) -> list[str]:
+    """Build ffmpeg command for the frosted-glass blur background."""
+    # Background: cover frame, blur. Foreground: fit inside tw×th without stretching
+    # (scale=W:H without force_original_aspect_ratio distorts non-exact matches).
+    bg = (
+        f"scale={tw}:{th}:force_original_aspect_ratio=increase,"
+        f"crop={tw}:{th},"
+        f"boxblur=20:5,"
+        f"eq=brightness=-0.08"
+    )
+    fg = f"scale={tw}:{th}:force_original_aspect_ratio=decrease"
+    overlay = "overlay=(W-w)/2:(H-h)/2"
+
+    fc = f"[0:v]{bg}[bg];[0:v]{fg}[fg];[bg][fg]{overlay}"
+    if author_filt:
+        fc += f",{author_filt}"
+    fc += "[out]"
+
+    return [
+        ffmpeg, "-i", str(input_path),
+        "-filter_complex", fc,
+        "-map", "[out]", "-map", "0:a?",
+        "-c:a", "copy", "-y", str(output_path),
+    ]
+
+
+def _pad_cmd(
+    ffmpeg: str,
+    input_path: Path,
+    output_path: Path,
+    tw: int,
+    th: int,
+    author_filt: str,
+) -> list[str]:
+    """Build ffmpeg command for plain black-bar padding (letterbox / pillarbox)."""
+    parts = [
+        f"scale={tw}:{th}:force_original_aspect_ratio=decrease",
+        f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:color=black",
+    ]
+    if author_filt:
+        parts.append(author_filt)
+
+    return [
+        ffmpeg, "-i", str(input_path),
+        "-vf", ",".join(parts),
+        "-c:a", "copy", "-y", str(output_path),
+    ]
 
 
 def batch_normalize_videos(
@@ -149,23 +200,10 @@ def batch_normalize_videos(
     output_dir: Path,
     target_width: int,
     target_height: int,
-    padding_method: str = "black",
+    padding_method: str = "blur",
     authors: dict[Path, str] = None,
 ) -> dict[Path, Path]:
-    """
-    Normalize multiple videos to target aspect ratio.
-
-    Args:
-        video_paths: List of input video paths
-        output_dir: Directory for normalized videos
-        target_width: Target width in pixels
-        target_height: Target height in pixels
-        padding_method: "black" or "blur"
-        authors: Dict mapping video paths to author names
-
-    Returns:
-        Dict mapping original paths to normalized paths
-    """
+    """Normalize multiple videos to target aspect ratio."""
     output_dir.mkdir(parents=True, exist_ok=True)
     normalized_paths = {}
     authors = authors or {}
@@ -184,7 +222,7 @@ def batch_normalize_videos(
             )
             normalized_paths[video_path] = normalized
         except Exception as e:
-            # Keep original path as fallback
+            logger.warning("Normalization failed for %s, using original: %s", video_path.name, e)
             normalized_paths[video_path] = video_path
 
     return normalized_paths

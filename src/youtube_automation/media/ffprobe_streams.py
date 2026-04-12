@@ -25,6 +25,24 @@ def _ffprobe_bin() -> str:
     return "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
 
 
+def probe_audio_duration(path: Path) -> float:
+    """Return the duration of a media file in seconds, or 0.0 on failure."""
+    cmd = [
+        _ffprobe_bin(),
+        "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=nk=1:nw=1",
+        str(path),
+    ]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if p.returncode != 0:
+        return 0.0
+    try:
+        return float(p.stdout.strip())
+    except Exception:
+        return 0.0
+
+
 def probe_container_streams(path: Path) -> ContainerStreamInfo:
     """
     Return whether the container has at least one video and/or audio stream.

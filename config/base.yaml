@@ -1,33 +1,99 @@
 used_horizon_days: 90
 
+final_target_duration: 10 # minutes; channel configs should override this
+
+post:
+  min_duration: 3
+  max_duration: 60
+  min_score: 100
+  min_ratio: 0.7
+  duration_score_factor: 20
+  over_source_pct: 25
+
+# Instagram hashtag reels (requires INSTAGRAM_SESSION_B64 or sessions/instagram.session).
+# Empty hashtags disables Instagram sourcing regardless of source_split.
+instagram:
+  hashtags: []
+  session_username: instagram
+  min_likes: 5000
+  min_duration: 3
+  max_duration: 60
+  section: both # top | recent | both
+  limit_per_hashtag: 100
+  delay: 2.0
+
+# Fraction of over-sourced duration budget per scraper (normalized to sum to 1).
+source_split:
+  reddit: 1.0
+  instagram: 0.0
+
 video_normalization:
   target_width: 1920
   target_height: 1080
-  padding_method: black
+  padding_method: blur
 
 commentary:
   # Default theme for commentary generation; channels can override this.
   theme: funny
   every_nth: 3
   tts_voices:
-    gemini: Kore
-    edge: en-US-AvaMultilingualNeural
+    # gemini: Kore  # Female — uncomment to re-enable
+    gemini: Joren # Male
+    # edge: en-US-AvaMultilingualNeural  # Female — uncomment to re-enable
+    edge: en-US-BrianMultilingualNeural # Male
 
 thumbnail:
+  # Output resolution — images are center-cropped and resized to this.
+  target_width: 1920
+  target_height: 1080
+  # How far the image's aspect ratio may deviate from target_width/target_height
+  # before the post is rejected. 0.5 accepts anything from ~1.2:1 to ~2.6:1,
+  # which covers portrait-ish, square, and wide shots without being too loose.
+  aspect_ratio_tolerance: 0.5
+
   min_score: 500
   min_ratio: 0.8
+  # Self-explaining image heuristics:
+  # Images that needed long titles/descriptions to go viral did so because of
+  # the *story*, not because the image is visually striking on its own.
+  max_title_words: 10 # Skip posts with titles longer than this many words (0 = no limit)
+  max_selftext_words: 20 # Skip posts whose body text exceeds this many words (0 = no limit)
+  require_no_selftext: false # Set to true to reject any post that has body text at all
+
+  arrow_overlay:
+    enabled: false # Composite a pointing arrow onto the thumbnail
+
+  emoji_overlay:
+    enabled: false # Composite a reaction emoji onto the thumbnail
+    size_ratio: 0.2 # Emoji diameter as a fraction of image width (default 0.18)
+    # pool:                   # Optional explicit emoji list (filenames from assets/thumbnail/emojis/).
+    #   - laughing-with-tears-emoji.png  # Overrides the auto-selected pool for this channel.
+    #   - silly-emoji.png
+
+audio:
+  # How much to duck original clip audio while commentary is playing (~20% = -14 dB).
+  # Has no effect on clips that have no commentary track.
+  original_clip_volume_db: -14
 
 music:
   enabled: true
   library_root: "assets/music"
 
   music_volume_db: -12
-  original_duck_db: -8
+  # Duck clip audio to ~20% when mixing in background music.
+  original_duck_db: -14
 
   fade_in_sec: 0.8
   fade_out_sec: 0.8
 
   pick: random
+
+post_context:
+  top_comments: 5 # How many comments to keep (see comment_max_words)
+  comment_max_words: 12 # Only keep comments with at most this many words (Reddit top order)
+  comment_max_len: 180 # Max chars per kept comment (truncated with ...)
+  # Set comment_max_words to 0 to disable the word filter (first N comments by Reddit order).
+  include_selftext: true
 
 publishing:
   ai_metadata:

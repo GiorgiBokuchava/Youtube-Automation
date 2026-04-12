@@ -1,60 +1,60 @@
+from pathlib import Path
 from typing import List
-import os
 import base64
+import os
 from openai import OpenAI
 
-import requests
 from youtube_automation.ai.text.types import TextRequest
 
+NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
-def _encode_video(path) -> str:
-    data = path.read_bytes()
-    b64 = base64.b64encode(data).decode("ascii")
-    return f"data:video/mp4;base64,{b64}"
+_MIME_BY_SUFFIX = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
 
 
-class OpenRouterProvider:
-    name = "openrouter"
+def _encode_image(path: Path) -> str:
+    mime = _MIME_BY_SUFFIX.get(path.suffix.lower(), "image/jpeg")
+    b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{b64}"
+
+
+class NvidiaProvider:
+    name = "nvidia"
 
     def __init__(self) -> None:
-        keys_str = os.getenv("OPENROUTER_API_KEYS", "")
+        keys_str = os.getenv("NVIDIA_API_KEYS", "")
         if not keys_str:
-            raise RuntimeError("OPENROUTER_API_KEYS is missing")
+            raise RuntimeError("NVIDIA_API_KEYS is missing")
 
-        # Split comma-separated keys and take first one
         keys = [k.strip() for k in keys_str.split(",") if k.strip()]
         if not keys:
-            raise RuntimeError("No valid OpenRouter API keys found")
+            raise RuntimeError("No valid NVIDIA API keys found")
 
         self._keys = keys
         self._current_key_index = 0
 
         self._client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
+            base_url=NVIDIA_BASE_URL,
             api_key=keys[0],
-            timeout=15,
+            timeout=30,
             max_retries=0,  # Provider handles key rotation; no SDK-level retries
         )
 
     def generate(self, *, model: str, request: TextRequest) -> str:
-        content = []
+        content: list = []
 
         if request.text:
             content.append({"type": "text", "text": request.text})
 
-        if request.video:
-            content.append(
-                {
-                    "type": "video_url",
-                    "video_url": {"url": _encode_video(request.video)},
-                }
-            )
+        if request.images:
+            for img_path in request.images:
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": _encode_image(img_path)},
+                })
 
-        # Try each key with fallback
         last_error = None
         for attempt in range(len(self._keys)):
             try:
-                # Update client with current key
                 self._client.api_key = self._keys[self._current_key_index]
 
                 resp = self._client.chat.completions.create(
@@ -70,25 +70,17 @@ class OpenRouterProvider:
                     self._keys
                 )
                 if attempt < len(self._keys) - 1:
-                    continue  # Try next key
-                raise e  # Re-raise if all keys failed
+                    continue
+                raise e
 
 
-OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
-
-
-def fetch_free_openrouter_models() -> List[str]:
-    api_key = os.getenv("OPENROUTER_API_KEYS")
-    if not api_key:
-        raise RuntimeError("OPENROUTER_API_KEYS is missing")
+def fetch_nvidia_models(api_key: str) -> List[str]:
+    import requests
 
     resp = requests.get(
-        OPENROUTER_MODELS_URL,
+        f"{NVIDIA_BASE_URL}/models",
         headers={"Authorization": f"Bearer {api_key}"},
         timeout=10,
     )
     resp.raise_for_status()
-
-    models = resp.json()["data"]
-
-    return [m["id"] for m in models if m["id"].endswith(":free")]
+    return [m["id"] for m in resp.json().get("data", [])]

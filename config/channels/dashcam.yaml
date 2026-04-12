@@ -1,12 +1,17 @@
 channel:
   name: dashcam
+  niche: dashcam fails & road rage
   youtube_channel_id: UCYYYY
 
-final_target_duration: 5
+final_target_duration: 1
 
 subreddits:
   - Dashcam
   - IdiotsInCars
+  - Roadcamfails
+  - dashcams
+  - Dashcam
+  - drivingUK
 
 post:
   min_duration: 5
@@ -14,14 +19,82 @@ post:
   min_score: 1000
   min_ratio: 0.85
 
+audio:
+  original_clip_volume_db: -14
+
 commentary:
   theme: dramatic
   every_nth: 1
+  commentary_gain: 1.6
   tts_voices:
-    edge: en-US-BrianMultilingualNeural
+    gemini:
+      # - Kore # Female
+      - Joren # Male
+    text_generator:
+      # - af_sarah # Female
+      - am_adam # Male
+    edge:
+      # - en-US-AvaMultilingualNeural # Female
+      - en-US-GuyNeural # Male
 
 thumbnail:
-  allow_nsfw: true
+  min_score: 500
+  min_ratio: 0.85
+
+  arrow_overlay:
+    enabled: true
+
+  emoji_overlay:
+    enabled: true
+    pool:
+      - shocked-emoji.png
+      - grimace-face-emoji.png
+      - anger-emoji.png
+
+  banned_words:
+    - nsfw
+    - death
+    - die
+    - murder
+    - suicide
+    - dead
+    - dying
+    - killed
+    - killing
+    - fatal
+    - fatality
+    - gore
+    - blood
+    - bloody
+
+youtube:
+  title_template: "Dashcam Fails Compilation | Reddit"
+  description_template: |
+    Best dashcam clips from Reddit.
+
+    Credits:
+    {credits}
+  tags:
+    - dashcam
+    - road rage
+    - idiots in cars
+    - driving fails
+  category_id: "2"
+  privacy_status: public
 
 music:
   tags: ["cinematic", "tension", "driving"]
+  enabled: true
+  music_volume_db: -14
+  original_duck_db: -14
+  fade_in_sec: 0.8
+  fade_out_sec: 0.8
+  track_gap_sec: 2.5
+  max_track_repeats: 1
+
+publishing:
+  ai_metadata:
+    tone: dramatic
+    audience: car enthusiasts
+    call_to_action: "Subscribe for more crazy dashcam footage every week!"
+    max_hashtags: 17

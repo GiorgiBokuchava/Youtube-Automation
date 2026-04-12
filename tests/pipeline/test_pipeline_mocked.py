@@ -11,7 +11,7 @@ def test_pipeline_end_to_end(mocker, minimal_settings, dummy_video, tmp_path):
     thumb_path.write_bytes(b"x")
 
     mocker.patch(
-        "youtube_automation.pipeline.source_videos",
+        "youtube_automation.pipeline.source_all_videos",
         return_value=[
             {
                 "id": "1",
@@ -30,16 +30,14 @@ def test_pipeline_end_to_end(mocker, minimal_settings, dummy_video, tmp_path):
     )
 
     mocker.patch(
-        "youtube_automation.pipeline.generate_commentary_video_first",
+        "youtube_automation.ai.text.commentary.generate_commentary_video_first",
         return_value=("funny dog", "test-model", False),
     )
 
-    mocker.patch(
-        "youtube_automation.pipeline.tts_service.synthesize",
-        return_value=type(
-            "A", (), {"data": b"x", "ext": ".mp3", "provider": "edge", "model": "edge"}
-        )(),
-    )
+    mock_tts = mocker.patch("youtube_automation.ai.tts.service.tts_service")
+    mock_tts.synthesize.return_value = type(
+        "A", (), {"data": b"x", "ext": ".mp3", "provider": "edge", "model": "edge"}
+    )()
 
     mocker.patch(
         "youtube_automation.pipeline.analyze_clip_audio",
@@ -94,7 +92,7 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
     thumb_path.write_bytes(b"x")
 
     mocker.patch(
-        "youtube_automation.pipeline.source_videos",
+        "youtube_automation.pipeline.source_all_videos",
         return_value=[
             {
                 "id": "1",
@@ -111,15 +109,13 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
         return_value={"path": str(thumb_path)},
     )
     mocker.patch(
-        "youtube_automation.pipeline.generate_commentary_video_first",
+        "youtube_automation.ai.text.commentary.generate_commentary_video_first",
         return_value=("c", "m", False),
     )
-    mocker.patch(
-        "youtube_automation.pipeline.tts_service.synthesize",
-        return_value=type(
-            "A", (), {"data": b"x", "ext": ".mp3", "provider": "edge", "model": "edge"}
-        )(),
-    )
+    mock_tts = mocker.patch("youtube_automation.ai.tts.service.tts_service")
+    mock_tts.synthesize.return_value = type(
+        "A", (), {"data": b"x", "ext": ".mp3", "provider": "edge", "model": "edge"}
+    )()
     mocker.patch(
         "youtube_automation.pipeline.analyze_clip_audio",
         return_value=type(
@@ -157,7 +153,7 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
 
 
 def test_cleanup_skipped_when_pipeline_aborts(mocker, minimal_settings):
-    mocker.patch("youtube_automation.pipeline.source_videos", return_value=[])
+    mocker.patch("youtube_automation.pipeline.source_all_videos", return_value=[])
     spy = mocker.patch("youtube_automation.pipeline._cleanup_generated_files")
 
     with pytest.raises(ValueError, match="No clips"):
