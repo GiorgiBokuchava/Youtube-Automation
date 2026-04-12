@@ -1,52 +1,26 @@
-# Shorts overlay for channel `animals` — merged after config/channels/animals.yaml.
-# Same YouTube channel as long-form; run this job on a higher cadence than compilations.
+# Shorts overlay for channel `animals`
+# This file overrides or adds to config/channels/animals.yaml when running in --mode shorts
 
 shorts:
   clip_count_min: 5
   clip_count_max: 7
   randomize_clip_count: true
-  topic_seeds:
-    - golden retriever
-    - german shepherd
-    - husky
-    - corgi
-    - kittens
-    - funny cat
-    - border collie
-  preferred_topic_model: null
   search_time_filter: month
   search_sort: top
-  search_limit_per_subreddit: 40
+  search_limit_per_subreddit: 100
   min_duration: 2
   max_duration: 60
-  min_score: 200
-  min_ratio: 0.78
-  min_height_width_ratio: 0.78
+  # Permissive filters to ensure high yield
+  min_score: 10
+  min_ratio: 0.10
+  min_height_width_ratio: 0.50
   max_segment_duration_sec: 22
   overlay_comment_max_len: 100
 
 publishing:
   ai_metadata:
-    enabled: false
+    enabled: true
 
-youtube:
-  shorts_title_template: "{main_title} #Shorts"
-  shorts_description_template: |
-    {main_title}
-
-    Credits:
-    {credits}
-  shorts_tags:
-    - Shorts
-    - animals
-    - cute
-  shorts_extra_tags:
-    - funny animals
-
+# Background music is disabled as per user request for shorts
 music:
-  enabled: true
-
-publishing_schedule:
-  note: >-
-    Schedule Shorts jobs more frequently than long-form (e.g. daily vs weekly)
-    in your CI or task runner; this block is documentation only.
+  enabled: false

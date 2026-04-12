@@ -25540,5 +25540,188 @@
     "youtube_url": "https://www.youtube.com/watch?v=sgnFNU8q03k",
     "pipeline_errors": [],
     "channel": "animals"
+  },
+  {
+    "created_at": "2026-04-12T10:08:09.544466+00:00",
+    "content_type": "shorts",
+    "clips": [
+      {
+        "id": "1rvgny9",
+        "title": "Funny cat",
+        "overlay_caption": "We should learn from him he knows how to enjoy his life",
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1rvgny9/funny_cat/",
+        "source_url": "https://v.redd.it/6c9zp27e3gpg1",
+        "subreddit": "funnycats",
+        "author": "More-Bodybuilder8142",
+        "duration_sec": 13,
+        "local_path": "downloads\\1rvgny9.mp4",
+        "score": 720,
+        "upvote_ratio": 1.0,
+        "probe_w": 480,
+        "probe_h": 854
+      }
+    ],
+    "num_clips": 1,
+    "topic": {
+      "topic_title": "Funny Cat",
+      "search_query": "funny cat",
+      "clip_count_requested": 7
+    },
+    "main_title": "Top 1 Funny Cat Moments",
+    "thumbnail": {},
+    "output_path": "out\\animals\\shorts\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [],
+    "channel": "animals"
+  },
+  {
+    "created_at": "2026-04-12T10:17:25.619859+00:00",
+    "content_type": "shorts",
+    "clips": [
+      {
+        "id": "1ryzntw",
+        "title": "Cat's jump",
+        "overlay_caption": "Yes slippery table caused poor jump. Send him chimkens.",
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ryzntw/cats_jump/",
+        "source_url": "https://v.redd.it/own386stz7qg1",
+        "subreddit": "funnycats",
+        "author": "Neither-Arachnid2971",
+        "duration_sec": 15,
+        "local_path": "downloads\\1ryzntw.mp4",
+        "score": 109,
+        "upvote_ratio": 0.98,
+        "probe_w": 720,
+        "probe_h": 1280
+      },
+      {
+        "id": "1rxlqr7",
+        "title": "Biggg jump\u2026fail",
+        "overlay_caption": "Biggg jump\u2026fail",
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1rxlqr7/biggg_jumpfail/",
+        "source_url": "https://v.redd.it/bt52km22ewpg1",
+        "subreddit": "Rabbits",
+        "author": "Glum_Discussion_1258",
+        "duration_sec": 15,
+        "local_path": "downloads\\1rxlqr7.mp4",
+        "score": 120,
+        "upvote_ratio": 1.0,
+        "probe_w": 1080,
+        "probe_h": 1920
+      }
+    ],
+    "num_clips": 2,
+    "topic": {
+      "topic_title": "Cats Fail Jumps",
+      "search_query": "cat fail jump",
+      "clip_count_requested": 5
+    },
+    "main_title": "Top 2 Cats Fail Jumps Moments",
+    "thumbnail": {},
+    "output_path": "out\\animals\\shorts\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [],
+    "channel": "animals"
+  },
+  {
+    "created_at": "2026-04-12T10:29:20.745546+00:00",
+    "content_type": "shorts",
+    "clips": [
+      {
+        "id": "1ruk9xo",
+        "title": "The videos I get on my ring camera when I'm away lol",
+        "permalink": "https://www.reddit.com/r/corgi/comments/1ruk9xo/the_videos_i_get_on_my_ring_camera_when_im_away/",
+        "source_url": "https://v.redd.it/to24i5y1w8pg1",
+        "subreddit": "corgi",
+        "author": "CorgiMama5534",
+        "duration_sec": 21,
+        "local_path": "downloads\\1ruk9xo.mp4",
+        "score": 4039,
+        "upvote_ratio": 0.97,
+        "probe_w": 1080,
+        "probe_h": 1080
+      },
+      {
+        "id": "1rrqnmj",
+        "title": "This ferocious Corgi just barely managed to warn his owner in time of a deadly ambush ahead",
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1rrqnmj/this_ferocious_corgi_just_barely_managed_to_warn/",
+        "source_url": "https://v.redd.it/wv89qvs28mog1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "YakInvestigator",
+        "duration_sec": 43,
+        "local_path": "downloads\\1rrqnmj.mp4",
+        "score": 4434,
+        "upvote_ratio": 1.0,
+        "probe_w": 720,
+        "probe_h": 1280
+      },
+      {
+        "id": "1rzyola",
+        "title": "Golden retriever gets to pick out new toy after vet visit!",
+        "permalink": "https://www.reddit.com/r/dogvideos/comments/1rzyola/golden_retriever_gets_to_pick_out_new_toy_after/",
+        "source_url": "https://v.redd.it/xu0t6zw7xfqg1",
+        "subreddit": "dogvideos",
+        "author": "tag24news",
+        "duration_sec": 26,
+        "local_path": "downloads\\1rzyola.mp4",
+        "score": 4840,
+        "upvote_ratio": 1.0,
+        "probe_w": 720,
+        "probe_h": 1280
+      },
+      {
+        "id": "1sez5x0",
+        "title": "Horror when Kim loses her Mama \ud83d\udda4\ud83d\udc3e\ud83d\udc3e\ud83d\udc3e",
+        "permalink": "https://www.reddit.com/r/corgi/comments/1sez5x0/horror_when_kim_loses_her_mama/",
+        "source_url": "https://v.redd.it/sr4nbtkndstg1",
+        "subreddit": "corgi",
+        "author": "No-Speaker-5382",
+        "duration_sec": 22,
+        "local_path": "downloads\\1sez5x0.mp4",
+        "score": 6607,
+        "upvote_ratio": 0.98,
+        "probe_w": 720,
+        "probe_h": 1280
+      },
+      {
+        "id": "1sdz2oq",
+        "title": "Huskie puppy doesn\u2019t quite get the howling thing",
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1sdz2oq/huskie_puppy_doesnt_quite_get_the_howling_thing/",
+        "source_url": "https://v.redd.it/ufhl2lx7pktg1",
+        "subreddit": "FunnyAnimals",
+        "author": "Unique-Structure-201",
+        "duration_sec": 30,
+        "local_path": "downloads\\1sdz2oq.mp4",
+        "score": 6961,
+        "upvote_ratio": 0.99,
+        "probe_w": 1280,
+        "probe_h": 720
+      },
+      {
+        "id": "1s2j00e",
+        "title": "Corgis playing sports animation",
+        "permalink": "https://www.reddit.com/r/corgi/comments/1s2j00e/corgis_playing_sports_animation/",
+        "source_url": "https://v.redd.it/qxcpqqf2t0rg1",
+        "subreddit": "corgi",
+        "author": "CreeperRush",
+        "duration_sec": 38,
+        "local_path": "downloads\\1s2j00e.mp4",
+        "score": 7027,
+        "upvote_ratio": 0.98,
+        "probe_w": 720,
+        "probe_h": 724
+      }
+    ],
+    "num_clips": 6,
+    "topic": {
+      "topic_title": "Cat Foot Attacks",
+      "search_query": "cat attacks feet",
+      "clip_count_requested": 6
+    },
+    "main_title": "Top 6 Cat Foot Attacks Moments",
+    "thumbnail": {},
+    "output_path": "out\\animals\\shorts\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [],
+    "channel": "animals"
   }
 ]

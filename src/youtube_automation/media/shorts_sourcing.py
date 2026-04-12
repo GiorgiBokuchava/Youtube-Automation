@@ -67,10 +67,13 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
     post_cfg = settings.get("post", {})
     min_dur = int(sc.get("min_duration", post_cfg.get("min_duration", 2)))
     max_dur = int(sc.get("max_duration", min(post_cfg.get("max_duration", 60), 60)))
-    min_score = int(sc.get("min_score", post_cfg.get("min_score", 50)))
-    min_ratio = float(sc.get("min_ratio", post_cfg.get("min_ratio", 0.75)))
-    min_hw = float(sc.get("min_height_width_ratio", 0.82))  # tall / portrait-ish
-    search_limit = int(sc.get("search_limit_per_subreddit", 35))
+    
+    # RELAXED FILTERS for high yield
+    min_score = int(sc.get("min_score", 10))
+    min_ratio = float(sc.get("min_ratio", 0.10))
+    min_hw = float(sc.get("min_height_width_ratio", 0.50))
+    search_limit = int(sc.get("search_limit_per_subreddit", 100))
+    
     time_filter = str(sc.get("search_time_filter", "month"))
     sort = str(sc.get("search_sort", "top"))
 
@@ -84,45 +87,62 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
         context_max_words = int(_cmw)
 
     target_n = int(topic_plan.clip_count)
-    query = topic_plan.search_query.strip()
+    queries = list(topic_plan.search_queries)
+    
+    # Add a super-broad fallback query based on the niche if needed
+    ch = settings.get("channel") or {}
+    niche_fallback = str(ch.get("niche", "animals")).lower()
+    if niche_fallback not in queries:
+        queries.append(niche_fallback)
 
     ffmpeg_location = ensure_ffmpeg()
     reddit = create_reddit_client()
     used = get_used_video_ids(settings)
+    
+    # Use a multi-reddit search to combine subreddits efficiently
     subs = list(settings.get("subreddits", []))
     random.shuffle(subs)
+    # Reddit search allows up to ~40-50 subreddits in one query string
+    active_subs_str = "+".join(subs[:min(50, len(subs))])
 
     # Gather candidate submissions (unique by id)
     seen: set[str] = set()
     candidates: list = []
-    for sub in subs:
+    
+    def _do_search(sq: str):
         try:
-            subreddit = reddit.subreddit(sub)
-            found = search_subreddit(
+            logger.info("Searching r/%s for query: %r", active_subs_str, sq)
+            subreddit = reddit.subreddit(active_subs_str)
+            found = list(search_subreddit(
                 subreddit,
-                query,
+                sq,
                 sort=sort,
                 time_filter=time_filter,
-                limit=search_limit,
-            )
+                limit=500, # Maximize search reach
+            ))
+            for s in found:
+                sid = s.id
+                if sid in seen or sid in used:
+                    continue
+                seen.add(sid)
+                if not getattr(s, "is_video", False):
+                    continue
+                if float(s.upvote_ratio or 0.0) < min_ratio:
+                    continue
+                dur = _get_reddit_video_duration(s)
+                if dur is None or not (min_dur <= dur <= max_dur):
+                    continue
+                if int(s.score) < min_score:
+                    continue
+                candidates.append(s)
         except Exception as e:
-            logger.debug("Search failed for r/%s: %s", sub, e)
-            continue
-        for s in found:
-            sid = s.id
-            if sid in seen or sid in used:
-                continue
-            seen.add(sid)
-            if not getattr(s, "is_video", False):
-                continue
-            if float(s.upvote_ratio or 0.0) < min_ratio:
-                continue
-            dur = _get_reddit_video_duration(s)
-            if dur is None or not (min_dur <= dur <= max_dur):
-                continue
-            if int(s.score) < min_score:
-                continue
-            candidates.append(s)
+            logger.warning("Multi-reddit search failed: %s", e)
+
+    # Loop through queries until we have enough candidates
+    for query in queries:
+        if len(candidates) >= target_n * 2:
+            break
+        _do_search(query)
 
     # Prefer higher Reddit score first, then try to keep portrait after probe
     candidates.sort(key=lambda s: int(s.score), reverse=True)
@@ -153,20 +173,10 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
             )
             continue
 
-        caption = _overlay_caption_from_submission(
-            submission,
-            context_limit=comments_limit,
-            comment_max_len=comment_max_len,
-            context_max_words=context_max_words,
-        )
-        if not caption:
-            caption = truncate_preserve_unicode(submission.title or "", comment_max_len)
-
         accepted.append(
             {
                 "id": sid,
                 "title": submission.title or "",
-                "overlay_caption": caption,
                 "permalink": f"https://www.reddit.com{submission.permalink}",
                 "source_url": submission.url,
                 "subreddit": submission.subreddit.display_name,
@@ -183,18 +193,17 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
                 "probe_h": sz.height,
             }
         )
-        time.sleep(random.uniform(0.2, 0.55))
+        time.sleep(random.uniform(0.1, 0.35))
 
     if len(accepted) < target_n:
         logger.warning(
-            "Shorts: only found %d/%d clips for query %r — relax shorts.* filters or subreddits",
+            "Shorts: only found %d/%d clips after full search — yield might be low",
             len(accepted),
             target_n,
-            query,
         )
 
     # Rank 1 = highest score → display order countdown: worst … best
     accepted.sort(key=lambda c: int(c.get("score", 0)))  # ascending: low first
     actual = len(accepted)
-    main_title = f"Top {actual} {topic_plan.topic_title} moments"
+    main_title = f"Top {actual} {topic_plan.topic_title} Moments"
     return accepted, main_title

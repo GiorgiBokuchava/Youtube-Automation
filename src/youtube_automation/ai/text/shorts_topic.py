@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class ShortsTopicPlan:
     topic_title: str
-    search_query: str
+    search_queries: list[str]
     clip_count: int
 
 
@@ -31,15 +31,11 @@ def _parse_json_object(raw: str) -> dict:
 
 def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
     """
-    Ask the text model to pick one concrete topic from channel context so titles stay fresh.
+    Ask the text model to pick a creative niche topic based on the channel's general focus.
     """
     sc = settings.get("shorts") or {}
     ch = settings.get("channel") or {}
-    niche = str(ch.get("niche", "") or "").strip()
-    seeds = sc.get("topic_seeds") or []
-    if isinstance(seeds, str):
-        seeds = [seeds]
-    seeds_list = [str(s).strip() for s in seeds if str(s).strip()]
+    niche = str(ch.get("niche", "animals")).strip()
 
     mn = int(sc.get("clip_count_min", sc.get("clip_count", 5)))
     mx = int(sc.get("clip_count_max", sc.get("clip_count", 7)))
@@ -48,21 +44,28 @@ def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
 
     preferred = sc.get("preferred_topic_model")
 
-    prompt = f"""You help plan a YouTube Shorts compilation for one channel.
+    prompt = f"""You are a viral YouTube Shorts content planner. 
+I need a topic for a "Top X ... Moments" compilation video.
 
-Channel niche: {niche or "(not specified)"}
-Optional seed phrases (use as inspiration only; you may pick something else on-theme): {seeds_list or "(none)"}
+Channel Niche: {niche}
 
-Choose ONE specific, searchable topic for a ranked list video titled like:
-"Top N [topic] moments" (example style only — do not copy literally).
+Your task:
+1. Pick a highly specific, creative, and viral sub-niche or theme within '{niche}'. 
+   DO NOT be generic (e.g., instead of "Dog", pick "Golden Retriever Zoomies" or "Husky Arguing").
+2. Create a 2-4 word Title for this sub-niche (Title Case).
+3. Create exactly 3 distinct search queries for Reddit, ranging from very specific to slightly broader.
+   IMPORTANT: DO NOT include the word "reddit" in these queries.
 
-Rules:
-- topic_title: 2–5 words, Title Case, good for an on-screen headline (no hashtags).
-- search_query: 1–6 lowercase words to find matching Reddit video posts (no subreddit name, no quotes).
-- clip_count: integer between {mn} and {mx} (how many ranked clips).
-
-Respond with ONLY a JSON object and no other text:
-{{"topic_title": "...", "search_query": "...", "clip_count": {mn}}}
+Return ONLY a JSON object:
+{{
+  "topic_title": "The Title from Step 2",
+  "search_queries": [
+    "highly specific query", 
+    "moderately specific query", 
+    "broader related query"
+  ],
+  "clip_count": {random.randint(mn, mx)}
+}}
 """
 
     try:
@@ -70,31 +73,39 @@ Respond with ONLY a JSON object and no other text:
         data = _parse_json_object(raw)
 
         topic_title = str(data.get("topic_title", "")).strip()
-        search_query = str(data.get("search_query", "")).strip().lower()
+        # Remove "Moments" if AI added it to avoid duplication in pipeline
+        topic_title = re.sub(r"\s+Moments$", "", topic_title, flags=re.IGNORECASE)
+        
+        queries = data.get("search_queries", [])
+        if not isinstance(queries, list):
+            queries = [str(queries)]
+        queries = [str(q).strip().lower() for q in queries if str(q).strip()]
+
         count = int(data.get("clip_count", mn))
 
-        if not topic_title or not search_query:
-            raise ValueError("Shorts topic model returned empty topic_title or search_query")
+        if not topic_title or not queries:
+            raise ValueError("Shorts topic model returned empty results")
 
         count = max(mn, min(mx, count))
 
         return ShortsTopicPlan(
             topic_title=topic_title,
-            search_query=search_query,
+            search_queries=queries,
             clip_count=count,
         )
     except Exception as e:
-        if not seeds_list:
-            raise RuntimeError(
-                "Shorts topic AI failed and shorts.topic_seeds is empty; "
-                "add topic_seeds in config/shorts/<channel>.yaml for fallback."
-            ) from e
-        picked = random.choice(seeds_list)
-        logger.warning("Shorts topic AI failed (%s); using random seed %r", e, picked)
+        logger.warning("Shorts topic AI failed (%s); using fallback", e)
+        # Fallback to something matching the niche
+        fallbacks = {
+            "animals": ("Funny Animal", ["funny animal", "cute animal"]),
+            "tech": ("Clever Hack", ["tech hack", "life hack"]),
+            "gaming": ("Epic Win", ["gaming moment", "epic win"]),
+        }
+        topic, queries = fallbacks.get(niche.lower(), ("Interesting", ["interesting", "cool"]))
         return ShortsTopicPlan(
-            topic_title=picked.title(),
-            search_query=picked.lower(),
-            clip_count=random.randint(mn, mx),
+            topic_title=topic,
+            search_queries=queries,
+            clip_count=6,
         )
 
 
@@ -108,6 +119,6 @@ def random_clip_count_if_needed(plan: ShortsTopicPlan, settings: dict) -> Shorts
     n = random.randint(max(3, mn), min(10, mx))
     return ShortsTopicPlan(
         topic_title=plan.topic_title,
-        search_query=plan.search_query,
+        search_queries=plan.search_queries,
         clip_count=n,
     )

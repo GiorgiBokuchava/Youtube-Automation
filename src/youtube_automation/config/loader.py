@@ -5,9 +5,18 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parents[3]
 
 
-def load_env(_channel: str | None = None) -> None:
-    """Load .env from cwd. Optional channel arg kept for CLI compatibility."""
+import os
+
+def load_env(channel: str | None = None) -> None:
+    """Load .env and map optional channel-prefixed vars (e.g. ANIMALS_VAR -> VAR)."""
     load_dotenv()
+    if not channel:
+        return
+    prefix = f"{channel.upper()}_"
+    for key, value in os.environ.items():
+        if key.startswith(prefix):
+            base_key = key[len(prefix) :]
+            os.environ[base_key] = value
 
 
 def _load_yaml(path: Path) -> dict:
@@ -31,9 +40,16 @@ def load_settings(channel: str, *, shorts: bool = False) -> dict:
 
     merged = _deep_merge(base, channel_cfg)
     if shorts:
+        # Load shorts-specific channel config
         shorts_path = BASE_DIR / "config" / "shorts" / f"{channel}.yaml"
         if shorts_path.exists():
             merged = _deep_merge(merged, _load_yaml(shorts_path))
+        
+        # Load shared shorts publishing/general config
+        publish_path = BASE_DIR / "config" / "shorts" / "publish.yaml"
+        if publish_path.exists():
+            merged = _deep_merge(merged, _load_yaml(publish_path))
+            
         merged["content_type"] = "shorts"
     else:
         merged["content_type"] = "long_form"

@@ -45,6 +45,11 @@ def _ffmpeg_path_literal(path: Path) -> str:
     return s.replace(":", r"\:")
 
 
+def _text_wrap(text: str, width: int = 24) -> str:
+    import textwrap
+    return "\n".join(textwrap.wrap(text, width=width))
+
+
 def render_shorts_segment(
     fitted_video: Path,
     output_video: Path,
@@ -64,7 +69,8 @@ def render_shorts_segment(
             "No font found for Shorts overlays. Set SHORTS_FONT_FILE to a .ttf path."
         )
 
-    title_txt = (main_title or "").strip()[:90]
+    # Wrap title so it doesn't run off screen
+    title_txt = _text_wrap((main_title or "").strip()[:100], width=20)
     body = f"{int(rank)}. {caption}".strip()[:220]
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
@@ -80,11 +86,12 @@ def render_shorts_segment(
         title_lit = _ffmpeg_path_literal(title_path)
         body_lit = _ffmpeg_path_literal(body_path)
 
+        # Title fontsize 64, wrap handled by newlines in textfile
         graph = (
-            f"[0:v]drawtext=fontfile='{font_lit}':textfile='{title_lit}':reload=0:fontsize=46:"
-            f"fontcolor=white:x=(w-text_w)/2:y=48:borderw=3:bordercolor=black,"
-            f"drawtext=fontfile='{font_lit}':textfile='{body_lit}':reload=0:fontsize=34:"
-            f"fontcolor=white:x=32:y=h-200:borderw=3:bordercolor=black[vout]"
+            f"[0:v]drawtext=fontfile='{font_lit}':textfile='{title_lit}':reload=0:fontsize=64:"
+            f"fontcolor=white:x=(w-text_w)/2:y=120:shadowcolor=black@0.7:shadowx=4:shadowy=4,"
+            f"drawtext=fontfile='{font_lit}':textfile='{body_lit}':reload=0:fontsize=42:"
+            f"fontcolor=white:x=60:y=h-280:shadowcolor=black@0.7:shadowx=3:shadowy=3[vout]"
         )
         script = tdir / "graph.txt"
         script.write_text(graph, encoding="utf-8")

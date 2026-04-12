@@ -1,5 +1,3 @@
-"""End-to-end Shorts generation (search-driven topics, 9:16, ranked overlays)."""
-
 from __future__ import annotations
 
 import logging
@@ -11,6 +9,7 @@ from youtube_automation.ai.text.shorts_topic import (
     generate_shorts_topic,
     random_clip_count_if_needed,
 )
+from youtube_automation.ai.text.shorts_commentary import generate_shorts_commentary
 from youtube_automation.media.composition.shorts_render import render_shorts_segment
 from youtube_automation.media.composition.timeline import stitch_clips
 from youtube_automation.media.music import add_background_music
@@ -46,10 +45,13 @@ def run_shorts_pipeline(
             ensure_youtube_refresh_token()
 
         topic_plan = random_clip_count_if_needed(generate_shorts_topic(settings), settings)
+        logger.info("Shorts topic: %r | Sourcing up to %d clips", topic_plan.topic_title, topic_plan.clip_count)
+        
         clips, main_title = source_shorts_clips(settings, topic_plan)
-
         if not clips:
             raise ValueError("No Shorts clips sourced; aborting")
+
+        logger.info("Sourced %d clips for %r", len(clips), main_title)
 
         sc = settings.get("shorts") or {}
         max_seg = float(sc.get("max_segment_duration_sec", 22))
@@ -59,6 +61,8 @@ def run_shorts_pipeline(
         for idx, clip in enumerate(clips):
             rank = n - idx
             cid = clip["id"]
+            logger.info("Processing segment %d/%d (rank %d): %s", idx + 1, n, rank, cid)
+            
             in_path = Path(clip["local_path"])
             fit_path = FIT_DIR / f"{cid}_fit.mp4"
             try:
@@ -68,31 +72,28 @@ def run_shorts_pipeline(
                     max_duration_sec=max_seg,
                 )
             except Exception as e:
-                _record_error(
-                    pipeline_errors,
-                    step="shorts_fit",
-                    exc=e,
-                    clip=clip,
-                )
+                _record_error(pipeline_errors, step="shorts_fit", exc=e, clip=clip)
                 continue
 
             seg_path = SEG_DIR / f"{cid}_seg.mp4"
             try:
+                # Generate a short (max 5 words) caption
+                caption = generate_shorts_commentary(
+                    clip_title=clip.get("title", ""),
+                    topic=topic_plan.topic_title
+                )
+                logger.info("Caption for %s: %r", cid, caption)
+
                 render_shorts_segment(
                     fit_path,
                     seg_path,
                     main_title=main_title,
                     rank=rank,
-                    caption=clip.get("overlay_caption") or clip.get("title", ""),
+                    caption=caption,
                 )
                 segment_paths.append(seg_path)
             except Exception as e:
-                _record_error(
-                    pipeline_errors,
-                    step="shorts_render",
-                    exc=e,
-                    clip=clip,
-                )
+                _record_error(pipeline_errors, step="shorts_render", exc=e, clip=clip)
                 continue
 
         if not segment_paths:
