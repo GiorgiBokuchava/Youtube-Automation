@@ -1,0 +1,24 @@
+# Minimal Shorts config for the `test` channel (CI / dry-runs).
+
+shorts:
+  clip_count_min: 3
+  clip_count_max: 3
+  randomize_clip_count: false
+  topic_seeds:
+    - test topic
+  search_time_filter: month
+  search_limit_per_subreddit: 5
+  min_score: 1
+  min_height_width_ratio: 0.5
+  max_segment_duration_sec: 15
+  overlay_comment_max_len: 80
+
+publishing:
+  ai_metadata:
+    enabled: false
+
+youtube:
+  shorts_title_template: "{main_title}"
+  shorts_description_template: "{main_title}\n\n{credits}"
+  shorts_tags:
+    - test

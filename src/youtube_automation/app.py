@@ -22,7 +22,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=["videos", "thumbnail", "pipeline"],
+        choices=["videos", "thumbnail", "pipeline", "shorts"],
         required=True,
     )
     parser.add_argument(
@@ -84,7 +84,7 @@ def main() -> None:
     setup_logging(args.debug)
 
     logger = logging.getLogger(__name__)
-    settings = load_settings(args.channel)
+    settings = load_settings(args.channel, shorts=(args.mode == "shorts"))
 
     if args.no_commentary or args.core_only:
         settings.setdefault("commentary", {})["every_nth"] = 0
@@ -131,7 +131,14 @@ def main() -> None:
         print(f"Sourced {len(clips)} clips.")
         return
 
-    session = run_pipeline(settings, dry_run=args.dry_run, cleanup=args.cleanup)
+    if args.mode == "shorts":
+        from youtube_automation.shorts_pipeline import run_shorts_pipeline
+
+        session = run_shorts_pipeline(
+            settings, dry_run=args.dry_run, cleanup=args.cleanup
+        )
+    else:
+        session = run_pipeline(settings, dry_run=args.dry_run, cleanup=args.cleanup)
     print(f"Pipeline complete. Clips: {session.get('num_clips', 0)}")
     errs = session.get("pipeline_errors") or []
     if errs:
