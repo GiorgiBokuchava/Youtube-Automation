@@ -44,16 +44,6 @@ def test_partial_render_failure_still_stitches_and_records_errors(
         return_value={"path": str(thumb_path)},
     )
     mocker.patch(
-        "youtube_automation.pipeline.generate_commentary_video_first",
-        return_value=("ok", "model", False),
-    )
-    mocker.patch(
-        "youtube_automation.pipeline.tts_service.synthesize",
-        return_value=type(
-            "A", (), {"data": b"x", "ext": ".mp3", "provider": "edge", "model": "edge"}
-        )(),
-    )
-    mocker.patch(
         "youtube_automation.pipeline.analyze_clip_audio",
         return_value=type(
             "AA",

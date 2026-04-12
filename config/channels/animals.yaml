@@ -1,5 +1,6 @@
 channel:
   name: animals
+  niche: funny animals & pets
   youtube_channel_id: UCXXXX
 
 final_target_duration: 12
@@ -52,7 +53,7 @@ subreddits:
 
 post:
   min_duration: 1
-  max_duration: 15
+  max_duration: 10
   min_score: 350
   min_ratio: 0.8
 
@@ -65,18 +66,31 @@ commentary:
   commentary_gain: 1.6
   tts_voices:
     gemini:
-      - Kore  # Female
-      - Joren  # Male
+      # - Kore # Female
+      - Joren # Male
     text_generator:
-      - af_sarah  # Female
-      - am_adam   # Male
+      # - af_sarah # Female
+      - am_adam # Male
     edge:
-      - en-US-AvaMultilingualNeural    # Female
-      - en-US-BrianMultilingualNeural  # Male
+      # - en-US-AvaMultilingualNeural # Female
+      - en-US-BrianMultilingualNeural # Male
 
 thumbnail:
   min_score: 1000
   min_ratio: 0.85
+
+  arrow_overlay:
+    enabled: true
+
+  emoji_overlay:
+    enabled: true
+    # Pool auto-resolved from commentary.theme=funny if omitted, but listed
+    # here explicitly so it's easy to customise per channel.
+    pool:
+      - laughing-with-tears-emoji.png
+      - silly-emoji.png
+      - smiling-emoji.png
+
   banned_words:
     - spider
     - nsfw
@@ -127,15 +141,16 @@ youtube:
 music:
   tags: ["fun", "upbeat", "cute"]
   enabled: true
-  music_volume_db: -14  # Music present but below narration
-  original_duck_db: 0   # Do not globally attenuate main audio (includes commentary)
+  music_volume_db: -14
+  original_duck_db: -14
   fade_in_sec: 0.8
   fade_out_sec: 0.8
-  track_gap_sec: 2.5  # Gap between music tracks
-  max_track_repeats: 1  # Don't repeat same track in one video
+  track_gap_sec: 2.5 # Gap between music tracks
+  max_track_repeats: 1 # Don't repeat same track in one video
 
 publishing:
   ai_metadata:
     tone: fun
     audience: animal lovers
-    call_to_action: subscribe
+    call_to_action: "Subscribe for more funny animal clips every week!"
+    max_hashtags: 17

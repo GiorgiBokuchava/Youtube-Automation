@@ -12,10 +12,7 @@ on:
         description: "Channel to run"
         required: true
         default: animals
-        type: choice
-        options:
-          - animals
-          - dashcam
+        type: string
 
 jobs:
   run:
@@ -47,6 +44,7 @@ jobs:
       # AI providers
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
+      NVIDIA_API_KEYS: ${{ secrets.NVIDIA_API_KEYS }}
       TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
 
       # Cookies (base64 stored inside REDDIT_COOKIES secret)
@@ -56,25 +54,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: poetry
+          cache-dependency-path: poetry.lock
 
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip poetry
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e .
+        run: poetry install --no-interaction
 
       - name: Preflight — YouTube OAuth refresh token
         run: |
-          python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
+          poetry run python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
         run: |
@@ -83,15 +83,16 @@ jobs:
 
       - name: Preflight - test cookies with yt-dlp
         run: |
-          yt-dlp --version
-          yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
+          poetry run yt-dlp --version
+          poetry run yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
             "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
 
       - name: Run pipeline
         run: |
-          python -m youtube_automation.app \
+          poetry run python -m youtube_automation.app \
             --mode pipeline \
-            --channel "$CHANNEL"
+            --channel "$CHANNEL" \
+            --cleanup
 
       - name: Commit updated state
         run: |

@@ -6,9 +6,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from youtube_automation.ai.text.commentary import generate_commentary_video_first
-from youtube_automation.ai.tts.service import tts_service
-from youtube_automation.ai.tts.types import TTSRequest
 from youtube_automation.media.audio import analyze_clip_audio
 from youtube_automation.media.composition import (
     RenderClipError,
@@ -20,10 +17,10 @@ from youtube_automation.media.video import source_videos
 from youtube_automation.media.video_processing import batch_normalize_videos
 from youtube_automation.media.music import add_background_music
 from youtube_automation.storage.sessions import new_session, save_session
+from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 from youtube_automation.youtube.auth import ensure_youtube_refresh_token
 from youtube_automation.youtube.upload import upload_video
 from youtube_automation.publishing.metadata import build_metadata
-from youtube_automation.publishing.ai_metadata import generate_ai_metadata
 
 
 def _clip_ref(clip: dict) -> str:
@@ -100,21 +97,39 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             ensure_youtube_refresh_token()
 
         clips = source_videos(settings)
-        thumb = source_thumbnail(settings)
-
         if not clips:
             raise ValueError("No clips sourced, aborting pipeline")
 
-        if not thumb:
-            raise ValueError("No thumbnail sourced, aborting pipeline")
+        # Move the highest-scored clip to position 0 so the video opens strong.
+        best_idx = max(range(len(clips)), key=lambda i: clips[i].get("score", 0))
+        if best_idx != 0:
+            clips.insert(0, clips.pop(best_idx))
+            logger.info(
+                "Reordered: clip %s (score=%d) moved to position 0",
+                clips[0].get("id"),
+                clips[0].get("score", 0),
+            )
 
-        # Normalize video aspect ratios
-        video_norm_cfg = settings.get("video_normalization", {})
+        sourced_duration = sum(c.get("duration_sec", 0) for c in clips)
+        target_dur = settings.get("final_target_duration", 0) * 60
+        logger.info(
+            "Sourced %d clips totalling %ds (target %ds, %.0f%%)",
+            len(clips),
+            sourced_duration,
+            target_dur,
+            (sourced_duration / target_dur * 100) if target_dur else 0,
+        )
+
+        thumb = source_thumbnail(settings)
+
+        # Normalize video aspect ratios (never skip just because the YAML block is empty:
+        # `if {}` is false in Python; use `enabled: false` to opt out.)
+        video_norm_cfg = settings.get("video_normalization") or {}
         target_width = int(video_norm_cfg.get("target_width", 1920))
         target_height = int(video_norm_cfg.get("target_height", 1080))
-        padding_method = video_norm_cfg.get("padding_method", "black")
+        padding_method = video_norm_cfg.get("padding_method", "blur")
 
-        if video_norm_cfg:
+        if video_norm_cfg.get("enabled", True):
             normalized_dir = base_out / "normalized_videos"
             video_paths = [Path(clip["local_path"]) for clip in clips]
             # Create mapping of video paths to authors
@@ -138,56 +153,76 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
         commentary_cfg = settings.get("commentary", {})
         every_n = int(commentary_cfg.get("every_nth", 3))
-        tts_voices = commentary_cfg.get("tts_voices", {})
-        preferred_video_model = commentary_cfg.get("preferred_video_model", None)
-        preferred_tts_model = commentary_cfg.get("preferred_tts_model", None)
-        theme = commentary_cfg.get("theme", "funny")
 
-        for i, clip in enumerate(clips):
-            if every_n <= 0 or (i % every_n) != 0:
-                continue
+        if every_n > 0:
+            from youtube_automation.ai.text.commentary import generate_commentary_video_first
+            from youtube_automation.ai.tts.service import tts_service
+            from youtube_automation.ai.tts.types import TTSRequest
 
-            try:
-                video_path = Path(clip["local_path"])
-                title = clip.get("title", "")
-                selftext = clip.get("selftext", "")
-                top_comments = clip.get("top_comments", []) or []
+            tts_voices = commentary_cfg.get("tts_voices", {})
+            preferred_video_model = commentary_cfg.get("preferred_video_model")
+            preferred_tts_model = commentary_cfg.get("preferred_tts_model")
+            theme = commentary_cfg.get("theme", "funny")
 
-                try:
-                    commentary, model_used, fallback_occurred = (
-                        generate_commentary_video_first(
-                            video_path=video_path,
-                            title=title,
-                            selftext=selftext,
-                            top_comments=top_comments,
-                            preferred_video_model=preferred_video_model,
-                            theme=theme,
-                        )
-                    )
-
-                    clip["commentary_text"] = commentary
-                    clip["commentary_model"] = model_used
-                    clip["commentary_fallback"] = fallback_occurred
-
-                except Exception as e:
-                    _record_error(pipeline_errors, step="commentary", exc=e, clip=clip)
+            for i, clip in enumerate(clips):
+                if (i % every_n) != 0:
                     continue
 
-                audio = tts_service.synthesize(
-                    TTSRequest(text=commentary, voice=None),
-                    preferred_model=preferred_tts_model,
-                    tts_voices=tts_voices,
-                )
+                try:
+                    video_path = Path(clip["local_path"])
+                    title = clip.get("title", "")
+                    selftext = clip.get("selftext", "")
+                    top_comments = clip.get("top_comments", []) or []
 
-                out_path = VOICEOVERS_DIR / f"{clip['id']}_vo{audio.ext}"
-                out_path.write_bytes(audio.data)
+                    try:
+                        commentary, model_used, fallback_occurred = (
+                            generate_commentary_video_first(
+                                video_path=video_path,
+                                title=title,
+                                selftext=selftext,
+                                top_comments=top_comments,
+                                preferred_video_model=preferred_video_model,
+                                theme=theme,
+                            )
+                        )
 
-                clip["voiceover_path"] = str(out_path)
-                clip["voiceover_provider"] = audio.provider
-                clip["voiceover_model"] = audio.model
-            except Exception as e:
-                _record_error(pipeline_errors, step="commentary_tts", exc=e, clip=clip)
-                continue
+                        commentary = sanitize_plain_english_tts(commentary)
+                        if not commentary:
+                            _record_error(
+                                pipeline_errors,
+                                step="commentary",
+                                exc=ValueError(
+                                    "commentary empty after plain-English sanitization"
+                                ),
+                                clip=clip,
+                            )
+                            continue
+
+                        clip["commentary_text"] = commentary
+                        clip["commentary_model"] = model_used
+                        clip["commentary_fallback"] = fallback_occurred
+
+                    except Exception as e:
+                        _record_error(pipeline_errors, step="commentary", exc=e, clip=clip)
+                        continue
+
+                    audio = tts_service.synthesize(
+                        TTSRequest(text=commentary, voice=None),
+                        preferred_model=preferred_tts_model,
+                        tts_voices=tts_voices,
+                    )
+
+                    out_path = VOICEOVERS_DIR / f"{clip['id']}_vo{audio.ext}"
+                    out_path.write_bytes(audio.data)
+
+                    clip["voiceover_path"] = str(out_path)
+                    clip["voiceover_provider"] = audio.provider
+                    clip["voiceover_model"] = audio.model
+                except Exception as e:
+                    _record_error(pipeline_errors, step="commentary_tts", exc=e, clip=clip)
+                    continue
+        else:
+            logger.info("Commentary disabled (every_nth=0), skipping.")
 
         for clip in clips:
             try:
@@ -267,6 +302,8 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         ai_cfg = settings.get("publishing", {}).get("ai_metadata", {})
         if ai_cfg.get("enabled", False):
             try:
+                from youtube_automation.publishing.ai_metadata import generate_ai_metadata
+
                 ai_meta = generate_ai_metadata(settings=settings, clips=clips)
 
                 if ai_meta.get("title"):

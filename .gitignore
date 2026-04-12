@@ -1,5 +1,7 @@
 # Secrets
 .env
+.env.*
+.env.channels/
 # config/used.json
 
 # Outputs
@@ -16,7 +18,7 @@ __pycache__/
 *.egg-info/
 .eggs/
 
-# Virtual environments
+# Virtual environments (Poetry manages its own venv externally; do not commit it)
 env/
 venv/
 .venv/
