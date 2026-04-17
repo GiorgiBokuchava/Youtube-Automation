@@ -1,8 +1,13 @@
 """Unit tests for multi-source video sourcing."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from youtube_automation.sourcing import instagram_sourcing_enabled, source_all_videos
+from youtube_automation.instagram import scraper as ig_scraper
+from youtube_automation.sourcing import (
+    _interleave_weighted,
+    instagram_sourcing_enabled,
+    source_all_videos,
+)
 
 
 def test_instagram_sourcing_enabled_requires_split_and_hashtags():
@@ -30,9 +35,19 @@ def test_source_all_renormalizes_when_instagram_disabled():
     }
     with patch("youtube_automation.media.video.source_videos") as mock_r:
         mock_r.return_value = []
-        with patch("youtube_automation.instagram.scraper.source_instagram_videos") as mock_i:
+        with patch.object(ig_scraper, "source_instagram_videos") as mock_i:
             source_all_videos(settings)
     mock_r.assert_called_once()
     cap_kw = mock_r.call_args[1]
     assert cap_kw["duration_cap_seconds"] > 0
     mock_i.assert_not_called()
+
+
+def test_interleave_weighted_balances_sources():
+    reddit = [{"id": "r1"}, {"id": "r2"}, {"id": "r3"}]
+    instagram = [{"id": "i1"}, {"id": "i2"}, {"id": "i3"}]
+
+    merged = _interleave_weighted(reddit, instagram, 0.5, 0.5)
+    ids = [clip["id"] for clip in merged]
+
+    assert ids == ["r1", "i1", "r2", "i2", "r3", "i3"]

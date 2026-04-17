@@ -28,6 +28,55 @@ def _split_budget(
     return b
 
 
+def _interleave_weighted(
+    reddit_clips: list[dict],
+    instagram_clips: list[dict],
+    reddit_weight: float,
+    instagram_weight: float,
+) -> list[dict]:
+    """Interleave two clip lists to roughly match weighted distribution by count."""
+    if not reddit_clips:
+        return list(instagram_clips)
+    if not instagram_clips:
+        return list(reddit_clips)
+
+    # If both weights are zero/invalid, fall back to alternating.
+    total = reddit_weight + instagram_weight
+    if total <= 0:
+        reddit_weight, instagram_weight = 0.5, 0.5
+    else:
+        reddit_weight /= total
+        instagram_weight /= total
+
+    merged: list[dict] = []
+    r_idx = i_idx = 0
+    picked_r = picked_i = 0
+
+    while r_idx < len(reddit_clips) or i_idx < len(instagram_clips):
+        if r_idx >= len(reddit_clips):
+            merged.extend(instagram_clips[i_idx:])
+            break
+        if i_idx >= len(instagram_clips):
+            merged.extend(reddit_clips[r_idx:])
+            break
+
+        # Choose the source that is furthest behind its expected share.
+        step = picked_r + picked_i + 1
+        r_gap = (step * reddit_weight) - picked_r
+        i_gap = (step * instagram_weight) - picked_i
+
+        if r_gap >= i_gap:
+            merged.append(reddit_clips[r_idx])
+            r_idx += 1
+            picked_r += 1
+        else:
+            merged.append(instagram_clips[i_idx])
+            i_idx += 1
+            picked_i += 1
+
+    return merged
+
+
 def source_all_videos(settings: dict) -> List[dict]:
     """
     Merge Reddit and Instagram clips according to ``source_split`` and shared
@@ -65,8 +114,8 @@ def source_all_videos(settings: dict) -> List[dict]:
     reddit_warn = int(final_target_seconds * r_w) if r_w > 0 else final_target_seconds
     ig_warn = int(final_target_seconds * i_w) if i_w > 0 else final_target_seconds
 
-    merged: list[dict] = []
-    seen_ids: set[str] = set()
+    clips_r: list[dict] = []
+    clips_i: list[dict] = []
 
     if r_w > 0 and reddit_budget > 0:
         clips_r = source_videos(
@@ -74,11 +123,6 @@ def source_all_videos(settings: dict) -> List[dict]:
             duration_cap_seconds=reddit_budget,
             warn_below_seconds=reddit_warn,
         )
-        for c in clips_r:
-            cid = c.get("id")
-            if cid and cid not in seen_ids:
-                seen_ids.add(cid)
-                merged.append(c)
         logger.info("Reddit contributed %d clip(s).", len(clips_r))
 
     if i_w > 0 and ig_budget > 0 and instagram_sourcing_enabled(settings):
@@ -87,12 +131,25 @@ def source_all_videos(settings: dict) -> List[dict]:
             duration_cap_seconds=ig_budget,
             warn_below_seconds=ig_warn,
         )
-        for c in clips_i:
-            cid = c.get("id")
-            if cid and cid not in seen_ids:
-                seen_ids.add(cid)
-                merged.append(c)
         logger.info("Instagram contributed %d clip(s).", len(clips_i))
+
+    seen_ids: set[str] = set()
+    unique_r: list[dict] = []
+    unique_i: list[dict] = []
+    for c in clips_r:
+        cid = c.get("id")
+        if not cid or cid in seen_ids:
+            continue
+        seen_ids.add(cid)
+        unique_r.append(c)
+    for c in clips_i:
+        cid = c.get("id")
+        if not cid or cid in seen_ids:
+            continue
+        seen_ids.add(cid)
+        unique_i.append(c)
+
+    merged = _interleave_weighted(unique_r, unique_i, r_w, i_w)
 
     logger.info(
         "Combined sourcing: %d clip(s), ~%ds total sourced duration (target %d min).",
