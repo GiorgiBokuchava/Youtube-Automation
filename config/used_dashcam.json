@@ -1,0 +1,175 @@
+[
+  {
+    "created_at": "2026-04-11T16:29:38.727268+00:00",
+    "clips": [
+      {
+        "id": "1sg3a50",
+        "title": "What are you doing buddy?! [oc]",
+        "selftext": "",
+        "top_comments": [
+          "Did he eventually back up??",
+          "Did that with such confidence.",
+          "I need to see the rest of this story",
+          "He's not your buddy, guy.",
+          "No way! Is this South Portland?"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1sg3a50/what_are_you_doing_buddy_oc/",
+        "source_url": "https://v.redd.it/3nql5a5fs0ug1",
+        "subreddit": "IdiotsInCars",
+        "author": "TrickOrange",
+        "duration_sec": 16,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sg3a50.mp4",
+        "overlay_title": true,
+        "score": 3525,
+        "upvote_ratio": 0.99,
+        "original_local_path": "downloads\\1sg3a50.mp4",
+        "commentary_text": "What are you doing buddy?! oc",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sg3a50_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1sf0m1d",
+        "title": "Driver vs Cyclist.",
+        "selftext": "Driver says cyclist at fault as should not be undertaking. Opinions?",
+        "top_comments": [
+          "The cemetery is filled with people who had right of way.",
+          "look like they deliberately drove into the cyclist",
+          "Car driver at fault....100",
+          "Braking is an option to avoid a collision",
+          "Personally, I'd forward the footage to the cops and let them decide."
+        ],
+        "permalink": "https://www.reddit.com/r/drivingUK/comments/1sf0m1d/driver_vs_cyclist/",
+        "source_url": "https://v.redd.it/6kgwt2slmstg1",
+        "subreddit": "drivingUK",
+        "author": "PuzzleheadedGas2192",
+        "duration_sec": 21,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sf0m1d.mp4",
+        "overlay_title": true,
+        "score": 2315,
+        "upvote_ratio": 0.96,
+        "original_local_path": "downloads\\1sf0m1d.mp4",
+        "commentary_text": "Driver vs Cyclist.",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.5,
+          "max_volume_db": 0.0,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sf0m1d_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1sgy9f1",
+        "title": "[OC] - The quickest \"Nope\" I ever said in my life, actually saved me",
+        "selftext": "",
+        "top_comments": [
+          "Wow, was that load secured by a Kindergartener?",
+          "Wise move. I try not to stay behind people hauling things, also.",
+          "Smartest Ram pickup driver",
+          "Gotta love Santa Clarita",
+          "new fear unlocked ;-;"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1sgy9f1/oc_the_quickest_nope_i_ever_said_in_my_life/",
+        "source_url": "https://v.redd.it/we9gr92cl7ug1",
+        "subreddit": "IdiotsInCars",
+        "author": "RealityCheck18",
+        "duration_sec": 39,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sgy9f1.mp4",
+        "overlay_title": true,
+        "score": 3419,
+        "upvote_ratio": 0.97,
+        "original_local_path": "downloads\\1sgy9f1.mp4",
+        "commentary_text": "Wow, was that load secured by a Kindergartener?",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sgy9f1_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      }
+    ],
+    "num_clips": 3,
+    "thumbnail": {
+      "submission_id": "1sbb1e2",
+      "path": "thumbnails\\1sbb1e2_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/1us7jxy7oysg1.png"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sg3a50_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sg3a50_vo.mp3'",
+        "clip_id": "1sg3a50"
+      },
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sf0m1d_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sf0m1d_vo.mp3'",
+        "clip_id": "1sf0m1d"
+      },
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sgy9f1_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sgy9f1_vo.mp3'",
+        "clip_id": "1sgy9f1"
+      }
+    ],
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T16:51:50.412015+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T16:58:54.211951+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T17:02:37.389300+00:00",
+    "thumbnail": {
+      "submission_id": "1sceluk",
+      "path": "thumbnails\\1sceluk_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/512nw7tmg7tg1.jpeg"
+    },
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T17:07:12.758283+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  }
+]

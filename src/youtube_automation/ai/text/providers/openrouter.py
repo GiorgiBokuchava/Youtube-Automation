@@ -32,7 +32,8 @@ class OpenRouterProvider:
         self._client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=keys[0],
-            timeout=10,
+            timeout=15,
+            max_retries=0,  # Provider handles key rotation; no SDK-level retries
         )
 
     def generate(self, *, model: str, request: TextRequest) -> str:
@@ -45,7 +46,7 @@ class OpenRouterProvider:
             content.append(
                 {
                     "type": "video_url",
-                    "videoUrl": {"url": _encode_video(request.video)},
+                    "video_url": {"url": _encode_video(request.video)},
                 }
             )
 

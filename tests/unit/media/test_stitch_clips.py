@@ -6,7 +6,7 @@ from youtube_automation.media.composition.timeline import stitch_clips
 
 def test_stitch_clips_writes_concat_file(mocker, tmp_path):
     mocker.patch(
-        "youtube_automation.media.composition.timeline.ensure_ffmpeg", return_value=None
+        "youtube_automation.media.composition.timeline._ffmpeg_bin", return_value="ffmpeg"
     )
     clips = [
         tmp_path / "a.mp4",
@@ -37,7 +37,7 @@ def test_stitch_clips_writes_concat_file(mocker, tmp_path):
 
 def test_stitch_clips_uses_fps_mode_not_vsync(mocker, tmp_path):
     mocker.patch(
-        "youtube_automation.media.composition.timeline.ensure_ffmpeg", return_value=None
+        "youtube_automation.media.composition.timeline._ffmpeg_bin", return_value="ffmpeg"
     )
     clips = [tmp_path / "a.mp4"]
     clips[0].write_bytes(b"mp4")

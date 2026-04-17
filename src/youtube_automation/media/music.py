@@ -1,22 +1,14 @@
 from __future__ import annotations
 
+import os
 import random
+import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Tuple, Optional
 
 from youtube_automation.config.loader import BASE_DIR
-from youtube_automation.media.ffmpeg import ensure_ffmpeg
-
-
-def _ffmpeg_bin() -> str:
-    ffmpeg_dir = ensure_ffmpeg()
-    return "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
-
-
-def _ffprobe_bin() -> str:
-    ffmpeg_dir = ensure_ffmpeg()
-    return "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
+from youtube_automation.media.ffmpeg import ffmpeg_bin as _ffmpeg_bin, ffprobe_bin as _ffprobe_bin
 
 
 def _probe_duration(path: Path) -> Optional[float]:
@@ -190,20 +182,33 @@ def _mix_music_into_video(
     return output_path
 
 
+def _passthrough(video_path: Path, output_path: Path) -> Path:
+    """Return output_path, creating it as a hard link (or copy) of video_path when needed."""
+    if video_path.resolve() == output_path.resolve():
+        return output_path
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+    try:
+        os.link(video_path, output_path)
+    except OSError:
+        shutil.copy2(video_path, output_path)
+    return output_path
+
+
 def add_background_music(
     *, video_path: Path, output_path: Path, settings: dict
 ) -> Path:
     music_cfg = settings.get("music", {})
     if not music_cfg.get("enabled", False):
-        return video_path
+        return _passthrough(video_path, output_path)
 
     tracks = _collect_music_tracks(settings)
     if not tracks:
-        return video_path
+        return _passthrough(video_path, output_path)
 
     video_dur = _probe_duration(video_path)
     if not video_dur or video_dur <= 1.0:
-        return video_path
+        return _passthrough(video_path, output_path)
 
     selected = _select_tracks(
         tracks,

@@ -11,39 +11,29 @@ Python toolchain that sources short videos from Reddit, optionally adds AI comme
 
 ## Install
 
-Create a virtual environment in the project root (do not install into the global interpreter):
+Install [Poetry](https://python-poetry.org/) if you haven't already:
 
 ```bash
-python -m venv .venv
+pip install poetry
 ```
 
-Activate it, then install the package (dependencies come from `pyproject.toml`; optional `requirements.txt` matches CI’s pinned set):
-
-**Windows (PowerShell)**
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e .
-```
-
-**macOS / Linux**
+Then install the project:
 
 ```bash
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -e .
+poetry install
 ```
 
-For development tests:
+For development (includes pytest):
 
 ```bash
-pip install -e ".[dev]"
+poetry install --extras dev
 ```
 
-Alternatively, without activating: `.\.venv\Scripts\python.exe -m pip install -e ".[dev]"` (Windows) or `.venv/bin/python -m pip install -e ".[dev]"` (Unix).
+Activate the Poetry shell so you can run `python` and CLI tools directly without the `poetry run` prefix:
 
-Runtime dependencies are also declared in `pyproject.toml`; `requirements.txt` remains a fully pinned lockfile for reproducible installs (for example in CI).
+```bash
+poetry shell
+```
 
 ## Configuration
 
@@ -54,21 +44,38 @@ Load order is implemented in `youtube_automation.config.loader.load_settings`.
 
 Session history (used post IDs) is stored in `config/used_<channel>.json` and pruned using `used_horizon_days`.
 
+Add a new channel by creating `config/channels/<name>.yaml` and running with `--channel <name>`.
+
 ## Environment variables
 
-| Variable | Purpose |
-|----------|---------|
-| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | PRAW |
-| `REDDIT_COOKIES_FILE` | Optional path to Netscape cookie file for yt-dlp |
-| `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | YouTube upload OAuth (values are trimmed; use non-breaking secrets with no stray newlines) |
-| `YT_PRIVACY` | Optional. When set to `public`, `private`, or `unlisted`, overrides `youtube.privacy_status` from YAML (useful in CI). |
-| `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | AI providers (see code for exact usage) |
+| Variable                                                           | Purpose                                                                                                                |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`    | PRAW                                                                                                                   |
+| `REDDIT_COOKIES_FILE`                                              | Optional path to Netscape cookie file for yt-dlp                                                                       |
+| `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`             | YouTube upload OAuth (values are trimmed; use non-breaking secrets with no stray newlines)                             |
+| `YT_PRIVACY`                                                       | Optional. When set to `public`, `private`, or `unlisted`, overrides `youtube.privacy_status` from YAML (useful in CI). |
+| `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | AI providers (see code for exact usage)                                                                                |
 
-Use a local `.env` file if you rely on `python-dotenv` via `load_env()` in the CLI.
+Environment loading is channel-aware:
+
+1. `.env` (global defaults)
+2. Channel-prefixed variables from `.env` (e.g. `ANIMALS_YT_CLIENT_ID`, `DASHBOARD_REDDIT_CLIENT_ID`)
+3. `.env.<channel>` (optional, overrides #1/#2)
+4. `.env.channels/<channel>.env` (optional, overrides all above)
+
+Examples:
+
+- Shared single file with prefixes:
+  - `ANIMALS_YT_CLIENT_ID=...`
+  - `DASHBOARD_YT_CLIENT_ID=...`
+- Per-channel files:
+  - `.env.animals`
+  - `.env.channels/dashboard.env`
 
 ## CLI
 
 ```bash
+# Inside `poetry shell` (or prefix every command with `poetry run`):
 python -m youtube_automation.app --mode pipeline --channel animals
 ```
 
@@ -82,6 +89,11 @@ Useful flags:
 
 - `--dry-run` — build everything but skip YouTube upload
 - `--cleanup` — when the run completes successfully, delete generated media under `out/<channel>/`, `thumbnails/`, and `downloads/` (session JSON is kept). If the pipeline aborts, cleanup is skipped so intermediates remain for debugging.
+- `--target-duration-minutes` — temporarily override `final_target_duration` from channel YAML (great for quick testing)
+- `--no-commentary` — disable AI commentary and TTS for this run
+- `--no-music` — disable background music mix for this run
+- `--no-ai-metadata` — disable AI-generated title/description/hashtags for this run
+- `--core-only` — disable commentary and music (AI metadata still runs)
 - `--debug` — verbose logging
 
 Partial failures (commentary, TTS, per-clip render, etc.) are logged and recorded under `pipeline_errors` on the saved session.
@@ -93,13 +105,13 @@ Partial failures (commentary, TTS, per-clip render, etc.) are logged and recorde
 1. Optional **Actions variable** `YT_PRIVACY_STATUS` (`public` \| `private` \| `unlisted`) overrides `youtube.privacy_status` in YAML when set. If unset, **channel YAML** controls visibility (same as local runs).
 2. Provide secrets as referenced in the workflow file (Reddit, YouTube OAuth, AI keys, base64-encoded Reddit cookies).
 
-Jobs target a GitHub **Environment** named after the channel (`animals`, `dashcam`). If you define secrets on those environments, they override repository secrets—keep `YT_*` values identical across environments unless you intend different channels per environment.
+Jobs target a GitHub **Environment** named after the `channel` input value. If you define secrets on those environments, they override repository secrets—this lets multiple channels run from one repo with isolated credentials.
 
 ### YouTube `invalid_grant` / weekly failures
 
 If CI logs show `invalid_grant` or `RefreshError` when refreshing the token:
 
-- **Testing mode:** In [Google Cloud Console](https://console.cloud.google.com/) → *APIs & Services* → *OAuth consent screen*, apps in **Testing** often get refresh tokens that stop working after about **seven days**. **Publish** the app to **Production** (complete verification if Google requires it for the `youtube.upload` scope) so refresh tokens last until revoked.
+- **Testing mode:** In [Google Cloud Console](https://console.cloud.google.com/) → _APIs & Services_ → _OAuth consent screen_, apps in **Testing** often get refresh tokens that stop working after about **seven days**. **Publish** the app to **Production** (complete verification if Google requires it for the `youtube.upload` scope) so refresh tokens last until revoked.
 - **Mismatched client:** `YT_REFRESH_TOKEN` must be issued for the **same** OAuth client as `YT_CLIENT_ID` / `YT_CLIENT_SECRET`.
 - **Stale environment secret:** Re-copy the three values from Cloud Console into the Environment secrets GitHub actually uses for that job.
 

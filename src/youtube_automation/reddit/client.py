@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import concurrent.futures
+import logging
 import os
 import time
-from typing import List
+from typing import Callable, List, TypeVar
 
 import praw
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 def create_reddit_client():
@@ -15,27 +22,36 @@ def create_reddit_client():
     )
 
 
-def _with_timeout(fn, timeout=20, retries=2, backoff=2.0):
+def with_timeout(
+    fn: Callable[[], T],
+    name: str = "",
+    what: str = "",
+    timeout: int = 20,
+    retries: int = 2,
+    backoff: float = 2.0,
+) -> T | list:
     attempt = 0
     while attempt <= retries:
         attempt += 1
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                return ex.submit(fn).result(timeout=timeout)
+                fut = ex.submit(fn)
+                return fut.result(timeout=timeout)
         except Exception:
             time.sleep(min(8.0, backoff ** (attempt - 1)))
     return []
 
 
 def fetch_feed(subreddit, mode: str, limit: int) -> List:
+    name = subreddit.display_name
     if mode == "new":
-        return _with_timeout(lambda: list(subreddit.new(limit=limit)))
+        return with_timeout(lambda: list(subreddit.new(limit=limit)), name, "new")
     if mode == "hot":
-        return _with_timeout(lambda: list(subreddit.hot(limit=limit)))
+        return with_timeout(lambda: list(subreddit.hot(limit=limit)), name, "hot")
     if mode == "rising":
-        return _with_timeout(lambda: list(subreddit.rising(limit=limit)))
+        return with_timeout(lambda: list(subreddit.rising(limit=limit)), name, "rising")
     if mode == "top_day":
-        return _with_timeout(
-            lambda: list(subreddit.top(time_filter="day", limit=limit))
+        return with_timeout(
+            lambda: list(subreddit.top(time_filter="day", limit=limit)), name, "top_day"
         )
     return []

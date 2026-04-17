@@ -13,7 +13,8 @@ from youtube_automation.media.composition import (
     stitch_clips,
 )
 from youtube_automation.media.thumbnail import source_thumbnail
-from youtube_automation.media.video import source_videos
+from youtube_automation.instagram.client import ensure_instagram_session_ok
+from youtube_automation.sourcing import instagram_sourcing_enabled, source_all_videos
 from youtube_automation.media.video_processing import batch_normalize_videos
 from youtube_automation.media.music import add_background_music
 from youtube_automation.storage.sessions import new_session, save_session
@@ -21,6 +22,29 @@ from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 from youtube_automation.youtube.auth import ensure_youtube_refresh_token
 from youtube_automation.youtube.upload import upload_video
 from youtube_automation.publishing.metadata import build_metadata
+
+
+class NoClipsSourcedError(ValueError):
+    """Sourcing returned no clips (filters too strict, empty feeds, or API limits)."""
+
+
+def _no_clips_hint(settings: dict) -> str:
+    lines = [
+        "No clips sourced — cannot build a video.",
+        "",
+        "Things to try:",
+        "  • Reddit: relax post.min_score / min_ratio / duration; add subreddits; check "
+        "config/used_<channel>.json is not blocking everything you expect.",
+        "  • Instagram: lower instagram.min_likes, widen min_duration/max_duration, try "
+        "different hashtags; hashtag results can be sparse when many filters apply at once.",
+        "  • Run with --mode videos first to confirm clips are found before the full pipeline.",
+    ]
+    if instagram_sourcing_enabled(settings):
+        lines.append(
+            "  • Instagram-only: confirm videos in those tags meet likes and duration "
+            "limits (very strict defaults often yield zero downloads)."
+        )
+    return "\n".join(lines)
 
 
 def _clip_ref(clip: dict) -> str:
@@ -96,9 +120,13 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         if not dry_run:
             ensure_youtube_refresh_token()
 
-        clips = source_videos(settings)
+        if instagram_sourcing_enabled(settings):
+            ensure_instagram_session_ok(settings)
+
+        clips = source_all_videos(settings)
         if not clips:
-            raise ValueError("No clips sourced, aborting pipeline")
+            logger.error("%s", _no_clips_hint(settings))
+            raise NoClipsSourcedError(_no_clips_hint(settings))
 
         # Move the highest-scored clip to position 0 so the video opens strong.
         best_idx = max(range(len(clips)), key=lambda i: clips[i].get("score", 0))

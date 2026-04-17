@@ -57,6 +57,29 @@ post:
   min_score: 350
   min_ratio: 0.8
 
+instagram:
+  hashtags:
+    - funnypets
+    - funnyanimals
+    - animals
+    - animal
+    - cutepets
+    - dogsofinstagram
+    - catsofinstagram
+    - petvideos
+    - funnydog
+    - funnycat
+    - animalsoftiktok
+    - funnyreels
+  min_likes: 5000
+  limit_per_hashtag: 300
+  max_duration: 20
+  min_duration: 1
+
+source_split:
+  reddit: 0.5
+  instagram: 0.5
+
 audio:
   original_clip_volume_db: -18
 
@@ -140,7 +163,7 @@ youtube:
 
 music:
   tags: ["fun", "upbeat", "cute"]
-  enabled: true
+  enabled: false
   music_volume_db: -14
   original_duck_db: -14
   fade_in_sec: 0.8

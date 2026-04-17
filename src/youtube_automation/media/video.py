@@ -261,7 +261,12 @@ def _download_reddit_video(
 
 
 # Public API
-def source_videos(settings: dict) -> List[dict]:
+def source_videos(
+    settings: dict,
+    *,
+    duration_cap_seconds: int | None = None,
+    warn_below_seconds: int | None = None,
+) -> List[dict]:
     ffmpeg_location = ensure_ffmpeg()
     reddit = create_reddit_client()
 
@@ -277,6 +282,8 @@ def source_videos(settings: dict) -> List[dict]:
 
     over_source_pct = int(post_cfg.get("over_source_pct", 25))
     effective_target = int(final_target_seconds * (1 + over_source_pct / 100))
+    if duration_cap_seconds is not None:
+        effective_target = min(effective_target, int(duration_cap_seconds))
 
     context_cfg = settings.get("post_context", {})
     comments_limit = int(context_cfg.get("top_comments", 5))
@@ -303,8 +310,14 @@ def source_videos(settings: dict) -> List[dict]:
         ("rising", 100),
     ]
 
+    warn_threshold = (
+        warn_below_seconds
+        if warn_below_seconds is not None
+        else final_target_seconds
+    )
+
     logger.info(
-        "Starting video sourcing: target=%d min (%ds), effective_target=%ds (over-source %d%%)",
+        "Starting Reddit video sourcing: target=%d min (%ds), effective_target=%ds (over-source %d%%)",
         final_target_minutes,
         final_target_seconds,
         effective_target,
@@ -406,6 +419,7 @@ def source_videos(settings: dict) -> List[dict]:
                         "overlay_title": len(submission.title or "") <= 75,
                         "score": int(submission.score),
                         "upvote_ratio": float(submission.upvote_ratio or 0.0),
+                        "source": "reddit",
                     }
                 )
 
@@ -416,28 +430,28 @@ def source_videos(settings: dict) -> List[dict]:
                     duration,
                     submission.score,
                     total_duration,
-                    final_target_seconds,
+                    effective_target,
                 )
 
                 time.sleep(random.uniform(0.25, 0.6))
 
     logger.info(
-        "Video sourcing complete: %d clips, %ds total (target %ds). " "Skipped: %s",
+        "Video sourcing complete: %d clips, %ds total (warn threshold %ds). " "Skipped: %s",
         len(accepted),
         total_duration,
-        final_target_seconds,
+        warn_threshold,
         ", ".join(f"{k}={v}" for k, v in skipped_reasons.items() if v > 0),
     )
 
-    if total_duration < final_target_seconds:
+    if total_duration < warn_threshold:
         logger.warning(
             "TARGET NOT REACHED: sourced %ds of %ds target (%d%%). "
             "Consider adding more subreddits or lowering score thresholds.",
             total_duration,
-            final_target_seconds,
+            warn_threshold,
             (
-                int(total_duration / final_target_seconds * 100)
-                if final_target_seconds
+                int(total_duration / warn_threshold * 100)
+                if warn_threshold
                 else 0
             ),
         )

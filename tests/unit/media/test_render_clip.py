@@ -16,10 +16,14 @@ from youtube_automation.media.ffprobe_streams import ContainerStreamInfo
 
 @pytest.fixture
 def patch_ffmpeg_path(mocker):
-    mocker.patch("youtube_automation.media.composition.clip.ensure_ffmpeg", return_value=None)
+    mocker.patch(
+        "youtube_automation.media.composition.clip._ffmpeg_bin", return_value="ffmpeg"
+    )
 
 
-def _ffmpeg_success(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+def _ffmpeg_success(
+    cmd: list[str], **kwargs: object
+) -> subprocess.CompletedProcess[str]:
     out = Path(cmd[-1])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(b"fakevideo")
@@ -135,7 +139,9 @@ def test_ffmpeg_failure_includes_stderr(mocker, tmp_path, patch_ffmpeg_path):
             stderr="Invalid data found when processing input",
         )
 
-    mocker.patch("youtube_automation.media.composition.clip.subprocess.run", side_effect=fail)
+    mocker.patch(
+        "youtube_automation.media.composition.clip.subprocess.run", side_effect=fail
+    )
 
     with pytest.raises(RenderClipError) as excinfo:
         render_clip(input_video=inv, output_video=outv, commentary_audio=None)

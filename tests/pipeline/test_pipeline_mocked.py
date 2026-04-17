@@ -11,7 +11,7 @@ def test_pipeline_end_to_end(mocker, minimal_settings, dummy_video, tmp_path):
     thumb_path.write_bytes(b"x")
 
     mocker.patch(
-        "youtube_automation.pipeline.source_videos",
+        "youtube_automation.pipeline.source_all_videos",
         return_value=[
             {
                 "id": "1",
@@ -92,7 +92,7 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
     thumb_path.write_bytes(b"x")
 
     mocker.patch(
-        "youtube_automation.pipeline.source_videos",
+        "youtube_automation.pipeline.source_all_videos",
         return_value=[
             {
                 "id": "1",
@@ -153,7 +153,7 @@ def test_cleanup_runs_only_when_requested(mocker, minimal_settings, dummy_video,
 
 
 def test_cleanup_skipped_when_pipeline_aborts(mocker, minimal_settings):
-    mocker.patch("youtube_automation.pipeline.source_videos", return_value=[])
+    mocker.patch("youtube_automation.pipeline.source_all_videos", return_value=[])
     spy = mocker.patch("youtube_automation.pipeline._cleanup_generated_files")
 
     with pytest.raises(ValueError, match="No clips"):

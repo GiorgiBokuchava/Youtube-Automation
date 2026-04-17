@@ -18,3 +18,13 @@ def ensure_ffmpeg() -> Optional[str]:
 
     print("[fatal] ffmpeg/ffprobe not found", file=sys.stderr)
     sys.exit(1)
+
+
+def ffmpeg_bin() -> str:
+    ffmpeg_dir = ensure_ffmpeg()
+    return "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
+
+
+def ffprobe_bin() -> str:
+    ffmpeg_dir = ensure_ffmpeg()
+    return "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
