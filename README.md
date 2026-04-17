@@ -11,8 +11,27 @@ Python toolchain that sources short videos from Reddit, optionally adds AI comme
 
 ## Install
 
+Create a virtual environment in the project root (do not install into the global interpreter):
+
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+```
+
+Activate it, then install the package (dependencies come from `pyproject.toml`; optional `requirements.txt` matches CI’s pinned set):
+
+**Windows (PowerShell)**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e .
+```
+
+**macOS / Linux**
+
+```bash
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -e .
 ```
 
@@ -21,6 +40,8 @@ For development tests:
 ```bash
 pip install -e ".[dev]"
 ```
+
+Alternatively, without activating: `.\.venv\Scripts\python.exe -m pip install -e ".[dev]"` (Windows) or `.venv/bin/python -m pip install -e ".[dev]"` (Unix).
 
 Runtime dependencies are also declared in `pyproject.toml`; `requirements.txt` remains a fully pinned lockfile for reproducible installs (for example in CI).
 
