@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import os
 import random
-import time
 import re
 import logging
-import concurrent.futures
 from pathlib import Path
 from typing import Optional, List
 
 import requests
 from PIL import Image
 
-from youtube_automation.reddit.client import create_reddit_client
+from youtube_automation.reddit.client import create_reddit_client, fetch_feed
 from youtube_automation.storage.sessions import (
     get_used_thumbnail_ids,
     save_session,
@@ -188,32 +186,6 @@ def _download_image(url: str, dest: Path) -> Optional[Path]:
         return None
 
 
-def _with_timeout(fn, timeout=20, retries=2, backoff=2.0):
-    attempt = 0
-    while attempt <= retries:
-        attempt += 1
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                return ex.submit(fn).result(timeout=timeout)
-        except Exception:
-            time.sleep(min(8.0, backoff ** (attempt - 1)))
-    return []
-
-
-def _fetch_feed(subreddit, mode: str, limit: int) -> List:
-    if mode == "new":
-        return _with_timeout(lambda: list(subreddit.new(limit=limit)))
-    if mode == "hot":
-        return _with_timeout(lambda: list(subreddit.hot(limit=limit)))
-    if mode == "rising":
-        return _with_timeout(lambda: list(subreddit.rising(limit=limit)))
-    if mode == "top_day":
-        return _with_timeout(
-            lambda: list(subreddit.top(time_filter="day", limit=limit))
-        )
-    return []
-
-
 def source_thumbnail(settings: dict) -> Optional[dict]:
     reddit = create_reddit_client()
     used_ids = get_used_thumbnail_ids(settings)
@@ -244,7 +216,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
             subreddit = reddit.subreddit(sub)
 
             try:
-                submissions = _fetch_feed(subreddit, stage_name, limit)
+                submissions = fetch_feed(subreddit, stage_name, limit)
 
                 posts_checked = 0
                 posts_skipped = 0
@@ -359,7 +331,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                 subreddit = reddit.subreddit(sub)
 
                 try:
-                    submissions = _fetch_feed(subreddit, stage_name, limit)
+                    submissions = fetch_feed(subreddit, stage_name, limit)
                     for submission in submissions:
                         if (
                             submission.is_self
