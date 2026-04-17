@@ -14,7 +14,8 @@ def test_text_service_preferred_model_success(mocker):
     assert res == "ok"
 
 
-def test_text_service_fallback_when_preferred_fails(mocker):
+def test_text_service_fallback_when_preferred_fails(mocker, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEYS", "sk-test-key-for-unit-test")
     mocker.patch(
         "youtube_automation.ai.text.providers.gemini.GeminiProvider.generate",
         side_effect=Exception("boom"),
@@ -22,6 +23,24 @@ def test_text_service_fallback_when_preferred_fails(mocker):
     mocker.patch(
         "youtube_automation.ai.text.providers.openrouter.OpenRouterProvider.generate",
         return_value="fallback",
+    )
+    # Avoid live OpenRouter model discovery (dummy key would yield no models).
+    mocker.patch(
+        "youtube_automation.ai.text.service.get_models_by_capabilities",
+        return_value=[
+            {
+                "provider": "gemini",
+                "model": "gemini-2.5-flash",
+                "capabilities": {"text_in", "text_out"},
+                "free": True,
+            },
+            {
+                "provider": "openrouter",
+                "model": "test/model:free",
+                "capabilities": {"text_in", "text_out"},
+                "free": True,
+            },
+        ],
     )
 
     svc = TextService()

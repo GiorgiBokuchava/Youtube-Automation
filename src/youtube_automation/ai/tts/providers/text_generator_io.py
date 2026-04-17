@@ -10,12 +10,11 @@ class TextGeneratorTTSProvider:
     API_URL = "https://api.text-generator.io/api/v1/generate_speech"
 
     def __init__(self) -> None:
-        self._secret = os.getenv("TEXT_GENERATOR_API_KEY")
-
-        if not self._secret:
-            raise RuntimeError("TEXT_GENERATOR_API_KEY missing")
+        self._secret = os.getenv("TEXT_GENERATOR_API_KEY") or ""
 
     def synthesize(self, *, model: str, request: TTSRequest) -> bytes:
+        if not self._secret:
+            raise RuntimeError("TEXT_GENERATOR_API_KEY missing")
         payload = {
             "text": request.text,
             "voice": request.voice or "af_sarah",
