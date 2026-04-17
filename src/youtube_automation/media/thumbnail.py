@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, List
 
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from youtube_automation.reddit.client import create_reddit_client, fetch_feed
 from youtube_automation.storage.sessions import (
@@ -32,6 +32,13 @@ FALLBACK_SEARCH_STAGES = [
     ("hot", 50),
     ("new", 50),
 ]
+
+_DEFAULT_EMOJI_POOL = ["😂", "😹", "😆", "🤣", "😍", "🥹"]
+_FILENAME_TO_EMOJI = {
+    "laughing-with-tears-emoji.png": "😂",
+    "silly-emoji.png": "😜",
+    "smiling-emoji.png": "😄",
+}
 
 
 def _contains_banned_words(text: str, banned_words: List[str]) -> bool:
@@ -133,6 +140,73 @@ def _create_composite_thumb(
         x += col_w
         if i < 2:
             x += bar_w
+
+    return out
+
+
+def _resolve_emoji_pool(values: list[str]) -> list[str]:
+    pool: list[str] = []
+    for v in values:
+        s = str(v or "").strip()
+        if not s:
+            continue
+        if s.lower().endswith(".png"):
+            mapped = _FILENAME_TO_EMOJI.get(s.lower())
+            if mapped:
+                pool.append(mapped)
+            continue
+        pool.append(s)
+    return pool
+
+
+def _apply_arrow_and_emoji_overlays(base: Image.Image, cfg: dict) -> Image.Image:
+    """
+    Draw simple overlays directly so uploads always include them, without
+    relying on external image asset files.
+    """
+    out = base.copy().convert("RGB")
+    draw = ImageDraw.Draw(out)
+    w, h = out.size
+
+    arrow_cfg = cfg.get("arrow_overlay", {}) or {}
+    if bool(arrow_cfg.get("enabled", False)):
+        # Bottom-right arrow with white border for contrast.
+        shaft_w = max(18, int(w * 0.018))
+        shaft_h = max(110, int(h * 0.16))
+        x2 = int(w * 0.88)
+        y2 = int(h * 0.86)
+        x1 = x2 - shaft_w
+        y1 = y2 - shaft_h
+
+        head_w = max(46, int(w * 0.05))
+        head_h = max(52, int(h * 0.08))
+        head = [(x1 - head_w, y1 + head_h // 2), (x2 + head_w // 3, y1 + head_h // 2), ((x1 + x2) // 2, y1 - head_h)]
+        fill = (255, 52, 52)
+        border = (255, 255, 255)
+
+        draw.rectangle((x1, y1, x2, y2), fill=fill, outline=border, width=max(3, shaft_w // 4))
+        draw.polygon(head, fill=fill, outline=border)
+
+    emoji_cfg = cfg.get("emoji_overlay", {}) or {}
+    if bool(emoji_cfg.get("enabled", False)):
+        raw_pool = emoji_cfg.get("pool") or []
+        emoji_pool = _resolve_emoji_pool(raw_pool) or _DEFAULT_EMOJI_POOL
+        emoji = random.choice(emoji_pool)
+
+        font_size = max(64, int(min(w, h) * 0.14))
+        try:
+            font = ImageFont.truetype("seguiemj.ttf", font_size)
+        except Exception:
+            try:
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except Exception:
+                font = ImageFont.load_default()
+
+        x = int(w * 0.06)
+        y = int(h * 0.06)
+        # Shadow improves readability over busy backgrounds.
+        draw.text((x + 3, y + 3), emoji, fill=(0, 0, 0), font=font)
+        draw.text((x, y), emoji, fill=(255, 255, 255), font=font)
 
     return out
 
@@ -302,6 +376,8 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                     if not out:
                         continue
 
+                    out = _apply_arrow_and_emoji_overlays(out, cfg)
+
                     out_path = THUMBS / f"{submission.id}_yt.jpg"
                     out.save(
                         out_path, "JPEG", quality=90, optimize=True, progressive=True
@@ -403,6 +479,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
 
         composite = _create_composite_thumb(portraits, target_w, target_h, tolerance)
         if composite:
+            composite = _apply_arrow_and_emoji_overlays(composite, cfg)
             out_path = THUMBS / "composite_fallback.jpg"
             composite.save(
                 out_path, "JPEG", quality=90, optimize=True, progressive=True
