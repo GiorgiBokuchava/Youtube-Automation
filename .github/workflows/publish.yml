@@ -60,21 +60,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: poetry
-          cache-dependency-path: poetry.lock
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
 
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Install Poetry
-        run: python -m pip install --upgrade pip poetry
-
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
 
       - name: Preflight — YouTube OAuth refresh token
         run: |
-          poetry run python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
+          python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
         run: |
@@ -83,13 +83,13 @@ jobs:
 
       - name: Preflight - test cookies with yt-dlp
         run: |
-          poetry run yt-dlp --version
-          poetry run yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
+          yt-dlp --version
+          yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
             "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
 
       - name: Run pipeline
         run: |
-          poetry run python -m youtube_automation.app \
+          python -m youtube_automation.app \
             --mode pipeline \
             --channel "$CHANNEL" \
             --cleanup
