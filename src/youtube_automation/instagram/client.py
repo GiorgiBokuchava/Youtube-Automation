@@ -55,7 +55,7 @@ def build_loader(
         save_metadata=False,
         compress_json=False,
         post_metadata_txt_pattern="",
-        dirname_pattern=str(download_dir),
+        dirname_pattern=str(download_dir / "{target}"),
         quiet=True,
     )
 

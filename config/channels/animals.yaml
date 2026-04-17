@@ -66,7 +66,13 @@ instagram:
     - cutepets
     - dogsofinstagram
     - catsofinstagram
-  min_likes: 5000
+    - petvideos
+    - funnydog
+    - funnycat
+    - animalsoftiktok
+    - funnyreels
+  min_likes: 1000
+  limit_per_hashtag: 300
   max_duration: 20
   min_duration: 1
 

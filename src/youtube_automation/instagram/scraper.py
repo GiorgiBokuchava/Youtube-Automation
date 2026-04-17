@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 from pathlib import Path
 from typing import Generator
@@ -19,6 +20,51 @@ from youtube_automation.utils.paths import DOWNLOADS
 logger = logging.getLogger(__name__)
 
 MEDIA_TYPE_VIDEO = 2
+
+# Simple heuristic for English detection
+_ENGLISH_WORDS = {
+    "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not",
+    "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from",
+    "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would",
+    "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which",
+    "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know",
+    "take", "people", "into", "year", "your", "good", "some", "could", "them", "see",
+    "other", "than", "then", "now", "look", "only", "come", "its", "over", "think",
+    "also", "back", "after", "use", "two", "how", "our", "work", "first", "well",
+    "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us",
+    "dog", "cat", "pet", "funny", "cute", "smile", "love", "baby", "animals", "animal",
+}
+
+
+def _is_likely_english(text: str) -> bool:
+    """Return True if text has enough English-like features or is very short/neutral."""
+    if not text:
+        return True
+    
+    # Normalize and extract words
+    words = re.findall(r"\b[a-z]{2,}\b", text.lower())
+    if not words:
+        # Check if it contains mostly non-Latin scripts (e.g. Arabic, Cyrillic, Chinese)
+        # by looking at the ratio of [a-zA-Z] chars.
+        latin_chars = len(re.findall(r"[a-zA-Z]", text))
+        total_chars = len(re.sub(r"\s+", "", text))
+        if total_chars > 5 and (latin_chars / total_chars) < 0.3:
+            return False
+        return True # Neutral/Emojis only
+
+    # Count common English words
+    common_count = sum(1 for w in words if w in _ENGLISH_WORDS)
+    
+    # If we find at least one very common English word, it's likely English or fine.
+    # For short captions, even 1 word is a good sign.
+    if len(words) <= 3:
+        return common_count >= 1 or all(w.isascii() for w in words)
+    
+    # For longer captions, expect at least 20% common words or mostly ASCII
+    ratio = common_count / len(words)
+    ascii_ratio = sum(1 for w in words if w.isascii()) / len(words)
+    
+    return ratio >= 0.15 or ascii_ratio >= 0.8
 
 
 def _caption_text(media: dict) -> str:
@@ -172,6 +218,34 @@ def _download_instagram_video(
         return None
 
 
+def _check_comments_english(L: instaloader.Instaloader, media: dict, shortcode: str) -> bool:
+    """Fetch top 5 comments and verify if they are likely English."""
+    logger.debug("Checking comments for English validation: %s", shortcode)
+    try:
+        post = instaloader.Post.from_iphone_struct(L.context, media)
+        count = 0
+        english_count = 0
+        
+        # instaloader's get_comments returns an iterator; we only need a few.
+        for comment in post.get_comments():
+            count += 1
+            if _is_likely_english(comment.text):
+                english_count += 1
+            if count >= 5:
+                break
+        
+        if count == 0:
+            return True # No comments to judge by
+            
+        # If majority are English, we accept it.
+        result = (english_count / count) >= 0.5
+        logger.debug("Comment check for %s: %s (%d/%d English)", shortcode, result, english_count, count)
+        return result
+    except Exception as exc:
+        logger.debug("Failed to check comments for %s: %s", shortcode, exc)
+        return True # Fallback to true if API fails
+
+
 def source_instagram_videos(
     settings: dict,
     *,
@@ -240,6 +314,7 @@ def source_instagram_videos(
         "already_used": 0,
         "low_likes": 0,
         "bad_duration": 0,
+        "not_english": 0,
         "download_failed": 0,
         "accepted": 0,
     }
@@ -255,6 +330,7 @@ def source_instagram_videos(
             "already_used": 0,
             "low_likes": 0,
             "bad_duration": 0,
+            "not_english": 0,
             "download_failed": 0,
             "accepted": 0,
         }
@@ -339,6 +415,20 @@ def source_instagram_videos(
                     )
                     continue
 
+                caption = _caption_text(media)
+                if not _is_likely_english(caption):
+                    # Caption looks non-English. Double check with top comments.
+                    if not _check_comments_english(L, media, shortcode):
+                        total_stats["not_english"] += 1
+                        tag_stats["not_english"] += 1
+                        logger.info(
+                            "Instagram skip #%s [%s]: non-English detected for %s",
+                            tag,
+                            label,
+                            shortcode,
+                        )
+                        continue
+
                 seen_ids.add(shortcode)
 
                 logger.info(
@@ -363,7 +453,7 @@ def source_instagram_videos(
                     continue
 
                 total_duration += int(duration)
-                title = _caption_text(media)
+                title = caption
                 user = media.get("user") or {}
                 username = user.get("username") if isinstance(user, dict) else None
                 author = username or "unknown"
@@ -403,12 +493,14 @@ def source_instagram_videos(
 
         logger.info(
             "Instagram tag summary #%s: raw=%d accepted=%d low_likes=%d bad_duration=%d "
-            "already_used=%d duplicate_in_run=%d missing_shortcode=%d download_failed=%d",
+            "not_english=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
+            "download_failed=%d",
             tag,
             tag_stats["raw_media_seen"],
             tag_stats["accepted"],
             tag_stats["low_likes"],
             tag_stats["bad_duration"],
+            tag_stats["not_english"],
             tag_stats["already_used"],
             tag_stats["duplicate_in_run"],
             tag_stats["missing_shortcode"],
@@ -425,11 +517,13 @@ def source_instagram_videos(
 
     logger.info(
         "Instagram overall summary: raw=%d accepted=%d low_likes=%d bad_duration=%d "
-        "already_used=%d duplicate_in_run=%d missing_shortcode=%d download_failed=%d",
+        "not_english=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
+        "download_failed=%d",
         total_stats["raw_media_seen"],
         total_stats["accepted"],
         total_stats["low_likes"],
         total_stats["bad_duration"],
+        total_stats["not_english"],
         total_stats["already_used"],
         total_stats["duplicate_in_run"],
         total_stats["missing_shortcode"],
