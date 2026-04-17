@@ -8,14 +8,16 @@ from youtube_automation.ai.text.registry import get_models_by_capabilities
 
 
 SYSTEM_RULES = """
-You are generating YouTube metadata.
+You are writing YouTube metadata for a real channel.
 
-Rules:
-- Do NOT mention Reddit.
-- Do NOT mention AI or automation.
+Hard rules:
+- Do NOT mention Reddit, AI, automation, or where the material came from.
+- Do NOT invent details not supported by the clip titles.
 - Do NOT include hashtags inside the description body.
-- Avoid generic titles like "Compilation", "Best Clips", or "Top Moments".
-Write natural, human-sounding YouTube copy that matches the channel tone.
+- Keep everything human, clean, and publishable.
+
+When clip titles are varied or thin on detail, write a strong broad title that fits the niche.
+Do not force specificity when the input does not support it.
 """
 
 
@@ -69,29 +71,26 @@ CHANNEL CONTEXT:
 - Tags: {ctx["tags"]}
 - Source themes: {sources}
 
-CLIP TITLES USED IN THIS VIDEO:
+CLIP TITLES:
 {clip_context}
 
-Write YouTube metadata that matches the channel context above.
+Use only the above to write the metadata. Do not assume access to footage.
 
-TITLE GUIDELINES:
-- Be specific and descriptive
-- Reflect the niche and tone accurately
-- Focus on moments, ideas, or situations shown in the video
-- Avoid generic phrasing (compilation, clips, top 10)
-- Keep under 90 characters
+TITLE:
+- One title only, max 90 characters
+- Should feel like a real YouTube upload from this channel
+- Calibrate specificity to what the clip titles actually support — broad is fine when context is thin
+- One emoji is allowed if it fits naturally; otherwise omit it
 
-TITLE EXAMPLES (adapt style, not content):
-- When {ctx["niche"]} Take an Unexpected Turn
-- Moments That Defined {ctx["niche"]}
-- You Won’t Expect What Happens Next
-- A Closer Look at {ctx["niche"]}
+DESCRIPTION:
+- Two short paragraphs
+- Paragraph 1: what kind of moments or situations the viewer can expect, grounded in the clip titles
+- Paragraph 2: natural viewer engagement; include this exact call to action once: "{call_to_action}"
+- Do not repeat the title verbatim; do not overhype
 
-TASKS:
-1. Write ONE YouTube title.
-2. Write a description (2–3 short paragraphs).
-3. Add ONE call to action: "{call_to_action}".
-4. Add up to {max_hashtags} relevant hashtags.
+HASHTAGS:
+- Up to {max_hashtags}, but use fewer if only 2–3 are genuinely relevant
+- Broad, searchable, evergreen — no subreddit-style or joke tags
 
 FORMAT EXACTLY AS:
 
@@ -121,7 +120,7 @@ def generate_ai_metadata(
 ) -> Dict[str, object]:
     pub_cfg = settings.get("publishing", {}).get("ai_metadata", {})
     call_to_action = pub_cfg.get("call_to_action", "Subscribe for more.")
-    max_hashtags = int(pub_cfg.get("max_hashtags", 6))
+    max_hashtags = int(pub_cfg.get("max_hashtags", 4))
 
     prompt = _build_prompt(
         clips=clips,
@@ -142,7 +141,7 @@ def generate_ai_metadata(
         ctx = _extract_channel_context(settings)
 
         if not parsed.get("title"):
-            parsed["title"] = f"Moments from {ctx['niche']}"
+            parsed["title"] = f"Unexpected Moments in {ctx['niche']}"
 
         if not parsed.get("description"):
             parsed["description"] = (
@@ -158,7 +157,7 @@ def generate_ai_metadata(
     except Exception:
         ctx = _extract_channel_context(settings)
         return {
-            "title": f"Moments from {ctx['niche']}",
+            "title": f"Unexpected Moments in {ctx['niche']}",
             "description": (
                 f"Selected moments related to {ctx['niche']}.\n\n" f"{call_to_action}"
             ),
