@@ -71,6 +71,8 @@ def fit_video_to_portrait_box(
     if info.has_audio:
         cmd.extend(
             [
+                "-af",
+                "dynaudnorm=f=150:g=15,volume=1.8",
                 "-c:a",
                 "aac",
                 "-b:a",

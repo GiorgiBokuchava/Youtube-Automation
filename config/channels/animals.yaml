@@ -140,7 +140,7 @@ youtube:
 
 music:
   tags: ["fun", "upbeat", "cute"]
-  enabled: true
+  enabled: false
   music_volume_db: -14
   original_duck_db: -14
   fade_in_sec: 0.8

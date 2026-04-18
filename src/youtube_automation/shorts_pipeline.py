@@ -9,7 +9,7 @@ from youtube_automation.ai.text.shorts_topic import (
     generate_shorts_topic,
     random_clip_count_if_needed,
 )
-from youtube_automation.ai.text.shorts_commentary import generate_shorts_commentary
+from youtube_automation.ai.text.shorts_commentary import generate_shorts_overlay_commentary
 from youtube_automation.media.composition.shorts_render import render_shorts_segment
 from youtube_automation.media.composition.timeline import stitch_clips
 from youtube_automation.media.music import add_background_music
@@ -57,9 +57,11 @@ def run_shorts_pipeline(
         max_seg = float(sc.get("max_segment_duration_sec", 22))
 
         segment_paths: list[Path] = []
+        segment_commentaries: list[str] = []
         n = len(clips)
+        progressive_commentaries: list[str] = ["" for _ in range(n)]
         for idx, clip in enumerate(clips):
-            rank = n - idx
+            rank = idx + 1
             cid = clip["id"]
             logger.info("Processing segment %d/%d (rank %d): %s", idx + 1, n, rank, cid)
             
@@ -77,21 +79,44 @@ def run_shorts_pipeline(
 
             seg_path = SEG_DIR / f"{cid}_seg.mp4"
             try:
-                # Generate a short (max 5 words) caption
-                caption = generate_shorts_commentary(
-                    clip_title=clip.get("title", ""),
-                    topic=topic_plan.topic_title
+                caption = generate_shorts_overlay_commentary(
+                    settings,
+                    clip,
+                    topic_title=topic_plan.topic_title,
+                    video_main_title=main_title,
+                    segment_rank=rank,
+                    total_segments=n,
                 )
                 logger.info("Caption for %s: %r", cid, caption)
 
+                progressive_commentaries[idx] = caption
+                list_lines: list[str] = []
+                for i in range(n):
+                    t = progressive_commentaries[i].strip()
+                    list_lines.append(f"{i + 1}. {t}".strip() if t else f"{i + 1}.")
+
+                of = sc.get("overlay_font_file")
+                otf = sc.get("overlay_title_font_file")
                 render_shorts_segment(
                     fit_path,
                     seg_path,
                     main_title=main_title,
-                    rank=rank,
-                    caption=caption,
+                    list_lines=list_lines,
+                    font_path=Path(of) if of and Path(str(of).strip()).exists() else None,
+                    title_font_path=(
+                        Path(otf) if otf and Path(str(otf).strip()).exists() else None
+                    ),
+                    title_fontcolor=str(
+                        sc.get("overlay_title_fontcolor", "0xffe082")
+                    ).strip(),
+                    title_font_size=int(sc.get("overlay_title_font_size", 52)),
+                    body_font_size=int(sc.get("overlay_body_font_size", 32)),
+                    list_margin_x=int(sc.get("overlay_list_margin_x", 56)),
+                    title_border_w=int(sc.get("overlay_title_border_w", 3)),
+                    body_border_w=int(sc.get("overlay_body_border_w", 2)),
                 )
                 segment_paths.append(seg_path)
+                segment_commentaries.append(caption)
             except Exception as e:
                 _record_error(pipeline_errors, step="shorts_render", exc=e, clip=clip)
                 continue
@@ -155,10 +180,11 @@ def run_shorts_pipeline(
                 "num_clips": len(clips),
                 "topic": {
                     "topic_title": topic_plan.topic_title,
-                    "search_query": topic_plan.search_query,
+                    "search_queries": topic_plan.search_queries,
                     "clip_count_requested": topic_plan.clip_count,
                 },
                 "main_title": main_title,
+                "shorts_commentaries": segment_commentaries,
                 "thumbnail": {},
                 "output_path": str(final_path),
                 "youtube_url": url,

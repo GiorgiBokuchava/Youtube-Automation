@@ -1,6 +1,9 @@
 from typing import Set, TypedDict, Literal
+import logging
 import os
 import requests
+
+logger = logging.getLogger(__name__)
 
 Capability = Literal[
     "text_in", "text_out", "image_in", "video_in", "audio_in", "tool_use"
@@ -86,7 +89,7 @@ def _load_openrouter_free_models() -> list[TextModelSpec]:
         ]
 
     except Exception as exc:
-        print(f"[warn] OpenRouter model discovery failed: {exc}")
+        logger.warning("OpenRouter model discovery failed: %s", exc, exc_info=True)
         _OPENROUTER_MODELS = []
 
     return _OPENROUTER_MODELS

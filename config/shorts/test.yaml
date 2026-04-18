@@ -4,7 +4,7 @@ shorts:
   clip_count_min: 3
   clip_count_max: 3
   randomize_clip_count: false
-  topic_seeds:
+  topic_hints:
     - test topic
   search_time_filter: month
   search_limit_per_subreddit: 5
