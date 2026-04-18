@@ -108,30 +108,110 @@ def source_all_videos(settings: dict) -> List[dict]:
         r_w /= total_w
         i_w /= total_w
 
-    reddit_budget = _split_budget(effective_target, r_w)
-    ig_budget = _split_budget(effective_target, i_w)
+    reddit_budget = _split_budget(effective_target, r_w) if r_w > 0 else 0
+    ig_budget = _split_budget(effective_target, i_w) if i_w > 0 else 0
 
     reddit_warn = int(final_target_seconds * r_w) if r_w > 0 else final_target_seconds
     ig_warn = int(final_target_seconds * i_w) if i_w > 0 else final_target_seconds
 
     clips_r: list[dict] = []
     clips_i: list[dict] = []
+    used_ids_in_run: set[str] = set()
+
+    def _append_unique(dst: list[dict], incoming: list[dict]) -> int:
+        added = 0
+        for clip in incoming:
+            cid = clip.get("id")
+            if not cid or cid in used_ids_in_run:
+                continue
+            used_ids_in_run.add(cid)
+            dst.append(clip)
+            added += 1
+        return added
 
     if r_w > 0 and reddit_budget > 0:
-        clips_r = source_videos(
+        batch = source_videos(
             settings,
             duration_cap_seconds=reddit_budget,
             warn_below_seconds=reddit_warn,
+            exclude_ids=used_ids_in_run,
         )
-        logger.info("Reddit contributed %d clip(s).", len(clips_r))
+        added = _append_unique(clips_r, batch)
+        logger.info("Reddit contributed %d clip(s) in initial pass.", added)
 
     if i_w > 0 and ig_budget > 0 and instagram_sourcing_enabled(settings):
-        clips_i = source_instagram_videos(
+        batch = source_instagram_videos(
             settings,
             duration_cap_seconds=ig_budget,
             warn_below_seconds=ig_warn,
+            exclude_ids=used_ids_in_run,
         )
-        logger.info("Instagram contributed %d clip(s).", len(clips_i))
+        added = _append_unique(clips_i, batch)
+        logger.info("Instagram contributed %d clip(s) in initial pass.", added)
+
+    def _duration(clips: list[dict]) -> int:
+        return sum(int(c.get("duration_sec") or 0) for c in clips)
+
+    total_duration = _duration(clips_r) + _duration(clips_i)
+    remaining = max(0, effective_target - total_duration)
+    can_reddit = bool(r_w > 0 and subs)
+    can_ig = bool(i_w > 0 and instagram_sourcing_enabled(settings))
+
+    # Top-up pass: if one source cannot satisfy its split, fill the remaining
+    # target duration by trying the other available source(s).
+    while remaining > 0 and (can_reddit or can_ig):
+        progress = False
+        prefer_reddit = _duration(clips_r) <= _duration(clips_i)
+
+        ordered_sources: list[str] = (
+            ["reddit", "instagram"] if prefer_reddit else ["instagram", "reddit"]
+        )
+        for source_name in ordered_sources:
+            if source_name == "reddit":
+                if not can_reddit:
+                    continue
+                batch = source_videos(
+                    settings,
+                    duration_cap_seconds=remaining,
+                    warn_below_seconds=remaining,
+                    exclude_ids=used_ids_in_run,
+                )
+                added = _append_unique(clips_r, batch)
+                if added == 0:
+                    can_reddit = False
+                    continue
+                progress = True
+                logger.info(
+                    "Top-up pass: Reddit added %d clip(s), remaining=%ds.",
+                    added,
+                    max(0, effective_target - (_duration(clips_r) + _duration(clips_i))),
+                )
+            else:
+                if not can_ig:
+                    continue
+                batch = source_instagram_videos(
+                    settings,
+                    duration_cap_seconds=remaining,
+                    warn_below_seconds=remaining,
+                    exclude_ids=used_ids_in_run,
+                )
+                added = _append_unique(clips_i, batch)
+                if added == 0:
+                    can_ig = False
+                    continue
+                progress = True
+                logger.info(
+                    "Top-up pass: Instagram added %d clip(s), remaining=%ds.",
+                    added,
+                    max(0, effective_target - (_duration(clips_r) + _duration(clips_i))),
+                )
+
+            remaining = max(0, effective_target - (_duration(clips_r) + _duration(clips_i)))
+            if remaining <= 0:
+                break
+
+        if not progress:
+            break
 
     seen_ids: set[str] = set()
     unique_r: list[dict] = []

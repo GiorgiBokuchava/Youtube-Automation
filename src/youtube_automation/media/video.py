@@ -266,6 +266,7 @@ def source_videos(
     *,
     duration_cap_seconds: int | None = None,
     warn_below_seconds: int | None = None,
+    exclude_ids: set[str] | None = None,
 ) -> List[dict]:
     ffmpeg_location = ensure_ffmpeg()
     reddit = create_reddit_client()
@@ -296,6 +297,8 @@ def source_videos(
     include_selftext = bool(context_cfg.get("include_selftext", True))
 
     previously_used_ids = get_used_video_ids(settings)
+    if exclude_ids:
+        previously_used_ids = set(previously_used_ids).union(exclude_ids)
     seen_ids: set[str] = set()
     accepted: List[dict] = []
     total_duration = 0
