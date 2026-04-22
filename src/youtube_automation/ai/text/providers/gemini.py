@@ -52,30 +52,17 @@ class GeminiProvider:
         if request.messages:
             contents.extend(request.messages)
 
-        available_models = self.get_available_models()
-        model_priority = [model] + [m for m in available_models if m != model]
-
-        last_error = None
-
-        for key in self._keys:
-            client = genai.Client(api_key=key)
-
-            for model_name in model_priority:
-                try:
-                    resp = client.models.generate_content(
-                        model=model_name,
-                        contents=contents,
-                        **request.params,
-                    )
-                    return (resp.text or "").strip()
-
-                except Exception as exc:
-                    last_error = exc
-                    if self._is_quota_error(exc):
-                        continue
-                    continue
-
-            if last_error and not self._is_quota_error(last_error):
-                continue
-
-        raise QuotaExhaustedError("All Gemini models and API keys exhausted")
+        # Single attempt per model id: TextService walks the registry; do not fall
+        # through to other models or retry keys here.
+        client = genai.Client(api_key=self._keys[0])
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=contents,
+                **request.params,
+            )
+            return (resp.text or "").strip()
+        except Exception as exc:
+            if self._is_quota_error(exc):
+                raise QuotaExhaustedError(str(exc)) from exc
+            raise

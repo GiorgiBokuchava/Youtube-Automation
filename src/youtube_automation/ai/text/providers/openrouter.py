@@ -1,12 +1,13 @@
+from typing import List
 import logging
 import os
 import base64
 from openai import OpenAI
 
+import requests
 from youtube_automation.ai.text.types import TextRequest
 
 logger = logging.getLogger(__name__)
-OPENROUTER_FREE_MODEL = "openrouter/free"
 
 
 def _encode_video(path) -> str:
@@ -89,6 +90,21 @@ class OpenRouterProvider:
                 raise
 
 
-def fetch_free_openrouter_models() -> list[str]:
-    """Compatibility helper: return the official Free Models Router id."""
-    return [OPENROUTER_FREE_MODEL]
+OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
+
+
+def fetch_free_openrouter_models() -> List[str]:
+    api_key = os.getenv("OPENROUTER_API_KEYS")
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEYS is missing")
+
+    resp = requests.get(
+        OPENROUTER_MODELS_URL,
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=10,
+    )
+    resp.raise_for_status()
+
+    models = resp.json()["data"]
+
+    return [m["id"] for m in models if m["id"].endswith(":free")]

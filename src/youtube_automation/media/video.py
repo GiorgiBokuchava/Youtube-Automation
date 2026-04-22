@@ -19,19 +19,25 @@ from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 logger = logging.getLogger(__name__)
 
 
-# Helpers
 def _get_reddit_source_config(settings: dict) -> dict:
-    """Resolve Reddit sourcing config with backward-compatible fallback."""
-    post_cfg = settings.get("post", {})
-    sourcing_cfg = settings.get("sourcing", {})
-    reddit_cfg = sourcing_cfg.get("reddit", {})
-
-    merged = dict(post_cfg)
-    if isinstance(reddit_cfg, dict):
-        merged.update(reddit_cfg)
+    """Merge `post` defaults with optional `sourcing.reddit` overrides."""
+    post = settings.get("post") or {}
+    reddit_ov = (settings.get("sourcing") or {}).get("reddit") or {}
+    merged = {
+        "min_duration": post.get("min_duration", 0),
+        "max_duration": post.get("max_duration", 10_000),
+        "min_score": post.get("min_score", 0),
+        "min_ratio": post.get("min_ratio", 0.0),
+        "duration_score_factor": int(post.get("duration_score_factor", 20)),
+        "over_source_pct": int(post.get("over_source_pct", 25)),
+    }
+    for key, value in reddit_ov.items():
+        if key in merged:
+            merged[key] = value
     return merged
 
 
+# Helpers
 def _get_reddit_video_duration(submission) -> Optional[int]:
     try:
         if (

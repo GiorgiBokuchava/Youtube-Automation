@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 from pathlib import Path
 from youtube_automation.ai.text.shorts_topic import ShortsTopicPlan
@@ -18,24 +19,47 @@ from youtube_automation.media.video import (
 )
 from youtube_automation.reddit.client import create_reddit_client, search_subreddit
 from youtube_automation.storage.sessions import get_used_video_ids
-from youtube_automation.utils.text_sanitize import truncate_preserve_unicode
 
 logger = logging.getLogger(__name__)
 
 
-def _overlay_caption_from_submission(
+def overlay_line_max_chars(settings: dict) -> int:
+    """Approximate max characters for one overlay list line (prefix + text) at 1080-wide Shorts."""
+    sc = settings.get("shorts") or {}
+    if sc.get("overlay_comment_max_chars") is not None:
+        return max(16, int(sc["overlay_comment_max_chars"]))
+    body_font = float(sc.get("overlay_body_font_size", 28))
+    margin_x = float(sc.get("overlay_list_margin_x", 56))
+    margin_right = float(sc.get("overlay_margin_right", 40))
+    video_w = float(sc.get("overlay_video_width", 1080))
+    inner = max(0.0, video_w - margin_x - margin_right)
+    return max(24, int(inner / (body_font * 0.52)))
+
+
+def _strip_overlay_markdown(text: str) -> str:
+    if not text:
+        return ""
+    t = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    t = re.sub(r"https?://\S+", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _collect_commentary_context_for_ai(
     submission,
     *,
-    context_limit: int,
-    comment_max_len: int,
+    comments_limit: int,
     context_max_words: int | None,
-) -> str:
-    """Prefer a short top comment; else title. Keeps emojis (only banned-word filter)."""
+    max_comment_chars: int = 600,
+) -> dict[str, object]:
+    """Gather post title, body, and top comments for AI overlay generation (not for direct display)."""
+    comments_text: list[str] = []
     try:
         submission.comment_sort = "top"
         submission.comments.replace_more(limit=0)
+        seen = 0
         for c in submission.comments.list():
-            if context_limit <= 0:
+            if comments_limit > 0 and seen >= comments_limit:
                 break
             body = getattr(c, "body", "").strip()
             if not body or body in ("[deleted]", "[removed]"):
@@ -44,11 +68,23 @@ def _overlay_caption_from_submission(
                 continue
             if not _comment_is_clean(body):
                 continue
-            return truncate_preserve_unicode(body, comment_max_len)
+            seen += 1
+            cleaned = _strip_overlay_markdown(body)
+            if cleaned:
+                comments_text.append(cleaned[:max_comment_chars])
     except Exception:
         pass
-    title = (submission.title or "").strip()
-    return truncate_preserve_unicode(title, comment_max_len)
+
+    raw_self = (submission.selftext or "").strip()
+    selftext = _strip_overlay_markdown(raw_self)
+    if len(selftext) > 2500:
+        selftext = selftext[:2500].rstrip() + "…"
+
+    return {
+        "post_title": submission.title or "",
+        "post_selftext": selftext,
+        "top_comments": comments_text,
+    }
 
 
 def _portrait_hw_score(width: int, height: int) -> float:
@@ -79,7 +115,6 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
 
     ctx = settings.get("post_context", {})
     comments_limit = int(ctx.get("top_comments", 5))
-    comment_max_len = int(sc.get("overlay_comment_max_len", ctx.get("comment_max_len", 120)))
     _cmw = ctx.get("comment_max_words", 14)
     if _cmw in (None, False) or (isinstance(_cmw, int) and _cmw <= 0):
         context_max_words: int | None = None
@@ -191,6 +226,11 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
                 "upvote_ratio": float(submission.upvote_ratio or 0.0),
                 "probe_w": sz.width,
                 "probe_h": sz.height,
+                "commentary_context": _collect_commentary_context_for_ai(
+                    submission,
+                    comments_limit=comments_limit,
+                    context_max_words=context_max_words,
+                ),
             }
         )
         time.sleep(random.uniform(0.1, 0.35))
@@ -203,7 +243,10 @@ def source_shorts_clips(settings: dict, topic_plan: ShortsTopicPlan) -> tuple[li
         )
 
     # Rank 1 = highest score → display order countdown: worst … best
-    accepted.sort(key=lambda c: int(c.get("score", 0)))  # ascending: low first
+    accepted.sort(key=lambda c: int(c.get("score", 0)), reverse=True)
     actual = len(accepted)
-    main_title = f"Top {actual} {topic_plan.topic_title} Moments"
+    if "{count}" in topic_plan.topic_title:
+        main_title = topic_plan.topic_title.replace("{count}", str(actual))
+    else:
+        main_title = topic_plan.topic_title or f"Top {actual} Viral Moments"
     return accepted, main_title

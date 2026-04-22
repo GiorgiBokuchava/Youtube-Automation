@@ -1,3 +1,4 @@
+import os
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
@@ -5,18 +6,28 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parents[3]
 
 
-import os
-
 def load_env(channel: str | None = None) -> None:
-    """Load .env and map optional channel-prefixed vars (e.g. ANIMALS_VAR -> VAR)."""
-    load_dotenv()
+    """Load env files under BASE_DIR and map channel-prefixed vars (e.g. ANIMALS_VAR -> VAR)."""
+    env_path = BASE_DIR / ".env"
+    if env_path.is_file():
+        load_dotenv(env_path, override=False)
+
     if not channel:
         return
+
     prefix = f"{channel.upper()}_"
-    for key, value in os.environ.items():
+    for key, value in list(os.environ.items()):
         if key.startswith(prefix):
             base_key = key[len(prefix) :]
             os.environ[base_key] = value
+
+    ch_file = BASE_DIR / f".env.{channel}"
+    if ch_file.is_file():
+        load_dotenv(ch_file, override=True)
+
+    ch_nested = BASE_DIR / ".env.channels" / f"{channel}.env"
+    if ch_nested.is_file():
+        load_dotenv(ch_nested, override=True)
 
 
 def _load_yaml(path: Path) -> dict:

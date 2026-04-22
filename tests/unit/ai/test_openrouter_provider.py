@@ -46,7 +46,7 @@ def test_openrouter_tries_second_key_on_account_limit(mocker):
     ]
 
     p = OpenRouterProvider()
-    out = p.generate(model="openrouter/free", request=TextRequest(text="hi"))
+    out = p.generate(model="x:free", request=TextRequest(text="hi"))
 
     assert out == "ok"
     assert create.call_count == 2

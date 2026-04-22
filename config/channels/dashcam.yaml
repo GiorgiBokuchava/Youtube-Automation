@@ -92,6 +92,37 @@ music:
   track_gap_sec: 2.5
   max_track_repeats: 1
 
+shorts:
+  clip_count: 5
+  randomize_clip_count: false
+  title_max_words: 10
+  # Optional inspiration for the topic model only (not used verbatim as title or queries).
+  topic_hints:
+    - dashcam fails, close calls, and road chaos
+  search_query_hints:
+    - dashcam near miss
+    - close call driving
+    - highway merge idiot
+  search_time_filter: month
+  search_sort: top
+  search_limit_per_subreddit: 150
+  min_duration: 5
+  max_duration: 60
+  min_score: 25
+  min_ratio: 0.65
+  min_height_width_ratio: 0.45
+  max_segment_duration_sec: 22
+  overlay_comment_max_len: 90
+  # Overlay lines are capped at 5 words max (YAML value cannot exceed that cap)
+  overlay_comment_max_words: 5
+  # Warm gold title on Impact (or SHORTS_TITLE_FONT_FILE); list body stays white
+  overlay_title_fontcolor: "0xffe082"
+  overlay_title_font_size: 54
+  overlay_body_font_size: 34
+  overlay_list_margin_x: 48
+  overlay_title_border_w: 3
+  overlay_body_border_w: 2
+
 publishing:
   ai_metadata:
     tone: dramatic

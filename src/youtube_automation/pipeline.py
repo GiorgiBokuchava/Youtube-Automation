@@ -180,8 +180,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     clip["local_path"] = str(normalized_paths[original_path])
 
         commentary_cfg = settings.get("commentary", {})
-        commentary_enabled = bool(commentary_cfg.get("enabled", True))
-        every_n = int(commentary_cfg.get("every_nth", 3)) if commentary_enabled else 0
+        every_n = int(commentary_cfg.get("every_nth", 3))
 
         if every_n > 0:
             from youtube_automation.ai.text.commentary import generate_commentary_video_first
@@ -251,7 +250,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     _record_error(pipeline_errors, step="commentary_tts", exc=e, clip=clip)
                     continue
         else:
-            logger.info("Commentary disabled, skipping.")
+            logger.info("Commentary disabled (every_nth=0), skipping.")
 
         for clip in clips:
             try:
