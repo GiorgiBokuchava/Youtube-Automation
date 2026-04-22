@@ -6,16 +6,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from youtube_automation.media.ffmpeg import ensure_ffmpeg
+from youtube_automation.media.ffmpeg import ffmpeg_bin as _ffmpeg_bin
 from youtube_automation.media.ffprobe_streams import (
     ContainerStreamInfo,
     StreamProbeError,
+    probe_audio_duration,
     probe_container_streams,
 )
 
 logger = logging.getLogger(__name__)
 
-# Path labels for logs and diagnostics
 NO_COMMENTARY_HAS_AUDIO = "no_commentary_source_has_audio"
 NO_COMMENTARY_NO_AUDIO = "no_commentary_source_no_audio"
 COMMENTARY_HAS_AUDIO = "commentary_source_has_audio"
@@ -47,11 +47,6 @@ class RenderClipError(RuntimeError):
         self.stderr = stderr
         self.stdout = stdout
         self.stage = stage
-
-
-def _ffmpeg_bin() -> str:
-    ffmpeg_dir = ensure_ffmpeg()
-    return "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
 
 
 def _preflight_media_path(path: Path, *, label: str) -> None:
@@ -184,11 +179,30 @@ def render_clip(
 
         if has_source_audio:
             path_kind = COMMENTARY_HAS_AUDIO
+
+            # Build a volume filter that only ducks during the commentary window.
+            # Outside that window the original audio plays at full volume.
+            # FFmpeg's `enable` expression disables the filter (passes audio unchanged)
+            # when the condition is false, so volume=X only applies inside [duck_start,duck_end].
+            # Commas inside between() must be escaped as \, in the filter_complex string.
+            commentary_dur = probe_audio_duration(commentary_audio)
+            if commentary_dur > 0:
+                duck_start = max(0.0, commentary_offset_sec)
+                duck_end = duck_start + commentary_dur
+                vol_filter = (
+                    f"volume={orig_factor:.6f}"
+                    f":enable=between(t\\,{duck_start:.3f}\\,{duck_end:.3f})"
+                )
+            else:
+                # Probe failed – fall back to flat duck for the whole clip.
+                vol_filter = f"volume={orig_factor:.6f}"
+
             filter_complex = (
-                f"[0:a]volume={orig_factor},aresample=48000,asetpts=N/SR/TB[a0];"
+                f"[0:v]setpts=PTS-STARTPTS[vout];"
+                f"[0:a]{vol_filter},aresample=48000,asetpts=N/SR/TB[a0];"
                 f"[1:a]adelay={delay_ms}|{delay_ms},"
                 f"volume={commentary_gain},aresample=48000,asetpts=N/SR/TB[a1];"
-                f"[a0][a1]amix=inputs=2:weights=1 4:duration=shortest:dropout_transition=0[aout]"
+                f"[a0][a1]amix=inputs=2:weights=1 4:duration=first:dropout_transition=0[aout]"
             )
             cmd = [
                 _ffmpeg_bin(),
@@ -201,7 +215,7 @@ def render_clip(
                 "-filter_complex",
                 filter_complex,
                 "-map",
-                "0:v:0",
+                "[vout]",
                 "-map",
                 "[aout]",
                 "-c:v",
@@ -223,6 +237,7 @@ def render_clip(
         else:
             path_kind = COMMENTARY_NO_AUDIO
             filter_complex = (
+                f"[0:v]setpts=PTS-STARTPTS[vout];"
                 f"[1:a]adelay={delay_ms}|{delay_ms},"
                 f"volume={commentary_gain},"
                 f"aresample=48000,asetpts=N/SR/TB[aout]"
@@ -238,7 +253,7 @@ def render_clip(
                 "-filter_complex",
                 filter_complex,
                 "-map",
-                "0:v:0",
+                "[vout]",
                 "-map",
                 "[aout]",
                 "-c:v",
@@ -258,11 +273,14 @@ def render_clip(
                 str(output_video),
             ]
     else:
-        orig_factor = 10 ** (original_volume_db / 20.0)
+        # No voiceover — pass original audio at full volume regardless of the
+        # duck setting (original_volume_db is only meaningful when a commentary
+        # track is competing for headroom over the source audio).
         if has_source_audio:
             path_kind = NO_COMMENTARY_HAS_AUDIO
             filter_complex = (
-                f"[0:a]volume={orig_factor},aresample=48000,asetpts=N/SR/TB[aout]"
+                "[0:v]setpts=PTS-STARTPTS[vout];"
+                "[0:a]aresample=48000,asetpts=N/SR/TB[aout]"
             )
             cmd = [
                 _ffmpeg_bin(),
@@ -273,7 +291,7 @@ def render_clip(
                 "-filter_complex",
                 filter_complex,
                 "-map",
-                "0:v:0",
+                "[vout]",
                 "-map",
                 "[aout]",
                 "-c:v",
@@ -304,6 +322,8 @@ def render_clip(
                 "lavfi",
                 "-i",
                 "anullsrc=channel_layout=stereo:sample_rate=48000",
+                "-vf",
+                "setpts=PTS-STARTPTS",
                 "-map",
                 "0:v:0",
                 "-map",

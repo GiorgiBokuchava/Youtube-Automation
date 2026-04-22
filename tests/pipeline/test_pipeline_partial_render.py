@@ -19,7 +19,7 @@ def test_partial_render_failure_still_stitches_and_records_errors(
     thumb_path.write_bytes(b"x")
 
     mocker.patch(
-        "youtube_automation.pipeline.source_videos",
+        "youtube_automation.pipeline.source_all_videos",
         return_value=[
             {
                 "id": "1",

@@ -10,10 +10,9 @@ class GeminiTTSProvider:
     name = "gemini"
 
     def __init__(self) -> None:
-        keys = os.getenv("GEMINI_API_KEYS")
-        if not keys:
-            raise ValueError("GEMINI_API_KEYS is not set")
-        self._keys: list[str] = [k.strip() for k in keys.split(",") if k.strip()]
+        raw = os.getenv("GEMINI_API_KEYS", "")
+        self._keys: list[str] = [k.strip() for k in raw.split(",") if k.strip()]
+        # Empty keys allowed at init (tests, lazy load); synthesize() errors if used without keys.
 
     def _is_quota_error(self, e: Exception) -> bool:
         msg = str(e).lower()
@@ -25,6 +24,9 @@ class GeminiTTSProvider:
         )
 
     def synthesize(self, *, model: str, request: TTSRequest) -> bytes:
+        if not self._keys:
+            raise ValueError("GEMINI_API_KEYS is not set")
+
         last_error = None
 
         for key in self._keys:

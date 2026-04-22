@@ -1,5 +1,178 @@
 [
   {
+    "created_at": "2026-04-11T16:29:38.727268+00:00",
+    "clips": [
+      {
+        "id": "1sg3a50",
+        "title": "What are you doing buddy?! [oc]",
+        "selftext": "",
+        "top_comments": [
+          "Did he eventually back up??",
+          "Did that with such confidence.",
+          "I need to see the rest of this story",
+          "He's not your buddy, guy.",
+          "No way! Is this South Portland?"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1sg3a50/what_are_you_doing_buddy_oc/",
+        "source_url": "https://v.redd.it/3nql5a5fs0ug1",
+        "subreddit": "IdiotsInCars",
+        "author": "TrickOrange",
+        "duration_sec": 16,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sg3a50.mp4",
+        "overlay_title": true,
+        "score": 3525,
+        "upvote_ratio": 0.99,
+        "original_local_path": "downloads\\1sg3a50.mp4",
+        "commentary_text": "What are you doing buddy?! oc",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sg3a50_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1sf0m1d",
+        "title": "Driver vs Cyclist.",
+        "selftext": "Driver says cyclist at fault as should not be undertaking. Opinions?",
+        "top_comments": [
+          "The cemetery is filled with people who had right of way.",
+          "look like they deliberately drove into the cyclist",
+          "Car driver at fault....100",
+          "Braking is an option to avoid a collision",
+          "Personally, I'd forward the footage to the cops and let them decide."
+        ],
+        "permalink": "https://www.reddit.com/r/drivingUK/comments/1sf0m1d/driver_vs_cyclist/",
+        "source_url": "https://v.redd.it/6kgwt2slmstg1",
+        "subreddit": "drivingUK",
+        "author": "PuzzleheadedGas2192",
+        "duration_sec": 21,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sf0m1d.mp4",
+        "overlay_title": true,
+        "score": 2315,
+        "upvote_ratio": 0.96,
+        "original_local_path": "downloads\\1sf0m1d.mp4",
+        "commentary_text": "Driver vs Cyclist.",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.5,
+          "max_volume_db": 0.0,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sf0m1d_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1sgy9f1",
+        "title": "[OC] - The quickest \"Nope\" I ever said in my life, actually saved me",
+        "selftext": "",
+        "top_comments": [
+          "Wow, was that load secured by a Kindergartener?",
+          "Wise move. I try not to stay behind people hauling things, also.",
+          "Smartest Ram pickup driver",
+          "Gotta love Santa Clarita",
+          "new fear unlocked ;-;"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1sgy9f1/oc_the_quickest_nope_i_ever_said_in_my_life/",
+        "source_url": "https://v.redd.it/we9gr92cl7ug1",
+        "subreddit": "IdiotsInCars",
+        "author": "RealityCheck18",
+        "duration_sec": 39,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sgy9f1.mp4",
+        "overlay_title": true,
+        "score": 3419,
+        "upvote_ratio": 0.97,
+        "original_local_path": "downloads\\1sgy9f1.mp4",
+        "commentary_text": "Wow, was that load secured by a Kindergartener?",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sgy9f1_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      }
+    ],
+    "num_clips": 3,
+    "thumbnail": {
+      "submission_id": "1sbb1e2",
+      "path": "thumbnails\\1sbb1e2_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/1us7jxy7oysg1.png"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sg3a50_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sg3a50_vo.mp3'",
+        "clip_id": "1sg3a50"
+      },
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sf0m1d_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sf0m1d_vo.mp3'",
+        "clip_id": "1sf0m1d"
+      },
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sgy9f1_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1sgy9f1_vo.mp3'",
+        "clip_id": "1sgy9f1"
+      }
+    ],
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T16:51:50.412015+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T16:58:54.211951+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T17:02:37.389300+00:00",
+    "thumbnail": {
+      "submission_id": "1sceluk",
+      "path": "thumbnails\\1sceluk_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/512nw7tmg7tg1.jpeg"
+    },
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-04-11T17:07:12.758283+00:00",
+    "thumbnail": {},
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
     "created_at": "2026-04-17T19:22:50.804557+00:00",
     "content_type": "shorts",
     "clips": [
@@ -16,7 +189,7 @@
         "upvote_ratio": 0.86,
         "probe_w": 1666,
         "probe_h": 1080,
-        "overlay_commentary": "I wouldn\u2019t expect FSD to swerve + not brake"
+        "overlay_commentary": "I wouldn’t expect FSD to swerve + not brake"
       },
       {
         "id": "1saxsak",
@@ -46,7 +219,7 @@
         "upvote_ratio": 0.97,
         "probe_w": 1920,
         "probe_h": 1080,
-        "overlay_commentary": "Probably just another mergin\u2019 virgin."
+        "overlay_commentary": "Probably just another mergin’ virgin."
       },
       {
         "id": "1s9mntc",
@@ -91,9 +264,9 @@
     },
     "main_title": "Top 5 Near Misses Moments",
     "shorts_commentaries": [
-      "I wouldn\u2019t expect FSD to swerve + not brake",
+      "I wouldn’t expect FSD to swerve + not brake",
       "Busy roads with these long bi-directional center turn lanes are so dangerous",
-      "Probably just another mergin\u2019 virgin.",
+      "Probably just another mergin’ virgin.",
       "regardless of who the blame is on, the biker paid the price.",
       "I guess three business days wasn't enough time to merge."
     ],
@@ -124,7 +297,7 @@
       },
       {
         "id": "1scm7ky",
-        "title": "[VIOFO A229+] It\u2019s just a little water vs It could\u2019ve been me",
+        "title": "[VIOFO A229+] It’s just a little water vs It could’ve been me",
         "permalink": "https://www.reddit.com/r/Dashcam/comments/1scm7ky/viofo_a229_its_just_a_little_water_vs_it_couldve/",
         "source_url": "https://v.redd.it/qvxkmjbjy8tg1",
         "subreddit": "Dashcam",
@@ -150,7 +323,7 @@
         "upvote_ratio": 0.86,
         "probe_w": 1666,
         "probe_h": 1080,
-        "overlay_commentary": "I wouldn\u2019t expect FSD to swerve + not brake"
+        "overlay_commentary": "I wouldn’t expect FSD to swerve + not brake"
       },
       {
         "id": "1s9mntc",
@@ -234,7 +407,7 @@
       },
       {
         "id": "1scm7ky",
-        "title": "[VIOFO A229+] It\u2019s just a little water vs It could\u2019ve been me",
+        "title": "[VIOFO A229+] It’s just a little water vs It could’ve been me",
         "permalink": "https://www.reddit.com/r/Dashcam/comments/1scm7ky/viofo_a229_its_just_a_little_water_vs_it_couldve/",
         "source_url": "https://v.redd.it/qvxkmjbjy8tg1",
         "subreddit": "Dashcam",
@@ -260,7 +433,7 @@
         "upvote_ratio": 0.86,
         "probe_w": 1666,
         "probe_h": 1080,
-        "overlay_commentary": "I wouldn\u2019t expect FSD to swerve + not brake"
+        "overlay_commentary": "I wouldn’t expect FSD to swerve + not brake"
       },
       {
         "id": "1so5eud",
@@ -321,7 +494,7 @@
     "shorts_commentaries": [
       "Their parents",
       "Can we also talk about how many people have no lights on?",
-      "I wouldn\u2019t expect FSD to swerve + not brake",
+      "I wouldn’t expect FSD to swerve + not brake",
       "Fantastic narration.",
       "regardless of who the blame is on, the biker paid the price.",
       "I guess three business days wasn't enough time to merge."
@@ -584,7 +757,7 @@
           "post_selftext": "Hopefully I trimmed it better. Enjoy the tunes.",
           "top_comments": [
             "He's gonna get where he's going.... \"Where the F is it!?\"",
-            "Omg, the easy listening music\u2026",
+            "Omg, the easy listening music…",
             "Thank you inertia! Gave enough time for the car behind the truck.",
             "Hi, Thanks for sharing this video!",
             "Thank you thinkware. I'm a big fan of your cameras."
@@ -618,7 +791,7 @@
       },
       {
         "id": "1s6ge0a",
-        "title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess\u2026",
+        "title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess…",
         "permalink": "https://www.reddit.com/r/Dashcam/comments/1s6ge0a/viofo_a129_qhd_cop_gave_up_immediately_no_karma/",
         "source_url": "https://v.redd.it/gf6y5i4kmvrg1",
         "subreddit": "Dashcam",
@@ -630,14 +803,14 @@
         "probe_w": 1280,
         "probe_h": 680,
         "commentary_context": {
-          "post_title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess\u2026",
+          "post_title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess…",
           "post_selftext": "",
           "top_comments": [
             "The flock will get him. The flock sees all.",
             "its good to know there's no crash involve",
             "Is this you OP?",
             "This is the answer.",
-            "Ummmmmm\u2026yes?"
+            "Ummmmmm…yes?"
           ]
         }
       },
@@ -656,11 +829,11 @@
         "probe_h": 1080,
         "commentary_context": {
           "post_title": "[Rexing V1] What did i do to piss off this guy???",
-          "post_selftext": "This morning - video starts with me stopped at red light. Me and other car off camera begin accelerating. This guy gets behind me, honks and then starts shouting & raging in his car behind me. I slowed and turned into a parking lot. It\u2019s a 30mph road. Wtf did I do?!?!",
+          "post_selftext": "This morning - video starts with me stopped at red light. Me and other car off camera begin accelerating. This guy gets behind me, honks and then starts shouting & raging in his car behind me. I slowed and turned into a parking lot. It’s a 30mph road. Wtf did I do?!?!",
           "top_comments": [
             "That's some nerve you got, existing and all in front of him.",
             "They reallllllly had to poop",
-            "Left one minute before they did? \ud83e\udd37\ud83c\udffd\u200d\u2640\ufe0f",
+            "Left one minute before they did? 🤷🏽‍♀️",
             "Dude is having a bad day.",
             "Sleep with his sister?"
           ]
@@ -760,7 +933,7 @@
           "post_selftext": "Hopefully I trimmed it better. Enjoy the tunes.",
           "top_comments": [
             "He's gonna get where he's going.... \"Where the F is it!?\"",
-            "Omg, the easy listening music\u2026",
+            "Omg, the easy listening music…",
             "Thank you inertia! Gave enough time for the car behind the truck.",
             "Hi, Thanks for sharing this video!",
             "Thank you thinkware. I'm a big fan of your cameras."
@@ -794,7 +967,7 @@
       },
       {
         "id": "1s6ge0a",
-        "title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess\u2026",
+        "title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess…",
         "permalink": "https://www.reddit.com/r/Dashcam/comments/1s6ge0a/viofo_a129_qhd_cop_gave_up_immediately_no_karma/",
         "source_url": "https://v.redd.it/gf6y5i4kmvrg1",
         "subreddit": "Dashcam",
@@ -806,14 +979,14 @@
         "probe_w": 1280,
         "probe_h": 680,
         "commentary_context": {
-          "post_title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess\u2026",
+          "post_title": "[VIOFO A129 QHD] Cop gave up immediately. No Karma lesson today I guess…",
           "post_selftext": "",
           "top_comments": [
             "The flock will get him. The flock sees all.",
             "its good to know there's no crash involve",
             "Is this you OP?",
             "This is the answer.",
-            "Ummmmmm\u2026yes?"
+            "Ummmmmm…yes?"
           ]
         }
       },
@@ -832,11 +1005,11 @@
         "probe_h": 1080,
         "commentary_context": {
           "post_title": "[Rexing V1] What did i do to piss off this guy???",
-          "post_selftext": "This morning - video starts with me stopped at red light. Me and other car off camera begin accelerating. This guy gets behind me, honks and then starts shouting & raging in his car behind me. I slowed and turned into a parking lot. It\u2019s a 30mph road. Wtf did I do?!?!",
+          "post_selftext": "This morning - video starts with me stopped at red light. Me and other car off camera begin accelerating. This guy gets behind me, honks and then starts shouting & raging in his car behind me. I slowed and turned into a parking lot. It’s a 30mph road. Wtf did I do?!?!",
           "top_comments": [
             "That's some nerve you got, existing and all in front of him.",
             "They reallllllly had to poop",
-            "Left one minute before they did? \ud83e\udd37\ud83c\udffd\u200d\u2640\ufe0f",
+            "Left one minute before they did? 🤷🏽‍♀️",
             "Dude is having a bad day.",
             "Sleep with his sister?"
           ]
@@ -957,7 +1130,7 @@
         "probe_h": 360,
         "commentary_context": {
           "post_title": "[Model Y] (SoCal) Apparently Fell Asleep",
-          "post_selftext": "My gf and I thought he was having a medical emergency because I could see some steering input as he almost swipes the other Tesla in front of him. My gf said when we drove past that his head was tilted back so she thought it was a seizure. I pulled over maybe 300ft away and called 911 and as soon as I got off the phone with them (3 mins) an ambulance and LAFD were already there with him. He was walking around looking pretty upset but other than that looked fine. I asked if it was a medical emergency and the firefighter said \u201cnah he just crashed his car is all, we\u2019ll check him out\u201d and sent me on my way. Glad he was alright and didn\u2019t hit anyone else.",
+          "post_selftext": "My gf and I thought he was having a medical emergency because I could see some steering input as he almost swipes the other Tesla in front of him. My gf said when we drove past that his head was tilted back so she thought it was a seizure. I pulled over maybe 300ft away and called 911 and as soon as I got off the phone with them (3 mins) an ambulance and LAFD were already there with him. He was walking around looking pretty upset but other than that looked fine. I asked if it was a medical emergency and the firefighter said “nah he just crashed his car is all, we’ll check him out” and sent me on my way. Glad he was alright and didn’t hit anyone else.",
           "top_comments": [
             "stay safe on the road guys, glad to hear he's okay.",
             "That curb sure woke him up. Amazing no others hit.",
@@ -984,11 +1157,11 @@
           "post_title": "[iZeeker iD440] Fiat Panda rolled over sharp bend.",
           "post_selftext": "",
           "top_comments": [
-            "Not seeing the \u201csharp bend\u201d\u2026.",
+            "Not seeing the “sharp bend”….",
             "Where is this sharp bend you speak of?",
             "Pandas are clumsy",
             "Merge cones should have started earlier",
-            "Hey! You can\u2019t park there!"
+            "Hey! You can’t park there!"
           ]
         }
       },
@@ -1028,7 +1201,7 @@
         "probe_h": 1080,
         "commentary_context": {
           "post_title": "[Rove R2-4K Dual] Why I never go right away at this intersection",
-          "post_selftext": "People sadly blow this light all the time. If I\u2019d gone when it was green, I\u2019d have been t-boned.",
+          "post_selftext": "People sadly blow this light all the time. If I’d gone when it was green, I’d have been t-boned.",
           "top_comments": [
             "That was a pretty short green light for you.",
             "I'm just surprised it wasn't the MBTA \"the ride\" operator this time.",
@@ -1130,8 +1303,8 @@
             "these motorcycle riders are the reason people hate bikes",
             "That's a moped, please don't call it a motorcycle.",
             "Istg would've asked this had I confronted her back then.",
-            "Exactly, she thinks that she has got extra lives \ud83e\udd26\ud83c\udffb",
-            "no pedals \u2014 it's a scoot, not a mo***ped***"
+            "Exactly, she thinks that she has got extra lives 🤦🏻",
+            "no pedals — it's a scoot, not a mo***ped***"
           ]
         }
       },
@@ -1174,7 +1347,7 @@
           "post_selftext": "Video was compressed. Wanted to share the video from last November here. Glad this tire didn't hit anybody. Feeling lucky.",
           "top_comments": [
             "/r/Tiresaretheenemy",
-            "Wow there are indeed a lot of strange subs here\u2026",
+            "Wow there are indeed a lot of strange subs here…",
             "Gave me a good laugh!"
           ]
         }
@@ -1196,7 +1369,7 @@
       "Moving out of the way was never an option here",
       "She tried to jump the speed bump, nearly got crushed",
       "Driver gambles at the light, loses when car",
-      "That runaway tire nearly became a projectile\u2014phew!"
+      "That runaway tire nearly became a projectile—phew!"
     ],
     "thumbnail": {},
     "output_path": "out\\dashcam\\shorts\\outputs\\final.mp4",

@@ -1,54 +1,43 @@
 from typing import Optional
+import time
 import logging
-import os
-from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+
 from youtube_automation.ai.text.registry import (
     get_models_by_capabilities,
     get_model_spec,
 )
 from youtube_automation.ai.text.providers.gemini import GeminiProvider
 from youtube_automation.ai.text.providers.openrouter import OpenRouterProvider
+from youtube_automation.ai.text.providers.nvidia import NvidiaProvider
 from youtube_automation.ai.text.types import TextRequest
-
-load_dotenv()
-
-logger = logging.getLogger(__name__)
-
-
-def _gemini_api_keys_configured() -> bool:
-    raw = os.getenv("GEMINI_API_KEYS", "")
-    return bool([k.strip() for k in raw.split(",") if k.strip()])
-
-
-def _dedupe_models(models: list) -> list:
-    seen: set[tuple[str, str]] = set()
-    out = []
-    for m in models:
-        key = (m["provider"], m["model"])
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(m)
-    return out
 
 
 class TextService:
     # Central AI service with smart model selection and fallback
 
+    MAX_MODEL_TIME = 30  # seconds before a single model result is considered too slow
+    MAX_TOTAL_TIME = 90  # hard wall across ALL model attempts combined
+    MAX_MODELS_PER_PROVIDER = 15  # max models tried per provider before moving on
+
     def __init__(self):
         self._providers: dict[str, object] = {}
 
-        if _gemini_api_keys_configured():
+        try:
             self._providers["gemini"] = GeminiProvider()
-        else:
-            logger.info(
-                "Gemini text provider skipped (no GEMINI_API_KEYS after channel env)"
-            )
+        except Exception as e:
+            logger.warning("Gemini disabled: %s", e)
 
         try:
             self._providers["openrouter"] = OpenRouterProvider()
         except Exception as e:
-            logger.warning(f"OpenRouter disabled: {e}")
+            logger.warning("OpenRouter disabled: %s", e)
+
+        try:
+            self._providers["nvidia"] = NvidiaProvider()
+        except Exception as e:
+            logger.warning("NVIDIA NIM disabled: %s", e)
 
     def generate(
         self, request: TextRequest, preferred_model: Optional[str] = None
@@ -56,77 +45,118 @@ class TextService:
         # Generate response with automatic model selection and fallback
 
         required_caps = request.get_required_capabilities()
-        attempted: set[tuple[str, str]] = set()
 
         if preferred_model:
             model_spec = get_model_spec(preferred_model)
             if model_spec and required_caps.issubset(model_spec["capabilities"]):
                 provider = self._providers.get(model_spec["provider"])
                 if provider:
-                    attempted.add((model_spec["provider"], preferred_model))
+                    start = time.time()
+                    result = None
+
                     try:
                         result = provider.generate(
                             model=preferred_model, request=request
                         )
-                        if result:
-                            return result
-                        logger.warning(
-                            "Preferred model %s returned empty output",
-                            preferred_model,
-                        )
                     except Exception as e:
-                        logger.warning(
-                            "Preferred model %s failed: %s",
-                            preferred_model,
-                            e,
-                            exc_info=True,
+                        logger.debug(
+                            "Preferred model %s failed: %s", preferred_model, e
                         )
+                        # Fall back to automatic selection
 
-        # Get all models that support required capabilities (one attempt per model id)
-        suitable_models = _dedupe_models(get_models_by_capabilities(required_caps))
+                    elapsed = time.time() - start
+                    if elapsed > self.MAX_MODEL_TIME:
+                        logger.debug(
+                            "Preferred model %s exceeded %ss, skipping",
+                            preferred_model,
+                            self.MAX_MODEL_TIME,
+                        )
+                        # Fall back to automatic selection
+
+                    if result:
+                        return result
+
+        # Get all models that support required capabilities
+        suitable_models = get_models_by_capabilities(required_caps)
 
         if not suitable_models:
             raise ValueError(f"No models found for capabilities: {required_caps}")
 
-        last_error: Exception | None = None
+        # Fast-fail: only keep models from providers that are actually initialised.
+        # This avoids wasting time trying providers whose keys are not set.
+        suitable_models = [
+            m for m in suitable_models if self._providers.get(m["provider"])
+        ]
+        if not suitable_models:
+            raise RuntimeError(
+                f"No initialised providers available for capabilities: {required_caps}"
+            )
 
+        # Group models by provider
+        provider_models: dict[str, list] = {}
         for model in suitable_models:
-            key = (model["provider"], model["model"])
-            if key in attempted:
-                continue
+            provider_name = model["provider"]
+            if provider_name not in provider_models:
+                provider_models[provider_name] = []
+            provider_models[provider_name].append(model)
 
-            provider = self._providers.get(model["provider"])
+        last_error = None
+        budget_start = time.time()
+
+        for provider_name, models in provider_models.items():
+            provider = self._providers.get(provider_name)
             if not provider:
                 continue
 
-            attempted.add(key)
+            tried = 0
+            for model in models:
+                if tried >= self.MAX_MODELS_PER_PROVIDER:
+                    logger.debug(
+                        "Provider %s: reached model cap (%d), moving on",
+                        provider_name,
+                        self.MAX_MODELS_PER_PROVIDER,
+                    )
+                    break
 
-            try:
-                result = provider.generate(model=model["model"], request=request)
-            except Exception as e:
-                last_error = e
-                logger.warning(
-                    "Model %s (%s) failed: %s",
-                    model["model"],
-                    model["provider"],
-                    e,
-                    exc_info=True,
-                )
-                continue
+                total_elapsed = time.time() - budget_start
+                if total_elapsed > self.MAX_TOTAL_TIME:
+                    logger.warning(
+                        "TextService: exceeded %ss total budget "
+                        "(provider=%s, tried=%d in this provider), giving up",
+                        self.MAX_TOTAL_TIME,
+                        provider_name,
+                        tried,
+                    )
+                    raise RuntimeError(
+                        f"All models failed within {self.MAX_TOTAL_TIME}s budget. "
+                        f"Last error: {last_error}"
+                    )
 
-            if result:
-                return result
-            logger.warning(
-                "Model %s (%s) returned empty output",
-                model["model"],
-                model["provider"],
-            )
+                tried += 1
+                start = time.time()
 
-        # If all models failed, raise the last error
+                try:
+                    result = provider.generate(model=model["model"], request=request)
+                except Exception as e:
+                    last_error = e
+                    logger.debug("Model %s failed: %s", model["model"], e)
+                    continue
+
+                elapsed = time.time() - start
+                if elapsed > self.MAX_MODEL_TIME:
+                    logger.debug(
+                        "Model %s took %.1fs (> %ss), skipping",
+                        model["model"],
+                        elapsed,
+                        self.MAX_MODEL_TIME,
+                    )
+                    continue
+
+                if result:
+                    return result
+
         if last_error:
-            raise RuntimeError(
-                f"All models failed. Last error: {last_error}"
-            ) from last_error
+            raise RuntimeError(f"All models failed. Last error: {last_error}")
         raise RuntimeError("No suitable providers available")
 
 

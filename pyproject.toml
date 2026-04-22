@@ -15,6 +15,7 @@ dependencies = [
     "google-auth-oauthlib>=1.2.1",
     "google-genai>=1.56.0",
     "httpx>=0.28.1",
+    "instaloader>=4.14",
     "openai>=2.14.0",
     "pillow>=12.0.0",
     "praw>=7.8.1",
@@ -40,3 +41,8 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires network and/or API keys",
+]

@@ -51,6 +51,9 @@ jobs:
       REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
       REDDIT_COOKIES_FILE: reddit_cookies.txt
 
+      # Instaloader session (base64 of sessions/instagram.session); optional if channel uses Reddit only
+      INSTAGRAM_SESSION_B64: ${{ secrets.INSTAGRAM_SESSION_B64 }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,21 +63,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: poetry
-          cache-dependency-path: poetry.lock
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
 
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Install Poetry
-        run: python -m pip install --upgrade pip poetry
-
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
 
       - name: Preflight — YouTube OAuth refresh token
         run: |
-          poetry run python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
+          python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
         run: |
@@ -83,13 +87,36 @@ jobs:
 
       - name: Preflight - test cookies with yt-dlp
         run: |
-          poetry run yt-dlp --version
-          poetry run yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
+          yt-dlp --version
+          yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
             "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
+
+      - name: Decode Instagram session (if configured)
+        run: |
+          if [ -n "${INSTAGRAM_SESSION_B64:-}" ]; then
+            python -c "from youtube_automation.instagram.client import decode_session; decode_session()"
+          fi
+
+      - name: Preflight — Instagram session (if configured)
+        run: |
+          if [ -n "${INSTAGRAM_SESSION_B64:-}" ]; then
+            python <<'PY'
+          import os
+          from youtube_automation.config.loader import load_env, load_settings
+          from youtube_automation.instagram.client import ensure_instagram_session_ok
+          from youtube_automation.sourcing import instagram_sourcing_enabled
+
+          ch = os.environ.get("CHANNEL", "animals")
+          load_env(ch)
+          settings = load_settings(ch)
+          if instagram_sourcing_enabled(settings):
+              ensure_instagram_session_ok(settings)
+          PY
+          fi
 
       - name: Run pipeline
         run: |
-          poetry run python -m youtube_automation.app \
+          python -m youtube_automation.app \
             --mode pipeline \
             --channel "$CHANNEL" \
             --cleanup

@@ -1,4 +1,4 @@
-from typing import Set, TypedDict, Literal
+from typing import Set, TypedDict, Literal, cast
 import logging
 import os
 import requests
@@ -56,6 +56,68 @@ TEXT_MODELS: list[TextModelSpec] = [
 
 _OPENROUTER_MODELS: list[TextModelSpec] | None = None
 
+_NVIDIA_MODELS: list[TextModelSpec] | None = None
+
+_NVIDIA_EXCLUDE_SUBSTR = (
+    "embed",
+    "reward",
+    "gliner",
+    "parse",
+    "nvclip",
+    "streampetr",
+)
+
+
+def _nvidia_capabilities_for_id(model_id: str) -> Set[Capability]:
+    caps: Set[Capability] = {"text_in", "text_out"}
+    low = model_id.lower()
+    if "vila" in low or ("vision" in low and "llama" in low):
+        caps.add("image_in")
+    return caps
+
+
+def _load_nvidia_models() -> list[TextModelSpec]:
+    """Discover chat models from NVIDIA NIM; requires NVIDIA_API_KEYS when populated."""
+    global _NVIDIA_MODELS
+    if _NVIDIA_MODELS is not None:
+        return _NVIDIA_MODELS
+
+    from youtube_automation.ai.text.providers.nvidia import fetch_nvidia_models
+
+    raw = os.getenv("NVIDIA_API_KEYS", "")
+    if not raw:
+        _NVIDIA_MODELS = []
+        return _NVIDIA_MODELS
+
+    api_key = raw.split(",")[0].strip()
+    try:
+        ids = fetch_nvidia_models(api_key)
+    except Exception as exc:
+        logger.warning("NVIDIA model discovery failed: %s", exc, exc_info=True)
+        _NVIDIA_MODELS = []
+        return _NVIDIA_MODELS
+
+    out: list[TextModelSpec] = []
+    for mid in ids:
+        mlow = mid.lower()
+        if any(s in mlow for s in _NVIDIA_EXCLUDE_SUBSTR):
+            continue
+        caps = _nvidia_capabilities_for_id(mid)
+        out.append(
+            cast(
+                TextModelSpec,
+                {
+                    "provider": "nvidia",
+                    "model": mid,
+                    "capabilities": caps,
+                    "free": True,
+                },
+            )
+        )
+
+    _NVIDIA_MODELS = out
+    return _NVIDIA_MODELS
+
 
 def _load_openrouter_free_models() -> list[TextModelSpec]:
     global _OPENROUTER_MODELS
@@ -96,7 +158,9 @@ def _load_openrouter_free_models() -> list[TextModelSpec]:
 
 
 def _all_models() -> list[TextModelSpec]:
-    return TEXT_MODELS + _load_openrouter_free_models()
+    return (
+        TEXT_MODELS + _load_openrouter_free_models() + _load_nvidia_models()
+    )
 
 
 # Public helpers

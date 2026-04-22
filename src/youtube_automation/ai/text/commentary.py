@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import logging
+import re
 from pathlib import Path
 from typing import Optional
 
 from youtube_automation.ai.errors import QuotaExhaustedError
 from youtube_automation.ai.text.service import text_service
 from youtube_automation.ai.text.types import TextRequest
+from youtube_automation.media.video import _comment_is_clean, _word_count
+from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
+
+logger = logging.getLogger(__name__)
+
+_FALLBACK_MAX_WORDS = 12
+_SENTENCE_END = re.compile(r"[.!?]+")
 
 
 def _video_prompt(theme: str) -> str:
@@ -16,38 +25,37 @@ def _video_prompt(theme: str) -> str:
     )
 
 
-def _post_fallback_prompt(
-    title: str, selftext: str, comments: list[str], theme: str
-) -> str:
-    context_lines = [f"Title: {title.strip()}"]
-    if selftext.strip():
-        context_lines.append(f"Description: {selftext.strip()}")
+def _is_single_sentence(text: str) -> bool:
+    """Return True when *text* contains at most one sentence-ending boundary."""
+    # Strip trailing punctuation so "Great shot!" doesn't count as 2 sentences.
+    stripped = text.strip().rstrip(".!?")
+    return len(_SENTENCE_END.findall(stripped)) < 2
 
-    if comments:
-        context_lines.append("Top comments:")
-        for i, c in enumerate(comments[:5], start=1):
-            context_lines.append(f"{i}. {c}")
 
-    context = "\n".join(context_lines)
-
-    return (
-        "You do NOT see the video. You only have partial Reddit context.\n"
-        "Assume details are missing and uncertain.\n\n"
-        f"Commentary theme: {theme}.\n\n"
-        "First, infer ONLY broad themes from obvious keywords "
-        "(animals, people, emotions, general situation).\n"
-        "Do NOT guess specific actions, outcomes, locations, or events.\n\n"
-        "Write ONE short, vague commentary that matches the specified theme "
-        "and would fit MANY possible clips.\n"
-        "Keep it generic and non-specific.\n\n"
-        "Rules:\n"
-        "- Max 12 words\n"
-        "- Casual tone\n"
-        "- No emojis\n"
-        "- No questions\n"
-        "- No specific actions or detailed descriptions\n\n"
-        f"{context}\n"
-    )
+def _pick_plain_text_fallback(
+    candidates: list[str],
+    *,
+    require_single_sentence: bool = False,
+) -> str | None:
+    """
+    Return the first candidate that is:
+    - non-empty after plain-English sanitization
+    - at most _FALLBACK_MAX_WORDS words
+    - passes the banned-word filter
+    - (optionally) is a single sentence
+    """
+    for raw in candidates:
+        text = sanitize_plain_english_tts(raw).strip()
+        if not text:
+            continue
+        if _word_count(text) > _FALLBACK_MAX_WORDS:
+            continue
+        if not _comment_is_clean(text):
+            continue
+        if require_single_sentence and not _is_single_sentence(text):
+            continue
+        return text
+    return None
 
 
 def generate_commentary_video_first(
@@ -60,11 +68,12 @@ def generate_commentary_video_first(
     theme: str = "funny",
 ) -> tuple[str, str, bool]:
     """
-    Try video-capable generation first (Gemini). If quota exhausted, fall back to text-only
-    using title/selftext/top comments.
+    Try video-capable generation first (Gemini).  On failure, pick the first
+    clean short text from: post title, then top_comments (in order).
+    Raises RuntimeError if none qualify.
 
     Returns:
-        tuple: (commentary_text, model_used, fallback_occurred)
+        (commentary_text, model_used, fallback_occurred)
     """
     top_comments = top_comments or []
 
@@ -74,16 +83,24 @@ def generate_commentary_video_first(
         result = text_service.generate(req, preferred_model=preferred_video_model)
         return result, preferred_video_model or "gemini", False
 
-    except QuotaExhaustedError:
-        # Tier 2: Post-context fallback
-        prompt = _post_fallback_prompt(title, selftext, top_comments, theme)
-        req = TextRequest(text=prompt)
-        result = text_service.generate(req)
-        return result, "text_fallback", True
+    except (QuotaExhaustedError, Exception) as primary_exc:
+        logger.debug(
+            "Video-based commentary failed (%s), falling back to title/comment",
+            type(primary_exc).__name__,
+        )
 
-    except Exception:
-        # If it's not quota, still attempt a graceful fallback (better than failing)
-        prompt = _post_fallback_prompt(title, selftext, top_comments, theme)
-        req = TextRequest(text=prompt)
-        result = text_service.generate(req)
-        return result, "text_fallback", True
+    # Tier 2a: Title — must also be a single sentence
+    text = _pick_plain_text_fallback([title], require_single_sentence=True)
+    if text:
+        logger.debug("Using title fallback: %r", text[:60])
+        return text, "text_fallback", True
+
+    # Tier 2b: Top comments — word-count + clean filter only (no sentence check)
+    text = _pick_plain_text_fallback(top_comments)
+    if text:
+        logger.debug("Using comment fallback: %r", text[:60])
+        return text, "text_fallback", True
+
+    raise RuntimeError(
+        "No video commentary available and no clean title/comment to fall back to"
+    )

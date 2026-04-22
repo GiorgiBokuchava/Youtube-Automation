@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import os
 import random
 import time
@@ -156,11 +157,20 @@ def _guess_ext_from_headers(headers) -> Optional[str]:
 
 def _pick_image_url(submission) -> Optional[str]:
     try:
-        u = submission.url
-        if u and any(
-            u.lower().endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp")
-        ):
-            return u
+        u = getattr(submission, "url", None) or ""
+        if u:
+            lu = u.lower()
+            if "i.redd.it" in lu or any(
+                lu.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp", ".gif")
+            ):
+                return u
+        preview = getattr(submission, "preview", None) or {}
+        images = preview.get("images") if isinstance(preview, dict) else None
+        if images:
+            src = images[0].get("source") or {}
+            raw = src.get("url")
+            if raw:
+                return html.unescape(raw)
     except Exception:
         pass
     return None

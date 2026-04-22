@@ -5,12 +5,7 @@ import subprocess
 from pathlib import Path
 import logging
 
-from youtube_automation.media.ffmpeg import ensure_ffmpeg
-
-
-def _ffmpeg_bin() -> str:
-    ffmpeg_dir = ensure_ffmpeg()
-    return "ffmpeg" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffmpeg")
+from youtube_automation.media.ffmpeg import ffmpeg_bin as _ffmpeg_bin
 
 
 def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
@@ -53,9 +48,7 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         "-loglevel",
         "info",
         "-stats",
-        # Concat demuxer
-        "-fflags",
-        "+genpts",
+        # Concat demuxer — no +genpts; rendered clips already have clean timestamps
         "-f",
         "concat",
         "-safe",
@@ -75,14 +68,18 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         preset,
         "-crf",
         str(crf),
+        "-vf",
+        "setpts=PTS-STARTPTS",
         "-c:a",
         "aac",
         "-b:a",
         "192k",
         "-ar",
         "48000",
+        # Rebuild audio timestamps from sample count so any residual concat
+        # discontinuities become invisible to the muxer.
         "-af",
-        "aresample=async=1:first_pts=0",
+        "aresample=48000,asetpts=N/SR/TB",
         "-movflags",
         "+faststart",
         str(output_path),

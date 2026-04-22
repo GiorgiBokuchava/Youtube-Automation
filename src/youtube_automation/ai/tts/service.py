@@ -43,7 +43,11 @@ class TTSService:
             factory = self._provider_factories.get(name)
             if not factory:
                 return None
-            self._providers[name] = factory()
+            try:
+                self._providers[name] = factory()
+            except Exception as e:
+                logger.warning("TTS provider %s unavailable: %s", name, e)
+                self._providers[name] = None
         return self._providers[name]
 
     def synthesize(
