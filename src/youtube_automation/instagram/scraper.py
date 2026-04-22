@@ -251,6 +251,7 @@ def source_instagram_videos(
     *,
     duration_cap_seconds: int,
     warn_below_seconds: int,
+    exclude_ids: set[str] | None = None,
 ) -> list[dict]:
     """
     Download Instagram reel/video posts matching channel ``instagram`` settings.
@@ -274,6 +275,8 @@ def source_instagram_videos(
     session_username = str(ig.get("session_username", SESSION_USERNAME_DEFAULT))
 
     previously_used = get_used_video_ids(settings)
+    if exclude_ids:
+        previously_used = set(previously_used).union(exclude_ids)
     seen_ids: set[str] = set()
     accepted: list[dict] = []
     total_duration = 0

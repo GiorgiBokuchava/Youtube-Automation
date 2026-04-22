@@ -11,28 +11,24 @@ Python toolchain that sources short videos from Reddit, optionally adds AI comme
 
 ## Install
 
-Install [Poetry](https://python-poetry.org/) if you haven't already:
+Create and activate a virtual environment:
 
 ```bash
-pip install poetry
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-Then install the project:
+Then install the project dependencies:
 
 ```bash
-poetry install
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
 For development (includes pytest):
 
 ```bash
-poetry install --extras dev
-```
-
-Activate the Poetry shell so you can run `python` and CLI tools directly without the `poetry run` prefix:
-
-```bash
-poetry shell
+python -m pip install -r requirements-dev.txt
 ```
 
 ## Configuration
@@ -75,7 +71,7 @@ Examples:
 ## CLI
 
 ```bash
-# Inside `poetry shell` (or prefix every command with `poetry run`):
+# Inside your activated virtual environment:
 python -m youtube_automation.app --mode pipeline --channel animals
 ```
 
