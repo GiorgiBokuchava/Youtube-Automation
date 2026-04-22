@@ -1,0 +1,13 @@
+# Shared publishing settings for all Shorts
+youtube:
+  shorts_title_template: "{main_title} #Shorts"
+  shorts_description_template: |
+    {main_title}
+
+    Credits:
+    {credits}
+  shorts_tags:
+    - Shorts
+    - viral
+  shorts_extra_tags:
+    - entertainment

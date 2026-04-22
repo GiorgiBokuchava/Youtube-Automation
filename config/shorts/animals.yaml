@@ -1,0 +1,26 @@
+# Shorts overlay for channel `animals`
+# This file overrides or adds to config/channels/animals.yaml when running in --mode shorts
+
+shorts:
+  clip_count_min: 5
+  clip_count_max: 7
+  randomize_clip_count: true
+  search_time_filter: month
+  search_sort: top
+  search_limit_per_subreddit: 100
+  min_duration: 2
+  max_duration: 60
+  # Permissive filters to ensure high yield
+  min_score: 10
+  min_ratio: 0.10
+  min_height_width_ratio: 0.50
+  max_segment_duration_sec: 22
+  overlay_comment_max_len: 100
+
+publishing:
+  ai_metadata:
+    enabled: true
+
+# Background music is disabled as per user request for shorts
+music:
+  enabled: false

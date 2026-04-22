@@ -57,35 +57,26 @@ post:
   min_score: 350
   min_ratio: 0.8
 
-instagram:
-  hashtags:
-    - funnypets
-    - funnyanimals
-    - animals
-    - animal
-    - cutepets
-    - dogsofinstagram
-    - catsofinstagram
-    - petvideos
-    - funnydog
-    - funnycat
-    - animalsoftiktok
-    - funnyreels
-  min_likes: 5000
-  limit_per_hashtag: 300
-  max_duration: 20
-  min_duration: 1
+# Source-specific thresholds (kept in sync with `post` for Reddit for now).
+sourcing:
+  reddit:
+    min_duration: 1
+    max_duration: 10
+    min_score: 350
+    min_ratio: 0.8
+  instagram:
+    min_likes: 10000
 
-source_split:
-  reddit: 0.5
-  instagram: 0.5
+shorts:
+  enabled: false
 
 audio:
   original_clip_volume_db: -18
 
 commentary:
   theme: funny
-  every_nth: 3
+  enabled: false
+  every_nth: 0
   commentary_gain: 1.6
   tts_voices:
     gemini:

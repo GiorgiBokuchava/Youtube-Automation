@@ -1,16 +1,7 @@
-from __future__ import annotations
-
 import concurrent.futures
-import logging
 import os
-import time
-from typing import Callable, List, TypeVar
 
 import praw
-
-logger = logging.getLogger(__name__)
-
-T = TypeVar("T")
 
 
 def create_reddit_client():
@@ -22,36 +13,53 @@ def create_reddit_client():
     )
 
 
-def with_timeout(
-    fn: Callable[[], T],
-    name: str = "",
-    what: str = "",
-    timeout: int = 20,
-    retries: int = 2,
-    backoff: float = 2.0,
-) -> T | list:
+def _with_timeout(fn, timeout=30, retries=2, backoff=2.0):
     attempt = 0
     while attempt <= retries:
         attempt += 1
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                fut = ex.submit(fn)
-                return fut.result(timeout=timeout)
+                return ex.submit(fn).result(timeout=timeout)
         except Exception:
+            import time
+
             time.sleep(min(8.0, backoff ** (attempt - 1)))
     return []
 
 
-def fetch_feed(subreddit, mode: str, limit: int) -> List:
-    name = subreddit.display_name
+def fetch_feed(subreddit, mode: str, limit: int) -> list:
+    """Fetch a subreddit listing (used by long-form video sourcing)."""
     if mode == "new":
-        return with_timeout(lambda: list(subreddit.new(limit=limit)), name, "new")
+        return _with_timeout(lambda: list(subreddit.new(limit=limit)))
     if mode == "hot":
-        return with_timeout(lambda: list(subreddit.hot(limit=limit)), name, "hot")
+        return _with_timeout(lambda: list(subreddit.hot(limit=limit)))
     if mode == "rising":
-        return with_timeout(lambda: list(subreddit.rising(limit=limit)), name, "rising")
+        return _with_timeout(lambda: list(subreddit.rising(limit=limit)))
     if mode == "top_day":
-        return with_timeout(
-            lambda: list(subreddit.top(time_filter="day", limit=limit)), name, "top_day"
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="day", limit=limit))
         )
     return []
+
+
+def search_subreddit(
+    subreddit,
+    query: str,
+    *,
+    sort: str = "top",
+    time_filter: str = "month",
+    limit: int = 40,
+) -> list:
+    """
+    Search posts within a single subreddit (restrict_sr is implicit when called on Subreddit).
+    """
+    return _with_timeout(
+        lambda: list(
+            subreddit.search(
+                query,
+                sort=sort,
+                time_filter=time_filter,
+                limit=limit,
+            )
+        )
+    )

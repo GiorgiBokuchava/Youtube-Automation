@@ -1,52 +1,22 @@
-import os
-from pathlib import Path
-
 import yaml
+from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
 
-def _load_env_file(path: Path, *, override: bool) -> None:
-    if path.exists():
-        load_dotenv(path, override=override)
-
-
-def _channel_prefix(channel: str) -> str:
-    sanitized = "".join(ch if ch.isalnum() else "_" for ch in channel.upper())
-    return f"{sanitized}_"
-
-
-def _apply_channel_prefixed_env(channel: str) -> None:
-    """
-    Map CHANNEL-prefixed vars to canonical names.
-
-    Example (for channel=animals):
-      ANIMALS_YT_CLIENT_ID -> YT_CLIENT_ID
-    """
-    prefix = _channel_prefix(channel)
-    for key, value in list(os.environ.items()):
-        if not key.startswith(prefix):
-            continue
-        target_key = key[len(prefix) :]
-        if not target_key:
-            continue
-        os.environ[target_key] = value
-
+import os
 
 def load_env(channel: str | None = None) -> None:
-    # Global defaults for all channels.
-    _load_env_file(BASE_DIR / ".env", override=False)
-
+    """Load .env and map optional channel-prefixed vars (e.g. ANIMALS_VAR -> VAR)."""
+    load_dotenv()
     if not channel:
         return
-
-    # Optional channel-specific aliases inside the shared environment.
-    _apply_channel_prefixed_env(channel)
-
-    # Explicit per-channel env files override everything above.
-    _load_env_file(BASE_DIR / f".env.{channel}", override=True)
-    _load_env_file(BASE_DIR / ".env.channels" / f"{channel}.env", override=True)
+    prefix = f"{channel.upper()}_"
+    for key, value in os.environ.items():
+        if key.startswith(prefix):
+            base_key = key[len(prefix) :]
+            os.environ[base_key] = value
 
 
 def _load_yaml(path: Path) -> dict:
@@ -64,8 +34,23 @@ def _deep_merge(base: dict, override: dict) -> dict:
     return result
 
 
-def load_settings(channel: str) -> dict:
+def load_settings(channel: str, *, shorts: bool = False) -> dict:
     base = _load_yaml(BASE_DIR / "config" / "base.yaml")
     channel_cfg = _load_yaml(BASE_DIR / "config" / "channels" / f"{channel}.yaml")
 
-    return _deep_merge(base, channel_cfg)
+    merged = _deep_merge(base, channel_cfg)
+    if shorts:
+        # Load shorts-specific channel config
+        shorts_path = BASE_DIR / "config" / "shorts" / f"{channel}.yaml"
+        if shorts_path.exists():
+            merged = _deep_merge(merged, _load_yaml(shorts_path))
+        
+        # Load shared shorts publishing/general config
+        publish_path = BASE_DIR / "config" / "shorts" / "publish.yaml"
+        if publish_path.exists():
+            merged = _deep_merge(merged, _load_yaml(publish_path))
+            
+        merged["content_type"] = "shorts"
+    else:
+        merged["content_type"] = "long_form"
+    return merged

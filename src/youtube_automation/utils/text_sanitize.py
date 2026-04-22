@@ -1,21 +1,29 @@
-"""Plain-ASCII text cleanup for TTS and stored Reddit comments."""
+"""Text helpers for TTS and on-screen overlays."""
 
 from __future__ import annotations
 
 import re
 
-# Keep English letters, digits, common punctuation, and whitespace; drop emojis,
-# other scripts, ZWJ, variation selectors, etc.
-_NON_PLAIN_ENGLISH = re.compile(r"[^a-zA-Z0-9\s.,!?'\-:;()\"/]")
-
 
 def sanitize_plain_english_tts(text: str) -> str:
     """
-    Return plain English text suitable for TTS: strip emojis and any character
-    outside a small ASCII whitelist, then collapse whitespace.
+    Keep ASCII-only text suitable for English TTS (strips emojis and most symbols).
+    Used for commentary and Reddit comment context fed to the AI/TTS path.
     """
     if not text:
         return ""
-    cleaned = _NON_PLAIN_ENGLISH.sub("", text)
-    cleaned = " ".join(cleaned.split())
-    return cleaned.strip()
+    # Collapse non-ASCII runs to a single space, trim whitespace
+    ascii_only = re.sub(r"[^\x00-\x7F]+", " ", text)
+    return re.sub(r"\s+", " ", ascii_only).strip()
+
+
+def truncate_preserve_unicode(text: str, max_len: int, *, suffix: str = "...") -> str:
+    """Truncate a string without stripping emojis or non-Latin scripts."""
+    if not text or max_len <= 0:
+        return ""
+    t = text.strip()
+    if len(t) <= max_len:
+        return t
+    if len(suffix) >= max_len:
+        return t[:max_len]
+    return t[: max_len - len(suffix)].rstrip() + suffix
