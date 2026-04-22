@@ -62,11 +62,18 @@ def run_shorts_pipeline(
         segment_paths: list[Path] = []
         segment_commentaries: list[str] = []
         n = len(clips)
-        progressive_commentaries: list[str] = ["" for _ in range(n)]
+        # Captions only for segments that actually render (stitch order). Avoids empty
+        # slots in the overlay when an earlier clip fails fit/render ("jumps" to line 3).
+        overlay_captions: list[str] = []
         for idx, clip in enumerate(clips):
-            rank = idx + 1
             cid = clip["id"]
-            logger.info("Processing segment %d/%d (rank %d): %s", idx + 1, n, rank, cid)
+            logger.info(
+                "Processing source clip %d/%d (output slot will be %d): %s",
+                idx + 1,
+                n,
+                len(segment_paths) + 1,
+                cid,
+            )
             
             in_path = Path(clip["local_path"])
             fit_path = FIT_DIR / f"{cid}_fit.mp4"
@@ -82,21 +89,22 @@ def run_shorts_pipeline(
 
             seg_path = SEG_DIR / f"{cid}_seg.mp4"
             try:
+                display_rank = len(segment_paths) + 1
                 caption = generate_shorts_overlay_commentary(
                     settings,
                     clip,
                     topic_title=topic_plan.topic_title,
                     video_main_title=main_title,
-                    segment_rank=rank,
+                    segment_rank=display_rank,
                     total_segments=n,
                 )
                 logger.info("Caption for %s: %r", cid, caption)
 
-                progressive_commentaries[idx] = caption
-                list_lines: list[str] = []
-                for i in range(n):
-                    t = progressive_commentaries[i].strip()
-                    list_lines.append(f"{i + 1}. {t}".strip() if t else f"{i + 1}.")
+                pending_captions = overlay_captions + [caption]
+                list_lines = [
+                    f"{i + 1}. {t.strip()}".strip() if t.strip() else f"{i + 1}."
+                    for i, t in enumerate(pending_captions)
+                ]
 
                 of = sc.get("overlay_font_file")
                 otf = sc.get("overlay_title_font_file")
@@ -118,6 +126,7 @@ def run_shorts_pipeline(
                     title_border_w=int(sc.get("overlay_title_border_w", 3)),
                     body_border_w=int(sc.get("overlay_body_border_w", 2)),
                 )
+                overlay_captions.append(caption)
                 segment_paths.append(seg_path)
                 segment_commentaries.append(caption)
             except Exception as e:

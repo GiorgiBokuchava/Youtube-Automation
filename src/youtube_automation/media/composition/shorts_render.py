@@ -178,8 +178,11 @@ def render_shorts_segment(
             "-map",
             "[vout]",
         ]
-        if probe_container_streams(fitted_video).has_audio:
-            cmd.extend(["-map", "0:a", "-c:a", "copy"])
+        has_audio = probe_container_streams(fitted_video).has_audio
+        if has_audio:
+            # Re-encoded video can end a few ms before copied audio; muxer would then
+            # hold the last video frame while audio plays. Trim to the shorter stream.
+            cmd.extend(["-map", "0:a", "-c:a", "copy", "-shortest"])
         cmd.extend(
             [
                 "-c:v",
