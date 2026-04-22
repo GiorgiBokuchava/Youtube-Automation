@@ -21,6 +21,22 @@ class ShortsTopicPlan:
     clip_count: int
 
 
+def _cap_words(text: str, max_words: int) -> str:
+    words = [w for w in (text or "").strip().split() if w]
+    if max_words > 0 and len(words) > max_words:
+        words = words[:max_words]
+    return " ".join(words)
+
+
+def _hint_lines(raw: object) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(x).strip() for x in raw if str(x).strip()]
+    s = str(raw).strip()
+    return [s] if s else []
+
+
 def _parse_json_object(raw: str) -> dict:
     raw = raw.strip()
     fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", raw, re.IGNORECASE)
@@ -36,33 +52,60 @@ def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
     sc = settings.get("shorts") or {}
     ch = settings.get("channel") or {}
     niche = str(ch.get("niche", "animals")).strip()
+    configured_count = sc.get("clip_count")
+    randomize_count = bool(sc.get("randomize_clip_count", False))
 
     mn = int(sc.get("clip_count_min", sc.get("clip_count", 5)))
-    mx = int(sc.get("clip_count_max", sc.get("clip_count", 7)))
+    mx = int(sc.get("clip_count_max", sc.get("clip_count", 5)))
     mn = max(3, min(mn, 10))
     mx = max(mn, min(mx, 10))
 
+    fixed_count: int | None = None
+    if configured_count is not None:
+        fixed_count = max(3, min(int(configured_count), 10))
+        # If clip_count is set and randomization is off, hard-enforce it.
+        if not randomize_count:
+            mn = fixed_count
+            mx = fixed_count
+
+    title_max_words = int(sc.get("title_max_words", 10))
+    # Optional inspiration only — never used as the final title or queries.
+    topic_hints = _hint_lines(sc.get("topic_hints")) or _hint_lines(sc.get("topic_seeds"))
+    search_query_hints = _hint_lines(sc.get("search_query_hints"))
+
+    topic_hints_txt = "\n".join(f"- {h}" for h in topic_hints) if topic_hints else "(none — invent freely)"
+    search_hints_txt = (
+        "\n".join(f"- {h}" for h in search_query_hints)
+        if search_query_hints
+        else "(none — invent freely)"
+    )
+
     preferred = sc.get("preferred_topic_model")
 
-    prompt = f"""You are a viral YouTube Shorts content planner. 
-I need a topic for a "Top X ... Moments" compilation video.
+    prompt = f"""You are a viral YouTube Shorts content planner.
+Create a complete, natural-sounding Shorts title and Reddit search queries.
 
-Channel Niche: {niche}
+Channel niche: {niche}
+
+Optional theme hints (examples only; do NOT copy verbatim — use as loose inspiration for tone/topic):
+{topic_hints_txt}
+
+Optional search-query style hints (examples only; do NOT copy or treat as final queries — you MUST still invent exactly 3 NEW queries tailored to this run and niche):
+{search_hints_txt}
 
 Your task:
-1. Pick a highly specific, creative, and viral sub-niche or theme within '{niche}'. 
-   DO NOT be generic (e.g., instead of "Dog", pick "Golden Retriever Zoomies" or "Husky Arguing").
-2. Create a 2-4 word Title for this sub-niche (Title Case).
-3. Create exactly 3 distinct search queries for Reddit, ranging from very specific to slightly broader.
-   IMPORTANT: DO NOT include the word "reddit" in these queries.
+1. Generate ONE complete compilation title (not a fragment). It must include the exact token "{{count}}" where the clip count belongs.
+2. Keep the title <= {title_max_words} words.
+3. Invent exactly 3 distinct Reddit search queries (specific → medium → slightly broader). Do not reuse the example hints as-is if any were given.
+4. Do not include the word "reddit" in the queries.
 
 Return ONLY a JSON object:
 {{
-  "topic_title": "The Title from Step 2",
+  "topic_title": "Complete title with {{count}} token",
   "search_queries": [
-    "highly specific query", 
-    "moderately specific query", 
-    "broader related query"
+    "your new specific query",
+    "your new medium query",
+    "your new broader query"
   ],
   "clip_count": {random.randint(mn, mx)}
 }}
@@ -73,8 +116,7 @@ Return ONLY a JSON object:
         data = _parse_json_object(raw)
 
         topic_title = str(data.get("topic_title", "")).strip()
-        # Remove "Moments" if AI added it to avoid duplication in pipeline
-        topic_title = re.sub(r"\s+Moments$", "", topic_title, flags=re.IGNORECASE)
+        topic_title = _cap_words(topic_title, title_max_words)
         
         queries = data.get("search_queries", [])
         if not isinstance(queries, list):
@@ -86,7 +128,10 @@ Return ONLY a JSON object:
         if not topic_title or not queries:
             raise ValueError("Shorts topic model returned empty results")
 
-        count = max(mn, min(mx, count))
+        if fixed_count is not None and not randomize_count:
+            count = fixed_count
+        else:
+            count = max(mn, min(mx, count))
 
         return ShortsTopicPlan(
             topic_title=topic_title,

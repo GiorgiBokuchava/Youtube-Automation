@@ -1,4 +1,4 @@
-"""Burn in Shorts-style title + rank/caption overlays (9:16)."""
+"""Burn in Shorts-style title + progressive numbered commentary list (9:16)."""
 
 from __future__ import annotations
 
@@ -39,15 +39,39 @@ def _default_font_path() -> Path | None:
     return None
 
 
+def _default_title_font_path() -> Path | None:
+    """Bold / display face for Shorts title (body keeps _default_font_path)."""
+    env = os.getenv("SHORTS_TITLE_FONT_FILE", "").strip()
+    if env:
+        p = Path(env)
+        if p.exists():
+            return p
+    if platform.system() == "Windows":
+        windir = Path(os.environ.get("WINDIR", r"C:\Windows"))
+        for name in ("impact.ttf", "arialbd.ttf", "seguiemj.ttf", "calibrib.ttf"):
+            p = windir / "Fonts" / name
+            if p.exists():
+                return p
+    for candidate in (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+    ):
+        p = Path(candidate)
+        if p.exists():
+            return p
+    return None
+
+
 def _ffmpeg_path_literal(path: Path) -> str:
     """Path for use inside an ffmpeg filtergraph (escaped colon for Windows drive letters)."""
     s = path.resolve().as_posix()
     return s.replace(":", r"\:")
 
 
-def _text_wrap(text: str, width: int = 24) -> str:
+def _text_wrap_title(text: str, width: int = 88) -> str:
     import textwrap
-    return "\n".join(textwrap.wrap(text, width=width))
+
+    return "\n".join(textwrap.wrap((text or "").replace("\n", " ").strip(), width=width))
 
 
 def render_shorts_segment(
@@ -55,44 +79,91 @@ def render_shorts_segment(
     output_video: Path,
     *,
     main_title: str,
-    rank: int,
-    caption: str,
+    list_lines: list[str],
     font_path: str | Path | None = None,
+    title_font_path: str | Path | None = None,
+    title_fontcolor: str = "0xffe082",
+    title_font_size: int = 52,
+    body_font_size: int = 32,
+    list_margin_x: int = 56,
+    title_border_w: int = 3,
+    body_border_w: int = 2,
 ) -> Path:
     """
-    Overlay main title at top and a bottom line `rank. caption` on a 9:16 video.
-    Text is supplied via UTF-8 sidecar files for emoji safety.
+    Overlay main title at top and one drawtext per list line (left-middle stack).
+    No textwrap on list lines — each line is rendered as a single drawtext so numbering
+    cannot merge. Text via UTF-8 sidecar files. Boxes disabled (transparent).
     """
-    font = Path(font_path) if font_path else _default_font_path()
-    if font is None:
+    body_font = Path(font_path) if font_path else _default_font_path()
+    if body_font is None:
         raise RuntimeError(
             "No font found for Shorts overlays. Set SHORTS_FONT_FILE to a .ttf path."
         )
 
-    # Wrap title so it doesn't run off screen
-    title_txt = _text_wrap((main_title or "").strip()[:100], width=20)
-    body = f"{int(rank)}. {caption}".strip()[:220]
+    title_font: Path | None = None
+    if title_font_path:
+        tp = Path(title_font_path)
+        if tp.exists():
+            title_font = tp
+    if title_font is None:
+        title_font = _default_title_font_path()
+    if title_font is None or not title_font.exists():
+        title_font = body_font
+
+    title_color = (title_fontcolor or "0xffe082").strip()
+    if title_color.startswith("#"):
+        title_color = "0x" + title_color[1:]
+
+    title_txt = _text_wrap_title((main_title or "").strip(), width=88)
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
+    n = len(list_lines)
+    line_step = body_font_size + 10
 
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
         title_path = tdir / "title.txt"
-        body_path = tdir / "body.txt"
         title_path.write_text(title_txt, encoding="utf-8")
-        body_path.write_text(body, encoding="utf-8")
 
-        font_lit = _ffmpeg_path_literal(font)
+        line_paths: list[Path] = []
+        for i, line in enumerate(list_lines):
+            p = tdir / f"line_{i}.txt"
+            p.write_text(line, encoding="utf-8")
+            line_paths.append(p)
+
+        body_font_lit = _ffmpeg_path_literal(body_font)
+        title_font_lit = _ffmpeg_path_literal(title_font)
         title_lit = _ffmpeg_path_literal(title_path)
-        body_lit = _ffmpeg_path_literal(body_path)
 
-        # Title fontsize 64, wrap handled by newlines in textfile
-        graph = (
-            f"[0:v]drawtext=fontfile='{font_lit}':textfile='{title_lit}':reload=0:fontsize=64:"
-            f"fontcolor=white:x=(w-text_w)/2:y=120:shadowcolor=black@0.7:shadowx=4:shadowy=4,"
-            f"drawtext=fontfile='{font_lit}':textfile='{body_lit}':reload=0:fontsize=42:"
-            f"fontcolor=white:x=60:y=h-280:shadowcolor=black@0.7:shadowx=3:shadowy=3[vout]"
+        # Chain: [0:v] title -> [v0] line0 -> [v1] ... -> [vout]
+        parts: list[str] = []
+        prev = "0:v"
+        tag = 0
+
+        parts.append(
+            f"[{prev}]drawtext=fontfile='{title_font_lit}':textfile='{title_lit}':reload=0:fontsize={title_font_size}:"
+            f"fontcolor={title_color}:x=(w-text_w)/2:y=48:line_spacing=10:box=0:"
+            f"borderw={title_border_w}:bordercolor=black@0.92:"
+            f"shadowcolor=black@0.88:shadowx=4:shadowy=4[v{tag}]"
         )
+        prev = f"v{tag}"
+        tag += 1
+
+        for i, lp in enumerate(line_paths):
+            lit = _ffmpeg_path_literal(lp)
+            out = "vout" if i == n - 1 else f"v{tag}"
+            y_expr = f"(h-{line_step}*{n})/2+{line_step}*{i}"
+            parts.append(
+                f"[{prev}]drawtext=fontfile='{body_font_lit}':textfile='{lit}':reload=0:fontsize={body_font_size}:"
+                f"fontcolor=white:x={list_margin_x}:y={y_expr}:line_spacing=0:box=0:"
+                f"borderw={body_border_w}:bordercolor=black@0.92:"
+                f"shadowcolor=black@0.88:shadowx=3:shadowy=3[{out}]"
+            )
+            if out != "vout":
+                prev = out
+                tag += 1
+
+        graph = ";".join(parts)
         script = tdir / "graph.txt"
         script.write_text(graph, encoding="utf-8")
 

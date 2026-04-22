@@ -1,6 +1,6 @@
 from typing import Optional
-import time
 import logging
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,15 +16,35 @@ from youtube_automation.ai.text.providers.openrouter import OpenRouterProvider
 from youtube_automation.ai.text.types import TextRequest
 
 
+def _gemini_api_keys_configured() -> bool:
+    raw = os.getenv("GEMINI_API_KEYS", "")
+    return bool([k.strip() for k in raw.split(",") if k.strip()])
+
+
+def _dedupe_models(models: list) -> list:
+    seen: set[tuple[str, str]] = set()
+    out = []
+    for m in models:
+        key = (m["provider"], m["model"])
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(m)
+    return out
+
+
 class TextService:
     # Central AI service with smart model selection and fallback
 
-    MAX_MODEL_TIME = 30  # Maximum time per model in seconds
-
     def __init__(self):
-        self._providers: dict[str, object] = {
-            "gemini": GeminiProvider(),
-        }
+        self._providers: dict[str, object] = {}
+
+        if _gemini_api_keys_configured():
+            self._providers["gemini"] = GeminiProvider()
+        else:
+            logger.info(
+                "Gemini text provider skipped (no GEMINI_API_KEYS after channel env)"
+            )
 
         try:
             self._providers["openrouter"] = OpenRouterProvider()
@@ -37,87 +57,78 @@ class TextService:
         # Generate response with automatic model selection and fallback
 
         required_caps = request.get_required_capabilities()
+        attempted: set[tuple[str, str]] = set()
 
         if preferred_model:
             model_spec = get_model_spec(preferred_model)
             if model_spec and required_caps.issubset(model_spec["capabilities"]):
                 provider = self._providers.get(model_spec["provider"])
                 if provider:
-                    start = time.time()
-                    result = None
-
+                    attempted.add((model_spec["provider"], preferred_model))
                     try:
                         result = provider.generate(
                             model=preferred_model, request=request
                         )
-                    except Exception as e:
-                        logger.debug(
-                            "Preferred model %s failed: %s", preferred_model, e
-                        )
-                        # Fall back to automatic selection
-
-                    elapsed = time.time() - start
-                    if elapsed > self.MAX_MODEL_TIME:
-                        logger.debug(
-                            "Preferred model %s exceeded %ss, skipping",
+                        if result:
+                            return result
+                        logger.warning(
+                            "Preferred model %s returned empty output",
                             preferred_model,
-                            self.MAX_MODEL_TIME,
                         )
-                        # Fall back to automatic selection
+                    except Exception as e:
+                        logger.warning(
+                            "Preferred model %s failed: %s",
+                            preferred_model,
+                            e,
+                            exc_info=True,
+                        )
 
-                    if result:
-                        return result
-
-        # Get all models that support required capabilities
-        suitable_models = get_models_by_capabilities(required_caps)
+        # Get all models that support required capabilities (one attempt per model id)
+        suitable_models = _dedupe_models(get_models_by_capabilities(required_caps))
 
         if not suitable_models:
             raise ValueError(f"No models found for capabilities: {required_caps}")
 
-        # Try models grouped by provider (exhaust all models in a provider before switching)
-        last_error = None
+        last_error: Exception | None = None
 
-        # Group models by provider
-        provider_models = {}
         for model in suitable_models:
-            provider_name = model["provider"]
-            if provider_name not in provider_models:
-                provider_models[provider_name] = []
-            provider_models[provider_name].append(model)
+            key = (model["provider"], model["model"])
+            if key in attempted:
+                continue
 
-        # Try each provider's models
-        for provider_name, models in provider_models.items():
-            provider = self._providers.get(provider_name)
+            provider = self._providers.get(model["provider"])
             if not provider:
                 continue
 
-            for model in models:
-                start = time.time()
+            attempted.add(key)
 
-                try:
-                    result = provider.generate(model=model["model"], request=request)
-                except Exception as e:
-                    last_error = e
-                    logger.debug("Model %s failed: %s", model["model"], e)
-                    continue  # Try next model in same provider
+            try:
+                result = provider.generate(model=model["model"], request=request)
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    "Model %s (%s) failed: %s",
+                    model["model"],
+                    model["provider"],
+                    e,
+                    exc_info=True,
+                )
+                continue
 
-                elapsed = time.time() - start
-                if elapsed > self.MAX_MODEL_TIME:
-                    logger.debug(
-                        "Model %s exceeded %ss, skipping",
-                        model["model"],
-                        self.MAX_MODEL_TIME,
-                    )
-                    continue
-
-                if result:
-                    return result
+            if result:
+                return result
+            logger.warning(
+                "Model %s (%s) returned empty output",
+                model["model"],
+                model["provider"],
+            )
 
         # If all models failed, raise the last error
         if last_error:
-            raise RuntimeError(f"All models failed. Last error: {last_error}")
-        else:
-            raise RuntimeError("No suitable providers available")
+            raise RuntimeError(
+                f"All models failed. Last error: {last_error}"
+            ) from last_error
+        raise RuntimeError("No suitable providers available")
 
 
 # Global instance for easy access
