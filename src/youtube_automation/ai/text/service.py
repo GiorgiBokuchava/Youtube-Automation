@@ -2,11 +2,6 @@ from typing import Optional
 import logging
 import os
 from dotenv import load_dotenv
-
-load_dotenv()
-
-logger = logging.getLogger(__name__)
-
 from youtube_automation.ai.text.registry import (
     get_models_by_capabilities,
     get_model_spec,
@@ -14,6 +9,10 @@ from youtube_automation.ai.text.registry import (
 from youtube_automation.ai.text.providers.gemini import GeminiProvider
 from youtube_automation.ai.text.providers.openrouter import OpenRouterProvider
 from youtube_automation.ai.text.types import TextRequest
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 def _gemini_api_keys_configured() -> bool:
