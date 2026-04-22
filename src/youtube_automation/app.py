@@ -132,6 +132,11 @@ def main() -> None:
         return
 
     if args.mode == "shorts":
+        shorts_enabled = bool((settings.get("shorts") or {}).get("enabled", True))
+        if not shorts_enabled:
+            raise RuntimeError(
+                f"Shorts mode is disabled for channel '{args.channel}' (shorts.enabled=false)"
+            )
         from youtube_automation.shorts_pipeline import run_shorts_pipeline
 
         session = run_shorts_pipeline(

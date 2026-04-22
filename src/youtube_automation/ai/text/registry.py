@@ -1,6 +1,4 @@
 from typing import Set, TypedDict, Literal
-import os
-import requests
 
 Capability = Literal[
     "text_in", "text_out", "image_in", "video_in", "audio_in", "tool_use"
@@ -46,54 +44,14 @@ TEXT_MODELS: list[TextModelSpec] = [
         "capabilities": {"text_in", "text_out"},
         "free": True,
     },
+    # OpenRouter: official free-model router
+    {
+        "provider": "openrouter",
+        "model": "openrouter/free",
+        "capabilities": {"text_in", "text_out"},
+        "free": True,
+    },
 ]
-
-
-# Dynamic OpenRouter free models
-
-_OPENROUTER_MODELS: list[TextModelSpec] | None = None
-
-
-def _load_openrouter_free_models() -> list[TextModelSpec]:
-    global _OPENROUTER_MODELS
-    if _OPENROUTER_MODELS is not None:
-        return _OPENROUTER_MODELS
-
-    api_key = os.getenv("OPENROUTER_API_KEYS")
-    if not api_key:
-        _OPENROUTER_MODELS = []
-        return _OPENROUTER_MODELS
-
-    try:
-        resp = requests.get(
-            "https://openrouter.ai/api/v1/models",
-            headers={"Authorization": f"Bearer {api_key}"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-
-        models = resp.json()["data"]
-
-        _OPENROUTER_MODELS = [
-            {
-                "provider": "openrouter",
-                "model": m["id"],
-                "capabilities": {"text_in", "text_out"},
-                "free": True,
-            }
-            for m in models
-            if m["id"].endswith(":free")
-        ]
-
-    except Exception as exc:
-        print(f"[warn] OpenRouter model discovery failed: {exc}")
-        _OPENROUTER_MODELS = []
-
-    return _OPENROUTER_MODELS
-
-
-def _all_models() -> list[TextModelSpec]:
-    return TEXT_MODELS + _load_openrouter_free_models()
 
 
 # Public helpers
@@ -104,17 +62,17 @@ def get_models_by_capabilities(
 ) -> list[TextModelSpec]:
     return [
         model
-        for model in _all_models()
+        for model in TEXT_MODELS
         if required_capabilities.issubset(model["capabilities"])
     ]
 
 
 def get_models_by_provider(provider: str) -> list[TextModelSpec]:
-    return [model for model in _all_models() if model["provider"] == provider]
+    return [model for model in TEXT_MODELS if model["provider"] == provider]
 
 
 def get_model_spec(model_name: str) -> TextModelSpec | None:
-    for model in _all_models():
+    for model in TEXT_MODELS:
         if model["model"] == model_name:
             return model
     return None

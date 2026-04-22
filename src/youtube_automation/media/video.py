@@ -20,6 +20,18 @@ logger = logging.getLogger(__name__)
 
 
 # Helpers
+def _get_reddit_source_config(settings: dict) -> dict:
+    """Resolve Reddit sourcing config with backward-compatible fallback."""
+    post_cfg = settings.get("post", {})
+    sourcing_cfg = settings.get("sourcing", {})
+    reddit_cfg = sourcing_cfg.get("reddit", {})
+
+    merged = dict(post_cfg)
+    if isinstance(reddit_cfg, dict):
+        merged.update(reddit_cfg)
+    return merged
+
+
 def _get_reddit_video_duration(submission) -> Optional[int]:
     try:
         if (
@@ -268,7 +280,7 @@ def source_videos(settings: dict) -> List[dict]:
     final_target_minutes = settings.get("final_target_duration", 10)
     final_target_seconds = int(final_target_minutes * 60)
 
-    post_cfg = settings.get("post", {})
+    post_cfg = _get_reddit_source_config(settings)
     min_dur = post_cfg.get("min_duration", 0)
     max_dur = post_cfg.get("max_duration", 10_000)
     min_score = post_cfg.get("min_score", 0)

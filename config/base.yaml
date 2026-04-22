@@ -71,6 +71,9 @@ music:
 
   pick: random
 
+shorts:
+  enabled: true
+
 post_context:
   top_comments: 5 # How many comments to keep (see comment_max_words)
   comment_max_words: 12 # Only keep comments with at most this many words (Reddit top order)
