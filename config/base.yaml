@@ -10,16 +10,19 @@ post:
   duration_score_factor: 20
   over_source_pct: 25
 
-# Instagram hashtag reels (requires INSTAGRAM_SESSION_B64 or sessions/instagram.session).
-# Empty hashtags disables Instagram sourcing regardless of source_split.
+# Instagram reels (requires INSTAGRAM_SESSION_B64 or sessions/instagram.session).
+# Sourcing runs when source_split.instagram > 0 and at least one hashtag or account is set.
 instagram:
   hashtags: []
+  # Usernames only (leading @ stripped); timeline video posts, same filters as hashtags.
+  accounts: []
   session_username: instagram
   min_likes: 5000
   min_duration: 3
   max_duration: 60
   section: both # top | recent | both
   limit_per_hashtag: 100
+  limit_per_account: 100 # max video posts scanned per account; if omitted, uses limit_per_hashtag
   delay: 2.0
 
 # Fraction of over-sourced duration budget per scraper (normalized to sum to 1).

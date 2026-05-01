@@ -57,6 +57,32 @@ post:
   min_score: 350
   min_ratio: 0.8
 
+# Blend Reddit + Instagram for animals channel (Instagram requires session env).
+source_split:
+  reddit: 0.85
+  instagram: 0.15
+
+instagram:
+  min_duration: 1
+  max_duration: 10
+  min_likes: 2500
+  section: both
+  hashtags:
+    - funnyanimals
+    - cuteanimals
+    - animalvideos
+    - petsofinstagram
+    - dogsofinstagram
+    - catsofinstagram
+  accounts:
+    [
+      catloversclub,
+      weratedogs,
+      thepetcollective,
+      animalsdoingthings,
+      round.animals,
+    ]
+
 audio:
   original_clip_volume_db: -18
 
@@ -124,9 +150,9 @@ thumbnail:
     - tragic
 
 youtube:
-  title_template: "Cute Animals Compilation | Reddit"
+  title_template: "Cute Animals Compilation | Reddit & Instagram"
   description_template: |
-    Best animal clips from Reddit.
+    Best animal clips from Reddit and Instagram.
 
     Credits:
     {credits}

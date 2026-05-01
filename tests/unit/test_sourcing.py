@@ -10,10 +10,13 @@ from youtube_automation.sourcing import (
 )
 
 
-def test_instagram_sourcing_enabled_requires_split_and_hashtags():
+def test_instagram_sourcing_enabled_requires_split_and_sources():
     assert not instagram_sourcing_enabled({})
     assert not instagram_sourcing_enabled(
-        {"source_split": {"instagram": 0.5}, "instagram": {"hashtags": []}}
+        {
+            "source_split": {"instagram": 0.5},
+            "instagram": {"hashtags": [], "accounts": []},
+        }
     )
     assert instagram_sourcing_enabled(
         {
@@ -21,17 +24,23 @@ def test_instagram_sourcing_enabled_requires_split_and_hashtags():
             "instagram": {"hashtags": ["cats"]},
         }
     )
+    assert instagram_sourcing_enabled(
+        {
+            "source_split": {"instagram": 0.5},
+            "instagram": {"hashtags": [], "accounts": ["natgeo"]},
+        }
+    )
 
 
 def test_source_all_renormalizes_when_instagram_disabled():
-    """If YAML keeps instagram weight but omits hashtags, Reddit gets full budget."""
+    """If YAML keeps instagram weight but no hashtags or accounts, Reddit gets full budget."""
     settings = {
         "channel": {"name": "test"},
         "final_target_duration": 10,
         "post": {"over_source_pct": 0},
         "subreddits": ["pics"],
         "source_split": {"reddit": 0.6, "instagram": 0.4},
-        "instagram": {"hashtags": []},
+        "instagram": {"hashtags": [], "accounts": []},
     }
     with patch("youtube_automation.media.video.source_videos") as mock_r:
         mock_r.return_value = []

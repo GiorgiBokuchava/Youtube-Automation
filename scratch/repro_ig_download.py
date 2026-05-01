@@ -38,7 +38,7 @@ def test_download():
         print(f"Shortcode in media: {media.get('code')}")
         print(f"Shortcode in post: {post.shortcode}")
 
-        path = _download_instagram_video(L, media, shortcode, 1.0)
+        path = _download_instagram_video(L, shortcode, 1.0, media=media)
         
         if path:
             print(f"Success! Downloaded to {path}")
