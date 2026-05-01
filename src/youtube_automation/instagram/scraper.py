@@ -12,7 +12,7 @@ import instaloader
 from youtube_automation.instagram.client import (
     SESSION_USERNAME_DEFAULT,
     build_loader,
-    session_file_path,
+    resolve_instagram_session_path,
 )
 from youtube_automation.storage.sessions import get_used_video_ids
 from youtube_automation.utils.paths import DOWNLOADS
@@ -283,6 +283,7 @@ def source_instagram_videos(
     duration_cap_seconds: int,
     warn_below_seconds: int,
     exclude_ids: set[str] | None = None,
+    max_clips: int | None = None,
 ) -> list[dict]:
     """
     Download Instagram reel/video posts matching channel ``instagram`` settings.
@@ -293,6 +294,10 @@ def source_instagram_videos(
     dedupe.
 
     ``duration_cap_seconds`` caps total *accepted* clip duration.
+
+    When ``max_clips`` is set, sourcing stops once that many clips are accepted
+    (still subject to filters). Duration cap is bumped so short compilations can
+    reach the clip target without hitting duration first.
     """
     ig = settings.get("instagram") or {}
     hashtags = [
@@ -310,6 +315,12 @@ def source_instagram_videos(
     min_likes = int(ig.get("min_likes", 5000))
     min_dur = float(ig.get("min_duration", 3))
     max_dur = float(ig.get("max_duration", 60))
+
+    if max_clips is not None and max_clips > 0:
+        duration_cap_seconds = max(
+            duration_cap_seconds,
+            max_clips * max(30, int(max_dur)) + 120,
+        )
     section_mode = str(ig.get("section", "both"))
     limit_per_hashtag = int(ig.get("limit_per_hashtag", 100))
     limit_per_account = int(ig.get("limit_per_account", limit_per_hashtag))
@@ -322,6 +333,7 @@ def source_instagram_videos(
     seen_ids: set[str] = set()
     accepted: list[dict] = []
     total_duration = 0
+    stop_early = False
 
     random.shuffle(hashtags)
     random.shuffle(accounts)
@@ -347,7 +359,7 @@ def source_instagram_videos(
         logger.info("Instagram accounts after shuffle: %s", ", ".join(accounts))
 
     L = build_loader(
-        session_file_path(),
+        resolve_instagram_session_path(),
         download_dir=DOWNLOADS,
         session_username=session_username,
     )
@@ -383,8 +395,11 @@ def source_instagram_videos(
         post: instaloader.Post | None,
         bucket_stats: dict[str, int],
     ) -> None:
-        nonlocal total_duration
+        nonlocal total_duration, stop_early
         slot = f"{kind_tag} [{section_label}]"
+
+        if stop_early:
+            return
 
         total_stats["raw_media_seen"] += 1
         bucket_stats["raw_media_seen"] += 1
@@ -517,6 +532,9 @@ def source_instagram_videos(
         total_stats["accepted"] += 1
         bucket_stats["accepted"] += 1
 
+        if max_clips is not None and len(accepted) >= max_clips:
+            stop_early = True
+
         logger.info(
             "Accepted Instagram clip %s (%s, %ds, likes=%d) — total %ds/%ds",
             shortcode,
@@ -528,7 +546,7 @@ def source_instagram_videos(
         )
 
     for tag in hashtags:
-        if total_duration >= duration_cap_seconds:
+        if stop_early or total_duration >= duration_cap_seconds:
             break
 
         tag_stats = {
@@ -546,13 +564,13 @@ def source_instagram_videos(
         logger.info("Instagram tag start: #%s", tag)
 
         for section_key, label in sections_to_scan:
-            if total_duration >= duration_cap_seconds:
+            if stop_early or total_duration >= duration_cap_seconds:
                 break
 
             logger.info("Instagram tag #%s scanning section=%s", tag, label)
 
             for media in iter_hashtag_section(L, tag, section_key, limit_per_hashtag):
-                if total_duration >= duration_cap_seconds:
+                if stop_early or total_duration >= duration_cap_seconds:
                     break
 
                 shortcode = media.get("code") or ""
@@ -593,7 +611,7 @@ def source_instagram_videos(
         )
 
     for username in accounts:
-        if total_duration >= duration_cap_seconds:
+        if stop_early or total_duration >= duration_cap_seconds:
             break
 
         acct_stats = {
@@ -611,7 +629,7 @@ def source_instagram_videos(
         logger.info("Instagram account start: @%s", username)
 
         for post in iter_profile_video_posts(L, username, limit_per_account):
-            if total_duration >= duration_cap_seconds:
+            if stop_early or total_duration >= duration_cap_seconds:
                 break
 
             shortcode = post.shortcode

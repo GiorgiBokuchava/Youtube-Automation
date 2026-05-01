@@ -66,6 +66,8 @@ instagram:
   min_duration: 1
   max_duration: 10
   min_likes: 2500
+  # Must match `python -m instaloader --login ...` handle (Instaloader session is per-user).
+  session_username: argon54637
   section: both
   hashtags:
     - funnyanimals

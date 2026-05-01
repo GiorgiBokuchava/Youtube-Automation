@@ -10,8 +10,9 @@ post:
   duration_score_factor: 20
   over_source_pct: 25
 
-# Instagram reels (requires INSTAGRAM_SESSION_B64 or sessions/instagram.session).
-# Sourcing runs when source_split.instagram > 0 and at least one hashtag or account is set.
+# Instagram reels (INSTAGRAM_SESSION_B64 and/or sessions/instagram.session).
+# If B64 is set it overwrites the file each run unless INSTAGRAM_PREFER_DISK_SESSION=1.
+# instagram.session_username must match the account used with instaloader --login.
 instagram:
   hashtags: []
   # Usernames only (leading @ stripped); timeline video posts, same filters as hashtags.

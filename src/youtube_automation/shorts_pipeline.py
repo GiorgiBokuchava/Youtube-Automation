@@ -8,11 +8,15 @@ from typing import Any
 from youtube_automation.ai.text.shorts_topic import (
     generate_shorts_topic,
     random_clip_count_if_needed,
+    sanitize_shorts_topic_title,
 )
-from youtube_automation.ai.text.shorts_commentary import generate_shorts_overlay_commentary
+from youtube_automation.ai.text.shorts_commentary import (
+    generate_shorts_overlay_commentary,
+)
 from youtube_automation.media.composition.shorts_render import render_shorts_segment
 from youtube_automation.media.composition.timeline import stitch_clips
 from youtube_automation.media.music import add_background_music
+from youtube_automation.media.ffprobe_streams import probe_audio_duration
 from youtube_automation.media.shorts_fit import fit_video_to_portrait_box
 from youtube_automation.media.shorts_sourcing import source_shorts_clips
 from youtube_automation.pipeline import _record_error
@@ -24,11 +28,48 @@ from youtube_automation.youtube.upload import upload_video
 logger = logging.getLogger(__name__)
 
 
+def _estimated_shorts_compilation_sec(clips: list[dict], max_seg_sec: float) -> float:
+    """Upper-bound-ish compilation length using source durations capped per segment."""
+    cap = max(0.0, float(max_seg_sec))
+    return sum(min(float(c.get("duration_sec") or 0), cap) for c in clips)
+
+
+def _shorts_targets_met(
+    *,
+    clip_count: int,
+    estimated_sec: float,
+    settings: dict,
+) -> tuple[bool, str]:
+    """
+    Success when clip_count_min is satisfied OR estimated runtime meets
+    target_compilation_duration_sec (when set). If target duration is omitted,
+    only the clip minimum applies.
+    """
+    sc = settings.get("shorts") or {}
+    min_clips = max(1, int(sc.get("clip_count_min", 3)))
+    td_raw = sc.get("target_compilation_duration_sec")
+    clip_ok = clip_count >= min_clips
+    if td_raw is None:
+        if clip_ok:
+            return True, f"{clip_count} clips (min {min_clips})"
+        return False, f"clips={clip_count}, need_min_clips={min_clips}"
+    td = float(td_raw)
+    dur_ok = estimated_sec >= td
+    ok = clip_ok or dur_ok
+    detail = (
+        f"clips={clip_count} (min {min_clips}), runtime≈{estimated_sec:.1f}s "
+        f"(duration gate {td}s)"
+    )
+    return ok, detail
+
+
 def run_shorts_pipeline(
     settings: dict, dry_run: bool = False, cleanup: bool = False
 ) -> dict:
     if not bool((settings.get("shorts") or {}).get("enabled", True)):
-        raise RuntimeError("Shorts generation is disabled by config (shorts.enabled=false)")
+        raise RuntimeError(
+            "Shorts generation is disabled by config (shorts.enabled=false)"
+        )
 
     channel = settings.get("channel", {}).get("name", "default")
     base_out = Path("out") / channel / "shorts"
@@ -47,17 +88,42 @@ def run_shorts_pipeline(
         if not dry_run:
             ensure_youtube_refresh_token()
 
-        topic_plan = random_clip_count_if_needed(generate_shorts_topic(settings), settings)
-        logger.info("Shorts topic: %r | Sourcing up to %d clips", topic_plan.topic_title, topic_plan.clip_count)
-        
+        topic_plan = random_clip_count_if_needed(
+            generate_shorts_topic(settings), settings
+        )
+        logger.info(
+            "Shorts topic: %r | Sourcing up to %d clips",
+            topic_plan.topic_title,
+            topic_plan.clip_count,
+        )
+
         clips, main_title = source_shorts_clips(settings, topic_plan)
         if not clips:
             raise ValueError("No Shorts clips sourced; aborting")
 
-        logger.info("Sourced %d clips for %r", len(clips), main_title)
-
         sc = settings.get("shorts") or {}
         max_seg = float(sc.get("max_segment_duration_sec", 22))
+
+        est_runtime = _estimated_shorts_compilation_sec(clips, max_seg)
+        ok_targets, targets_detail = _shorts_targets_met(
+            clip_count=len(clips),
+            estimated_sec=est_runtime,
+            settings=settings,
+        )
+        if not ok_targets:
+            raise ValueError(
+                "Shorts compilation targets not met after sourcing "
+                f"({targets_detail}). Relax filters, refresh Instagram session, "
+                "or widen sourcing."
+            )
+
+        logger.info(
+            "Sourced %d clips for %r (~%.1fs estimated runtime; segment cap %.1fs)",
+            len(clips),
+            main_title,
+            est_runtime,
+            max_seg,
+        )
 
         segment_paths: list[Path] = []
         segment_commentaries: list[str] = []
@@ -74,7 +140,7 @@ def run_shorts_pipeline(
                 len(segment_paths) + 1,
                 cid,
             )
-            
+
             in_path = Path(clip["local_path"])
             fit_path = FIT_DIR / f"{cid}_fit.mp4"
             try:
@@ -113,18 +179,23 @@ def run_shorts_pipeline(
                     seg_path,
                     main_title=main_title,
                     list_lines=list_lines,
-                    font_path=Path(of) if of and Path(str(of).strip()).exists() else None,
+                    font_path=(
+                        Path(of) if of and Path(str(of).strip()).exists() else None
+                    ),
                     title_font_path=(
                         Path(otf) if otf and Path(str(otf).strip()).exists() else None
                     ),
                     title_fontcolor=str(
                         sc.get("overlay_title_fontcolor", "0xffe082")
                     ).strip(),
-                    title_font_size=int(sc.get("overlay_title_font_size", 52)),
-                    body_font_size=int(sc.get("overlay_body_font_size", 32)),
-                    list_margin_x=int(sc.get("overlay_list_margin_x", 56)),
-                    title_border_w=int(sc.get("overlay_title_border_w", 3)),
-                    body_border_w=int(sc.get("overlay_body_border_w", 2)),
+                    title_font_size=int(sc.get("overlay_title_font_size", 58)),
+                    body_font_size=int(sc.get("overlay_body_font_size", 40)),
+                    body_fontcolor=str(
+                        sc.get("overlay_body_fontcolor", "0xfffef8")
+                    ).strip(),
+                    list_margin_x=int(sc.get("overlay_list_margin_x", 52)),
+                    title_border_w=int(sc.get("overlay_title_border_w", 4)),
+                    body_border_w=int(sc.get("overlay_body_border_w", 3)),
                 )
                 overlay_captions.append(caption)
                 segment_paths.append(seg_path)
@@ -135,6 +206,18 @@ def run_shorts_pipeline(
 
         if not segment_paths:
             raise ValueError("No Shorts segments rendered successfully")
+
+        stitched_runtime = sum(probe_audio_duration(p) for p in segment_paths)
+        ok_rendered, rendered_detail = _shorts_targets_met(
+            clip_count=len(segment_paths),
+            estimated_sec=stitched_runtime,
+            settings=settings,
+        )
+        if not ok_rendered:
+            raise ValueError(
+                "Shorts compilation targets not met after render "
+                f"({rendered_detail}). Some clips may have failed fit/render."
+            )
 
         stitched = stitch_clips(
             clip_paths=segment_paths,
@@ -161,11 +244,15 @@ def run_shorts_pipeline(
         ai_cfg = settings.get("publishing", {}).get("ai_metadata", {})
         if ai_cfg.get("enabled", False):
             try:
-                from youtube_automation.publishing.ai_metadata import generate_ai_metadata
+                from youtube_automation.publishing.ai_metadata import (
+                    generate_ai_metadata,
+                )
 
                 ai_meta = generate_ai_metadata(settings=settings, clips=clips)
                 if ai_meta.get("title"):
-                    meta["title"] = ai_meta["title"]
+                    meta["title"] = sanitize_shorts_topic_title(
+                        str(ai_meta["title"]).strip()
+                    )
                 if ai_meta.get("description"):
                     meta["description"] = ai_meta["description"]
                 if ai_meta.get("hashtags"):

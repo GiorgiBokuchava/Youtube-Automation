@@ -107,15 +107,38 @@ def main() -> None:
     music_on = settings.get("music", {}).get("enabled", True)
     ai_meta_on = settings.get("publishing", {}).get("ai_metadata", {}).get("enabled", False)
 
-    logger.info(
-        "Channel: %s | Mode: %s | Target: %s min | Commentary: %s | Music: %s | AI metadata: %s",
-        args.channel,
-        args.mode,
-        target_dur,
-        f"every {every_n}" if every_n and every_n > 0 else "off",
-        "on" if music_on else "off",
-        "on" if ai_meta_on else "off",
-    )
+    if args.mode == "shorts":
+        sc = settings.get("shorts") or {}
+        clip_mn = sc.get("clip_count_min")
+        clip_mx = sc.get("clip_count_max")
+        seg_cap = sc.get("max_segment_duration_sec")
+        comp_gate = sc.get("target_compilation_duration_sec")
+        extras = []
+        if comp_gate is not None:
+            extras.append(f"compilation gate ≥{comp_gate}s")
+        extra_txt = f" | {'; '.join(extras)}" if extras else ""
+        logger.info(
+            "Channel: %s | Mode: shorts | Shorts clips (YAML): %s-%s | Segment cap: %ss%s "
+            "| Commentary: %s | Music: %s | AI metadata: %s",
+            args.channel,
+            clip_mn,
+            clip_mx,
+            seg_cap,
+            extra_txt,
+            f"every {every_n}" if every_n and every_n > 0 else "off",
+            "on" if music_on else "off",
+            "on" if ai_meta_on else "off",
+        )
+    else:
+        logger.info(
+            "Channel: %s | Mode: %s | Target: %s min | Commentary: %s | Music: %s | AI metadata: %s",
+            args.channel,
+            args.mode,
+            target_dur,
+            f"every {every_n}" if every_n and every_n > 0 else "off",
+            "on" if music_on else "off",
+            "on" if ai_meta_on else "off",
+        )
 
     if args.mode == "thumbnail":
         thumb = source_thumbnail(settings)

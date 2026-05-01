@@ -10,6 +10,25 @@ from youtube_automation.media.shorts_sourcing import overlay_line_max_chars
 logger = logging.getLogger(__name__)
 
 
+def _strip_ai_rank_echo(text: str, segment_rank: int) -> str:
+    """Remove only a leading enumeration echo that matches this clip's display slot."""
+    t = (text or "").strip().strip('"').strip("'")
+    if not t:
+        return t
+    # Slot-specific only - avoids eating legitimate captions like "2 dogs ..."
+    n = int(segment_rank)
+    for pattern in (
+        rf"^\s*{n}\s*\.\s+",
+        rf"^\s*{n}\s*\)\s+",
+        rf"^\s*{n}\s*[\-\u2013]\s+",
+        rf"(?i)^\s*(?:clip|part)\s*{n}\s*[\.:\-\u2013]\s*",
+    ):
+        t2 = re.sub(pattern, "", t, count=1).strip()
+        if t2 != t:
+            return t2
+    return t
+
+
 def normalize_short_caption(text: str, *, max_words: int = 5) -> str:
     words = [w for w in (text or "").strip().replace("\n", " ").split() if w]
     if not words:
@@ -79,9 +98,13 @@ Channel name: {channel_name}
 Channel niche: {niche}
 Compilation title (this video): {video_main_title}
 Topic / theme for this Short: {topic_title}
-This clip is item {segment_rank} of {total_segments} in the numbered list (1..{total_segments}).
 
---- Reddit post (this clip) ---
+Numbering on-screen (important): clips are labeled in playback order as 1., 2., 3., ...
+This clip will appear as number **{segment_rank}** in that list when it is shown.
+Up to **{total_segments}** clips are sourced for this Short - some may be dropped during editing,
+so do NOT say "part X of Y" or rely on totals; focus only on this clip.
+
+--- Source post for this clip (Reddit or Instagram) ---
 Title: {post_title}
 Post body / description (OP text, may be empty):
 {post_selftext or "(none)"}
@@ -89,23 +112,23 @@ Post body / description (OP text, may be empty):
 Top comments (for context and tone; do not copy them verbatim):
 {comments_block}
 
-Metadata: r/{clip.get('subreddit', '')}, score {clip.get('score')}, ~{clip.get('duration_sec', 0)}s
+Metadata: source={clip.get("subreddit", "")}, score/likes {clip.get("score")}, ~{clip.get("duration_sec", 0)}s
 
-Write exactly ONE caption for this clip. It will show as: "{segment_rank}. <your text>"
+Write exactly ONE caption for this clip. In the final video it is shown as line **{segment_rank}.** followed by your text.
 
 Rules:
 - Short, engaging, witty or punchy when it fits {niche}.
 - At most {max_words} words.
 - No hashtags, no emojis.
 - No quotation marks around the answer.
-- Do not prefix with "{segment_rank}." — output ONLY the caption words after the number we add in editing.
+- Output ONLY the caption words (no leading number, no "1.", no "Clip 3:" - we add the number in editing).
+- Do not start your caption with the digit **{segment_rank}** followed by punctuation - it duplicates the label.
 - Output a single line of plain text, nothing else.
 """
     try:
         req = TextRequest(text=prompt)
         raw = text_service.generate(req, preferred_model=preferred).strip()
-        raw = raw.strip('"').strip("'").strip()
-        raw = re.sub(r"^[\d]+[\).\s]+", "", raw).strip()
+        raw = _strip_ai_rank_echo(raw, segment_rank)
         return _fit_caption_to_line(
             raw,
             rank=segment_rank,
@@ -115,6 +138,7 @@ Rules:
     except Exception as e:
         logger.warning("Shorts overlay commentary AI failed: %s", e)
         fb = normalize_short_caption(post_title, max_words=max_words) or "Wait for it"
+        fb = _strip_ai_rank_echo(fb, segment_rank)
         return _fit_caption_to_line(
             fb,
             rank=segment_rank,

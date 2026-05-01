@@ -28,6 +28,21 @@ def _cap_words(text: str, max_words: int) -> str:
     return " ".join(words)
 
 
+def sanitize_shorts_topic_title(title: str) -> str:
+    """Fix frequent model typos before titles appear on-screen or in metadata."""
+    t = (title or "").strip()
+    if not t:
+        return t
+    fixes = (
+        (r"\bAnimls\b", "Animals"),
+        (r"\bAmimals\b", "Animals"),
+        (r"\bAniamls\b", "Animals"),
+    )
+    for pat, repl in fixes:
+        t = re.sub(pat, repl, t, flags=re.IGNORECASE)
+    return t
+
+
 def _hint_lines(raw: object) -> list[str]:
     if raw is None:
         return []
@@ -98,6 +113,7 @@ Your task:
 2. Keep the title <= {title_max_words} words.
 3. Invent exactly 3 distinct Reddit search queries (specific → medium → slightly broader). Do not reuse the example hints as-is if any were given.
 4. Do not include the word "reddit" in the queries.
+5. Use correct English spelling everywhere (e.g. "Animals", not misspellings like "Animls").
 
 Return ONLY a JSON object:
 {{
@@ -117,7 +133,8 @@ Return ONLY a JSON object:
 
         topic_title = str(data.get("topic_title", "")).strip()
         topic_title = _cap_words(topic_title, title_max_words)
-        
+        topic_title = sanitize_shorts_topic_title(topic_title)
+
         queries = data.get("search_queries", [])
         if not isinstance(queries, list):
             queries = [str(queries)]
@@ -142,13 +159,21 @@ Return ONLY a JSON object:
         logger.warning("Shorts topic AI failed (%s); using fallback", e)
         # Fallback to something matching the niche
         fallbacks = {
-            "animals": ("Funny Animal", ["funny animal", "cute animal"]),
-            "tech": ("Clever Hack", ["tech hack", "life hack"]),
-            "gaming": ("Epic Win", ["gaming moment", "epic win"]),
+            "animals": ("Top {count} Funny Animal Moments", ["funny animal", "cute animal"]),
+            "tech": ("Top {count} Clever Hack Moments", ["tech hack", "life hack"]),
+            "gaming": ("Top {count} Epic Gaming Moments", ["gaming moment", "epic win"]),
         }
-        topic, queries = fallbacks.get(niche.lower(), ("Interesting", ["interesting", "cool"]))
+        nk = niche.lower()
+        if nk in fallbacks:
+            topic, queries = fallbacks[nk]
+        elif "animal" in nk:
+            topic, queries = fallbacks["animals"]
+        elif "game" in nk:
+            topic, queries = fallbacks["gaming"]
+        else:
+            topic, queries = ("Top {count} Wild Moments", ["interesting", "cool"])
         return ShortsTopicPlan(
-            topic_title=topic,
+            topic_title=sanitize_shorts_topic_title(topic),
             search_queries=queries,
             clip_count=6,
         )

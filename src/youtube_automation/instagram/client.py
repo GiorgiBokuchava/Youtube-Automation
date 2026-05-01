@@ -15,9 +15,13 @@ DEFAULT_SESSION_REL = Path("sessions") / "instagram.session"
 SESSION_USERNAME_DEFAULT = "instagram"
 
 _SESSION_HELP = (
-    "Refresh the Instaloader session: run import_firefox_session.py locally, then "
-    "base64-encode sessions/instagram.session and set INSTAGRAM_SESSION_B64 "
-    "(or the GitHub Actions secret of the same name)."
+    "Instagram session: (1) Run `python -m instaloader --login YOUR_USERNAME`, copy the saved "
+    "`session-YOUR_USERNAME` file to sessions/instagram.session under the project root, and set "
+    "instagram.session_username in YAML to YOUR_USERNAME. "
+    "(2) Or put raw session bytes in INSTAGRAM_SESSION_B64 (plain standard base64, no quotes). "
+    "If INSTAGRAM_SESSION_B64 is set it overwrites sessions/instagram.session every run unless "
+    "you set INSTAGRAM_PREFER_DISK_SESSION=1 to keep the on-disk file. "
+    "See https://instaloader.github.io/basic-usage.html"
 )
 
 
@@ -25,19 +29,84 @@ def session_file_path() -> Path:
     return BASE_DIR / DEFAULT_SESSION_REL
 
 
-def decode_session(*, env_var: str = "INSTAGRAM_SESSION_B64") -> Path:
-    """Decode base64 session from env into ``sessions/instagram.session`` under project root."""
-    b64 = os.environ.get(env_var, "").strip()
+def _instagram_b64_from_env(env_var: str) -> str:
+    """Normalize INSTAGRAM_SESSION_B64 (trim, strip accidental wrapping quotes / whitespace)."""
+    raw = os.environ.get(env_var, "").strip()
+    if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "'\"":
+        raw = raw[1:-1].strip()
+    return "".join(raw.split())
+
+
+def decode_session_raw(b64: str) -> Path:
+    """Write decoded session bytes to ``sessions/instagram.session``."""
     if not b64:
+        raise RuntimeError(f"Empty session base64. {_SESSION_HELP}")
+    try:
+        decoded = base64.b64decode(b64, validate=False)
+    except Exception as exc:
         raise RuntimeError(
-            f"{env_var} is not set. {_SESSION_HELP}"
-        )
-    raw = base64.b64decode(b64)
+            f"INSTAGRAM_SESSION_B64 is not valid base64: {exc}. {_SESSION_HELP}"
+        ) from exc
     out = session_file_path()
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(raw)
-    logger.info("Wrote Instaloader session file %s (%d bytes)", out, len(raw))
+    out.write_bytes(decoded)
+    logger.info("Wrote Instaloader session file %s (%d bytes)", out, len(decoded))
     return out
+
+
+def decode_session(*, env_var: str = "INSTAGRAM_SESSION_B64") -> Path:
+    """Decode base64 session from env into ``sessions/instagram.session`` under project root."""
+    b64 = _instagram_b64_from_env(env_var)
+    if not b64:
+        raise RuntimeError(
+            f"{env_var} is not set or empty after stripping. {_SESSION_HELP}"
+        )
+    return decode_session_raw(b64)
+
+
+def resolve_instagram_session_path(*, env_var: str = "INSTAGRAM_SESSION_B64") -> Path:
+    """
+    Path to ``sessions/instagram.session``.
+
+    - If ``INSTAGRAM_PREFER_DISK_SESSION`` is truthy and the file exists, use it (skip env decode).
+    - Else if ``INSTAGRAM_SESSION_B64`` is non-empty, decode it (overwrites on-disk file).
+    - Else use on-disk path only.
+    """
+    disk = session_file_path()
+    b64 = _instagram_b64_from_env(env_var)
+    prefer_disk = os.environ.get(
+        "INSTAGRAM_PREFER_DISK_SESSION", ""
+    ).strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+    if prefer_disk:
+        if disk.is_file():
+            logger.info(
+                "Instagram: using on-disk session %s (INSTAGRAM_PREFER_DISK_SESSION)",
+                disk,
+            )
+            return disk
+        if b64:
+            logger.warning(
+                "INSTAGRAM_PREFER_DISK_SESSION set but %s missing; decoding %s instead.",
+                disk,
+                env_var,
+            )
+
+    if b64:
+        logger.info(
+            "Instagram: decoding %s into %s (set INSTAGRAM_PREFER_DISK_SESSION=1 or clear %s "
+            "to use a manually copied file without overwriting)",
+            env_var,
+            disk,
+            env_var,
+        )
+        return decode_session_raw(b64)
+
+    return disk
 
 
 def build_loader(
@@ -71,8 +140,26 @@ def build_loader(
             raise RuntimeError("Session invalid (test_login returned None).")
         logger.info("Instagram session OK, logged in as %s", username)
     except Exception as exc:
+        detail = str(exc).lower()
+        hints: list[str] = []
+        if (
+            "getaddrinfo" in detail
+            or "nameresolutionerror" in detail
+            or "11001" in detail
+            or "name or service not known" in detail
+        ):
+            hints.append(
+                "Network/DNS: hostname lookup failed for instagram.com — check connectivity, VPN, "
+                "DNS settings, or firewall (this is not a session-file bug)."
+            )
+        if "401" in detail or "unauthorized" in detail:
+            hints.append(
+                "HTTP 401 from Instagram — often rate-limit / cooldown; wait and retry, refresh "
+                "session after DNS works, avoid parallel scrapers hitting IG."
+            )
+        suffix = ("\n" + "\n".join(hints)) if hints else ""
         raise RuntimeError(
-            f"Failed to load Instagram session: {exc}\n{_SESSION_HELP}"
+            f"Failed to load Instagram session: {exc}{suffix}\n{_SESSION_HELP}"
         ) from exc
 
     return L
@@ -112,15 +199,12 @@ def ensure_instagram_session_ok(settings: dict) -> None:
     ig = settings.get("instagram") or {}
     session_username = str(ig.get("session_username", SESSION_USERNAME_DEFAULT))
 
-    if os.environ.get("INSTAGRAM_SESSION_B64", "").strip():
-        path = decode_session()
-    else:
-        path = session_file_path()
-        if not path.is_file():
-            raise RuntimeError(
-                "Instagram sourcing requires INSTAGRAM_SESSION_B64 or an existing "
-                f"{path}. {_SESSION_HELP}"
-            )
+    path = resolve_instagram_session_path()
+    if not path.is_file():
+        raise RuntimeError(
+            "Instagram sourcing requires INSTAGRAM_SESSION_B64 or an existing "
+            f"{path}. {_SESSION_HELP}"
+        )
 
     user = test_session(path, session_username=session_username)
     if not user:
