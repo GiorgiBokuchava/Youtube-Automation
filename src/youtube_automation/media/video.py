@@ -275,8 +275,7 @@ def source_videos(settings: dict) -> List[dict]:
     min_ratio = post_cfg.get("min_ratio", 0.0)
     duration_score_factor = int(post_cfg.get("duration_score_factor", 20))
 
-    over_source_pct = int(post_cfg.get("over_source_pct", 25))
-    effective_target = int(final_target_seconds * (1 + over_source_pct / 100))
+    effective_target = final_target_seconds
 
     context_cfg = settings.get("post_context", {})
     comments_limit = int(context_cfg.get("top_comments", 5))
@@ -304,11 +303,10 @@ def source_videos(settings: dict) -> List[dict]:
     ]
 
     logger.info(
-        "Starting video sourcing: target=%d min (%ds), effective_target=%ds (over-source %d%%)",
+        "Starting video sourcing: target=%d min (%ds), effective_target=%ds",
         final_target_minutes,
         final_target_seconds,
         effective_target,
-        over_source_pct,
     )
     logger.info("Targeting %d subreddits: %s", len(subs), ", ".join(subs))
     logger.info(

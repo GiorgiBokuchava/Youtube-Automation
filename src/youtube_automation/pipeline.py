@@ -12,6 +12,7 @@ from youtube_automation.media.composition import (
     render_clip,
     stitch_clips,
 )
+from youtube_automation.media.ffprobe_streams import probe_media_duration_seconds
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.media.video import source_videos
 from youtube_automation.media.video_processing import batch_normalize_videos
@@ -296,6 +297,19 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             output_path=OUTPUT_DIR / "final.mp4",
             settings=settings,
         )
+
+        target_duration_sec = float(settings.get("final_target_duration", 0) * 60)
+        if target_duration_sec > 0:
+            final_duration = probe_media_duration_seconds(Path(final_with_music))
+            if final_duration is None:
+                raise ValueError(
+                    f"Could not verify final video duration for {final_with_music}"
+                )
+            if final_duration < target_duration_sec:
+                raise ValueError(
+                    "Final video is shorter than required target duration "
+                    f"({final_duration:.2f}s < {target_duration_sec:.2f}s)"
+                )
 
         meta = build_metadata(settings, clips)
 

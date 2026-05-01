@@ -92,3 +92,29 @@ def probe_video_stream_size(path: Path) -> VideoStreamSize | None:
     if not w or not h:
         return None
     return VideoStreamSize(width=int(w), height=int(h))
+
+
+def probe_media_duration_seconds(path: Path) -> float | None:
+    """
+    Return media duration in seconds, or None when unavailable.
+    """
+    cmd = [
+        _ffprobe_bin(),
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=nk=1:nw=1",
+        str(path),
+    ]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if p.returncode != 0:
+        return None
+    try:
+        value = float((p.stdout or "").strip())
+    except (TypeError, ValueError):
+        return None
+    if value <= 0:
+        return None
+    return value

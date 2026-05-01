@@ -53,8 +53,11 @@ def upload_video(
                 media_body=MediaFileUpload(str(thumbnail_path)),
             )
             _execute_with_retry(thumbnail_request)
+            logging.info("YouTube thumbnail applied from %s", thumbnail_path)
         except Exception as e:
             logging.warning(f"Thumbnail upload failed, continuing: {e}")
+    elif thumbnail_path:
+        logging.warning("Thumbnail path does not exist, skipping: %s", thumbnail_path)
 
     return f"https://www.youtube.com/watch?v={video_id}"
 

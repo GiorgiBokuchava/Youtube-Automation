@@ -90,6 +90,10 @@ def test_partial_render_failure_still_stitches_and_records_errors(
         return_value=final,
     )
     mocker.patch("youtube_automation.pipeline.add_background_music", return_value=final)
+    mocker.patch(
+        "youtube_automation.pipeline.probe_media_duration_seconds",
+        return_value=1.0,
+    )
     mocker.patch("youtube_automation.pipeline.save_session")
 
     settings = {
