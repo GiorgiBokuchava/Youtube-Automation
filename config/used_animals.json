@@ -37238,5 +37238,231 @@
     "youtube_url": "https://www.youtube.com/watch?v=IdHtU8K26n8",
     "pipeline_errors": [],
     "channel": "animals"
+  },
+  {
+    "created_at": "2026-05-02T19:14:19.227644+00:00",
+    "clips": [
+      {
+        "id": "1t18vnk",
+        "title": "Foster kitten enjoying sunset",
+        "selftext": "",
+        "top_comments": [
+          "So cute",
+          "https://preview.redd.it/gxbqu9ha7oyg1.jpeg?width=1080&format=pjpg&auto=webp&s=82b8d2edf0a82482040c3a7aada1ba3b53a7c94b",
+          "Two beautiful things in a single video",
+          "the life every cat deserves!",
+          "Looks like he's in a cat-amaran"
+        ],
+        "permalink": "https://www.reddit.com/r/aww/comments/1t18vnk/foster_kitten_enjoying_sunset/",
+        "source_url": "https://v.redd.it/9gsirrvdxlyg1",
+        "subreddit": "aww",
+        "author": "ash_ofthe_lee",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1t18vnk.mp4",
+        "overlay_title": true,
+        "score": 11412,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1t18vnk.mp4",
+        "commentary_text": "This cat's vacation is better than mine.",
+        "commentary_model": "gemini",
+        "commentary_fallback": false,
+        "voiceover_path": "out/animals/voiceovers/1t18vnk_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1t18vnk_rendered.mp4",
+        "render_path_kind": "commentary_source_no_audio"
+      },
+      {
+        "id": "1sy6wlm",
+        "title": "my backyard squirrels have concluded, through experimentation, that my dog cant catch them. they eat right in front of her face now \ud83d\ude2d",
+        "selftext": "",
+        "top_comments": [
+          "They convinced the dog too",
+          "Build the dude a ramp, even the odds...",
+          "The dog's paid off!",
+          "Time to get Belgian Malinois!",
+          "They really ran the tests and published their findings"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingJerks/comments/1sy6wlm/my_backyard_squirrels_have_concluded_through/",
+        "source_url": "https://v.redd.it/nhoxusm8nyxg1",
+        "subreddit": "AnimalsBeingJerks",
+        "author": "StrangeElk",
+        "duration_sec": 6,
+        "local_path": "out/animals/normalized_videos/normalized_1sy6wlm.mp4",
+        "overlay_title": false,
+        "score": 536,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1sy6wlm.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -56.1,
+          "max_volume_db": -37.4,
+          "silence_ratio": 0.994881089804791,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1sy6wlm_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1t1l1rq",
+        "title": "He did NOT approve this outfit but now he has to own it",
+        "selftext": "",
+        "top_comments": [
+          "He s got better winter gear than I do!",
+          "but 100% confidence anyway",
+          "We can tell he was forced",
+          "Gotta keep those beans warm!",
+          "He s definitely rocking it!"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1t1l1rq/he_did_not_approve_this_outfit_but_now_he_has_to/",
+        "source_url": "https://v.redd.it/9hm0ulfizoyg1",
+        "subreddit": "funnycats",
+        "author": "umutreyiz28",
+        "duration_sec": 6,
+        "local_path": "out/animals/normalized_videos/normalized_1t1l1rq.mp4",
+        "overlay_title": true,
+        "score": 632,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1t1l1rq.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1t1l1rq_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1t0s6zn",
+        "title": "I got yelled at for secretly filming (volume warning)",
+        "selftext": "",
+        "top_comments": [
+          "The pawparazzi have no respect for privacy",
+          "This makes me unbelievably happy",
+          "that was goofy lol",
+          "That'll teach you!",
+          "Mawww"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1t0s6zn/i_got_yelled_at_for_secretly_filming_volume/",
+        "source_url": "https://v.redd.it/4y4q4gv7tiyg1",
+        "subreddit": "funnycats",
+        "author": "StraightDistrict8681",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1t0s6zn.mp4",
+        "overlay_title": true,
+        "score": 491,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1t0s6zn.mp4",
+        "commentary_text": "The cat gets up close and personal with the camera.",
+        "commentary_model": "gemini",
+        "commentary_fallback": false,
+        "voiceover_path": "out/animals/voiceovers/1t0s6zn_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -26.6,
+          "max_volume_db": -5.9,
+          "silence_ratio": 0.2576577868852459,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out/animals/rendered_clips/1t0s6zn_rendered.mp4",
+        "render_path_kind": "commentary_source_has_audio"
+      },
+      {
+        "id": "1t1mun0",
+        "title": "Animated bouncy boy made my day",
+        "selftext": "He's so round",
+        "top_comments": [
+          "The face wash at the end was really cute too.",
+          "Guilty gear?",
+          "WHERE IS THIS BOUNCY BOII FROM?! I need to know!",
+          "so he is perfect",
+          "grown man btw (i mean the bun)"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1t1mun0/animated_bouncy_boy_made_my_day/",
+        "source_url": "https://v.redd.it/ebgnvyhkhpyg1",
+        "subreddit": "Rabbits",
+        "author": "WangTheDong",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1t1mun0.mp4",
+        "overlay_title": true,
+        "score": 628,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1t1mun0.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1t1mun0_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1szz9f4",
+        "title": "I don't know what she's dreaming about but it must be delicious!",
+        "selftext": "",
+        "top_comments": [
+          "That s so cute!",
+          "What animal is this?",
+          "i burst out laughing",
+          "Dreaming of Mom",
+          "What a cute little weasel you have there!"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1szz9f4/i_dont_know_what_shes_dreaming_about_but_it_must/",
+        "source_url": "https://v.redd.it/8d0hpq02icyg1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "loveyousomuch_ok",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1szz9f4.mp4",
+        "overlay_title": true,
+        "score": 627,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1szz9f4.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -42.0,
+          "max_volume_db": -9.5,
+          "silence_ratio": 0.09578393394481066,
+          "has_sustained_audio": true,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1szz9f4_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 6,
+    "thumbnail": {
+      "submission_id": "1szwl88",
+      "path": "thumbnails/1szwl88_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/dwqraz441cyg1.jpeg"
+    },
+    "output_path": "out/animals/outputs/final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=FMp75Tg12rQ",
+    "pipeline_errors": [],
+    "channel": "animals"
   }
 ]
