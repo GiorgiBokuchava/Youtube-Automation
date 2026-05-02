@@ -5,22 +5,46 @@ shorts:
   clip_count_min: 5
   clip_count_max: 7
   randomize_clip_count: true
+  # reddit_first | instagram_first | interleave (interleave uses source_split weights).
+  # Instagram is mobile-first and typically portrait; prefer it for Shorts.
+  multi_source_strategy: instagram_first
   search_time_filter: month
   search_sort: top
-  search_limit_per_subreddit: 100
+  search_limit_per_subreddit: 80
   min_duration: 2
-  max_duration: 60
-  # Permissive filters to ensure high yield
-  min_score: 10
-  min_ratio: 0.10
-  min_height_width_ratio: 0.50
-  max_segment_duration_sec: 22
+  # Max length in the final short (trimmed in fit). Source files can be longer.
+  max_segment_duration_sec: 10
+  # Pool of downloaded clips (seconds). Must be >= max_segment_duration_sec.
+  max_duration: 75
+  # Stricter than legacy shorts defaults (min_score 10, min_ratio 0.10).
+  min_score: 400
+  min_ratio: 0.78
+  # Require portrait/square sources (h >= w). Landscape Reddit clips are skipped;
+  # the blur-fill fit handles any minor pillarboxing for near-square clips.
+  min_height_width_ratio: 1.0
+  # Abort unless clip_count_min is met OR stitched runtime reaches this (~60s goal).
+  target_compilation_duration_sec: 60
   overlay_comment_max_len: 100
+  overlay_title_font_size: 58
+  overlay_body_font_size: 42
+  overlay_title_border_w: 4
+  overlay_body_border_w: 4
+  overlay_body_fontcolor: "0xfffacd"
+
+# Used only when shorts.multi_source_strategy is ``interleave``.
+source_split:
+  reddit: 0.5
+  instagram: 0.5
+
+# Stricter Instagram thresholds for shorts (merged over channel instagram block).
+instagram:
+  min_likes: 6000
+  min_duration: 2
+  max_duration: 75
 
 publishing:
   ai_metadata:
     enabled: true
 
-# Background music is disabled as per user request for shorts
 music:
   enabled: false

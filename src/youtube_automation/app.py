@@ -78,13 +78,28 @@ def main() -> None:
         action="store_true",
         help="Disable commentary and music (AI metadata still runs).",
     )
+    parser.add_argument(
+        "--thumbnail-shorts-orientation",
+        action="store_true",
+        help=(
+            "With --mode thumbnail, load shorts config and source a portrait (9:16) thumbnail."
+        ),
+    )
     args = parser.parse_args()
 
+    if args.thumbnail_shorts_orientation and args.mode != "thumbnail":
+        parser.error(
+            "--thumbnail-shorts-orientation is only allowed with --mode thumbnail"
+        )
     load_env(args.channel)
     setup_logging(args.debug)
 
     logger = logging.getLogger(__name__)
-    settings = load_settings(args.channel, shorts=(args.mode == "shorts"))
+    use_shorts_config = (
+        args.mode == "shorts"
+        or (args.mode == "thumbnail" and args.thumbnail_shorts_orientation)
+    )
+    settings = load_settings(args.channel, shorts=use_shorts_config)
 
     if args.no_commentary or args.core_only:
         settings.setdefault("commentary", {})["every_nth"] = 0
@@ -107,17 +122,49 @@ def main() -> None:
     music_on = settings.get("music", {}).get("enabled", True)
     ai_meta_on = settings.get("publishing", {}).get("ai_metadata", {}).get("enabled", False)
 
-    logger.info(
-        "Channel: %s | Mode: %s | Target: %s min | Commentary: %s | Music: %s | AI metadata: %s",
-        args.channel,
-        args.mode,
-        target_dur,
-        f"every {every_n}" if every_n and every_n > 0 else "off",
-        "on" if music_on else "off",
-        "on" if ai_meta_on else "off",
-    )
+    if args.mode == "shorts":
+        sc = settings.get("shorts") or {}
+        clip_mn = sc.get("clip_count_min")
+        clip_mx = sc.get("clip_count_max")
+        seg_cap = sc.get("max_segment_duration_sec")
+        comp_gate = sc.get("target_compilation_duration_sec")
+        extras = []
+        if comp_gate is not None:
+            extras.append(f"compilation gate ≥{comp_gate}s")
+        extra_txt = f" | {'; '.join(extras)}" if extras else ""
+        logger.info(
+            "Channel: %s | Mode: shorts | Shorts clips (YAML): %s-%s | Segment cap: %ss%s "
+            "| Commentary: %s | Music: %s | AI metadata: %s",
+            args.channel,
+            clip_mn,
+            clip_mx,
+            seg_cap,
+            extra_txt,
+            f"every {every_n}" if every_n and every_n > 0 else "off",
+            "on" if music_on else "off",
+            "on" if ai_meta_on else "off",
+        )
+    else:
+        logger.info(
+            "Channel: %s | Mode: %s | Target: %s min | Commentary: %s | Music: %s | AI metadata: %s",
+            args.channel,
+            args.mode,
+            target_dur,
+            f"every {every_n}" if every_n and every_n > 0 else "off",
+            "on" if music_on else "off",
+            "on" if ai_meta_on else "off",
+        )
 
     if args.mode == "thumbnail":
+        logger.info(
+            "Thumbnail canvas: %s (content_type=%s)",
+            (
+                "portrait 1080×1920"
+                if settings.get("content_type") == "shorts"
+                else "landscape 1920×1080"
+            ),
+            settings.get("content_type", "long_form"),
+        )
         thumb = source_thumbnail(settings)
         session = new_session({"thumbnail": thumb or {}, "clips": [], "num_clips": 0})
         save_session(session, settings)

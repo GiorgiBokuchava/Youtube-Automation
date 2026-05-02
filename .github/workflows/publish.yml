@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 6 */2 * *" # every 2 days
+    - cron: "0 6 */2 * *" # every 2 days → long-form pipeline only (see pipeline_kind below)
   workflow_dispatch:
     inputs:
       channel:
@@ -13,6 +13,14 @@ on:
         required: true
         default: animals
         type: string
+      pipeline_kind:
+        description: "Scheduled runs always use long-form; this applies to manual Run workflow only"
+        required: true
+        default: long_form
+        type: choice
+        options:
+          - long_form
+          - shorts
 
 jobs:
   run:
@@ -26,6 +34,8 @@ jobs:
 
     env:
       CHANNEL: ${{ github.event.inputs.channel || 'animals' }}
+      # Only workflow_dispatch may select shorts; schedule/push/other triggers always pipeline.
+      APP_MODE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.pipeline_kind == 'shorts') && 'shorts' || 'pipeline' }}
       # Optional: repository variable YT_PRIVACY_STATUS (public | private | unlisted)
       # overrides youtube.privacy_status in YAML. If unset, leave empty so CI does
       # not override channel config (same as before YT_PRIVACY was added to this file).
@@ -108,7 +118,8 @@ jobs:
 
           ch = os.environ.get("CHANNEL", "animals")
           load_env(ch)
-          settings = load_settings(ch)
+          shorts_run = os.environ.get("APP_MODE") == "shorts"
+          settings = load_settings(ch, shorts=shorts_run)
           if instagram_sourcing_enabled(settings):
               ensure_instagram_session_ok(settings)
           PY
@@ -116,8 +127,9 @@ jobs:
 
       - name: Run pipeline
         run: |
+          echo "APP_MODE=${APP_MODE} (event=${GITHUB_EVENT_NAME}, channel=${CHANNEL})"
           python -m youtube_automation.app \
-            --mode pipeline \
+            --mode "$APP_MODE" \
             --channel "$CHANNEL" \
             --cleanup
 

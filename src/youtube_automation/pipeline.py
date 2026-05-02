@@ -36,13 +36,13 @@ def _no_clips_hint(settings: dict) -> str:
         "  • Reddit: relax post.min_score / min_ratio / duration; add subreddits; check "
         "config/used_<channel>.json is not blocking everything you expect.",
         "  • Instagram: lower instagram.min_likes, widen min_duration/max_duration, try "
-        "different hashtags; hashtag results can be sparse when many filters apply at once.",
+        "different hashtags or add instagram.accounts; feeds can be sparse when many filters apply.",
         "  • Run with --mode videos first to confirm clips are found before the full pipeline.",
     ]
     if instagram_sourcing_enabled(settings):
         lines.append(
-            "  • Instagram-only: confirm videos in those tags meet likes and duration "
-            "limits (very strict defaults often yield zero downloads)."
+            "  • Instagram-only: confirm videos from those hashtags/accounts meet likes "
+            "and duration limits (very strict defaults often yield zero downloads)."
         )
     return "\n".join(lines)
 

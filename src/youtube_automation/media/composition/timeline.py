@@ -79,7 +79,7 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         # Rebuild audio timestamps from sample count so any residual concat
         # discontinuities become invisible to the muxer.
         "-af",
-        "aresample=48000,asetpts=N/SR/TB",
+        "aresample=48000,asetpts=N/SR/TB,alimiter=limit=0.97",
         "-movflags",
         "+faststart",
         str(output_path),

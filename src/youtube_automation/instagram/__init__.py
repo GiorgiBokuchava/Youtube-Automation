@@ -1,1 +1,1 @@
-"""Instagram session + hashtag video sourcing via Instaloader."""
+"""Instagram session + hashtag / account video sourcing via Instaloader."""

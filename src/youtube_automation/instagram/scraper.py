@@ -12,7 +12,7 @@ import instaloader
 from youtube_automation.instagram.client import (
     SESSION_USERNAME_DEFAULT,
     build_loader,
-    session_file_path,
+    resolve_instagram_session_path,
 )
 from youtube_automation.storage.sessions import get_used_video_ids
 from youtube_automation.utils.paths import DOWNLOADS
@@ -21,50 +21,33 @@ logger = logging.getLogger(__name__)
 
 MEDIA_TYPE_VIDEO = 2
 
-# Simple heuristic for English detection
-_ENGLISH_WORDS = {
-    "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not",
-    "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from",
-    "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would",
-    "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which",
-    "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know",
-    "take", "people", "into", "year", "your", "good", "some", "could", "them", "see",
-    "other", "than", "then", "now", "look", "only", "come", "its", "over", "think",
-    "also", "back", "after", "use", "two", "how", "our", "work", "first", "well",
-    "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us",
-    "dog", "cat", "pet", "funny", "cute", "smile", "love", "baby", "animals", "animal",
-}
+# Standalone abbreviations for 'generated-by-AI' callouts (comments/captions):
+# - AI: English / international Latin
+# - IA: Spanish, French, Portuguese, Italian (IA ~ AI)
+# - II (Cyrillic): common Russian shorthand for AI
+# Latin tokens use ASCII-letter boundaries so AID/FAIL/email-style substrings stay safe.
+# German KI is omitted: Turkish uses standalone "ki" as a word -> too many false positives.
+_LATIN_AI_MARKERS_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:AI|IA)(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
+_CYRILLIC_II_MARKERS_RE = re.compile(r"(?<!\w)(?:ИИ)(?!\w)", re.UNICODE)
 
 
-def _is_likely_english(text: str) -> bool:
-    """Return True if text has enough English-like features or is very short/neutral."""
-    if not text:
+def _text_contains_ai_locale_marker(text: str) -> bool:
+    """True when ``text`` contains AI / IA / Cyrillic II token."""
+    if not text or not text.strip():
+        return False
+    if _LATIN_AI_MARKERS_RE.search(text):
         return True
-    
-    # Normalize and extract words
-    words = re.findall(r"\b[a-z]{2,}\b", text.lower())
-    if not words:
-        # Check if it contains mostly non-Latin scripts (e.g. Arabic, Cyrillic, Chinese)
-        # by looking at the ratio of [a-zA-Z] chars.
-        latin_chars = len(re.findall(r"[a-zA-Z]", text))
-        total_chars = len(re.sub(r"\s+", "", text))
-        if total_chars > 5 and (latin_chars / total_chars) < 0.3:
-            return False
-        return True # Neutral/Emojis only
+    return bool(_CYRILLIC_II_MARKERS_RE.search(text))
 
-    # Count common English words
-    common_count = sum(1 for w in words if w in _ENGLISH_WORDS)
-    
-    # If we find at least one very common English word, it's likely English or fine.
-    # For short captions, even 1 word is a good sign.
-    if len(words) <= 3:
-        return common_count >= 1 or all(w.isascii() for w in words)
-    
-    # For longer captions, expect at least 20% common words or mostly ASCII
-    ratio = common_count / len(words)
-    ascii_ratio = sum(1 for w in words if w.isascii()) / len(words)
-    
-    return ratio >= 0.15 or ascii_ratio >= 0.8
+
+def _caption_or_comments_signal_ai(*, caption: str, comment_texts: list[str]) -> bool:
+    """True if caption or any sampled comment carries an AI locale marker."""
+    if _text_contains_ai_locale_marker(caption):
+        return True
+    return any(_text_contains_ai_locale_marker(t) for t in comment_texts)
 
 
 def _caption_text(media: dict) -> str:
@@ -190,6 +173,46 @@ def iter_hashtag_section(
         params = {"__a": 1, "__d": "dis", "tag_name": keyword, "max_id": next_max_id}
 
 
+def iter_profile_video_posts(
+    L: instaloader.Instaloader,
+    username: str,
+    limit: int,
+) -> Generator[instaloader.Post, None, None]:
+    """Yield up to ``limit`` video posts from a profile timeline (newest first)."""
+    try:
+        profile = instaloader.Profile.from_username(L.context, username)
+    except instaloader.exceptions.ProfileNotExistsException:
+        logger.warning("Instagram account not found: @%s", username)
+        return
+    except instaloader.exceptions.PrivateProfileNotFollowedException:
+        logger.warning("Instagram account private or not followed: @%s", username)
+        return
+    except Exception as exc:
+        logger.warning("Instagram profile @%s unavailable: %s", username, exc)
+        return
+
+    yielded = 0
+    try:
+        for post in profile.get_posts():
+            try:
+                if not post.is_video:
+                    continue
+            except (KeyError, TypeError):
+                continue
+            yielded += 1
+            yield post
+            if yielded >= limit:
+                return
+    except instaloader.exceptions.TooManyRequestsException:
+        logger.warning(
+            "Instagram rate limited while scanning @%s — waiting 60s...",
+            username,
+        )
+        time.sleep(60)
+    except Exception as exc:
+        logger.warning("Instagram posts iteration failed for @%s: %s", username, exc)
+
+
 def _pick_downloaded_mp4(shortcode: str) -> Path | None:
     folder = DOWNLOADS / shortcode
     if not folder.is_dir():
@@ -202,13 +225,22 @@ def _pick_downloaded_mp4(shortcode: str) -> Path | None:
 
 def _download_instagram_video(
     L: instaloader.Instaloader,
-    media: dict,
     shortcode: str,
     delay: float,
+    *,
+    media: dict | None = None,
+    post: instaloader.Post | None = None,
 ) -> Path | None:
     try:
-        post = instaloader.Post.from_iphone_struct(L.context, media)
-        L.download_post(post, target=shortcode)
+        resolved: instaloader.Post
+        if post is not None:
+            resolved = post
+        elif media is not None:
+            resolved = instaloader.Post.from_iphone_struct(L.context, media)
+        else:
+            logger.debug("Instagram download skipped %s: no media or post", shortcode)
+            return None
+        L.download_post(resolved, target=shortcode)
         path = _pick_downloaded_mp4(shortcode)
         if path:
             time.sleep(delay)
@@ -218,32 +250,31 @@ def _download_instagram_video(
         return None
 
 
-def _check_comments_english(L: instaloader.Instaloader, media: dict, shortcode: str) -> bool:
-    """Fetch top 5 comments and verify if they are likely English."""
-    logger.debug("Checking comments for English validation: %s", shortcode)
+def _top_instagram_comment_texts(
+    L: instaloader.Instaloader,
+    shortcode: str,
+    *,
+    media: dict | None = None,
+    post: instaloader.Post | None = None,
+    limit: int = 5,
+) -> list[str]:
+    """First ``limit`` comment bodies from Instaloader (may be fewer); empty on failure."""
     try:
-        post = instaloader.Post.from_iphone_struct(L.context, media)
-        count = 0
-        english_count = 0
-        
-        # instaloader's get_comments returns an iterator; we only need a few.
-        for comment in post.get_comments():
-            count += 1
-            if _is_likely_english(comment.text):
-                english_count += 1
-            if count >= 5:
+        if post is not None:
+            resolved = post
+        elif media is not None:
+            resolved = instaloader.Post.from_iphone_struct(L.context, media)
+        else:
+            return []
+        texts: list[str] = []
+        for comment in resolved.get_comments():
+            texts.append((comment.text or "").strip())
+            if len(texts) >= limit:
                 break
-        
-        if count == 0:
-            return True # No comments to judge by
-            
-        # If majority are English, we accept it.
-        result = (english_count / count) >= 0.5
-        logger.debug("Comment check for %s: %s (%d/%d English)", shortcode, result, english_count, count)
-        return result
+        return texts
     except Exception as exc:
-        logger.debug("Failed to check comments for %s: %s", shortcode, exc)
-        return True # Fallback to true if API fails
+        logger.debug("Failed to fetch comments for %s: %s", shortcode, exc)
+        return []
 
 
 def source_instagram_videos(
@@ -252,25 +283,47 @@ def source_instagram_videos(
     duration_cap_seconds: int,
     warn_below_seconds: int,
     exclude_ids: set[str] | None = None,
+    max_clips: int | None = None,
 ) -> list[dict]:
     """
     Download Instagram reel/video posts matching channel ``instagram`` settings.
 
+    Discovers candidates from configured hashtags (top/recent) and/or seed accounts
+    (profile video timeline). Filters: likes, duration, rejection when caption or any of
+    the top sampled comments contain multilingual AI abbreviations (AI, IA, Cyrillic ИИ),
+    dedupe.
+
     ``duration_cap_seconds`` caps total *accepted* clip duration.
+
+    When ``max_clips`` is set, sourcing stops once that many clips are accepted
+    (still subject to filters). Duration cap is bumped so short compilations can
+    reach the clip target without hitting duration first.
     """
     ig = settings.get("instagram") or {}
     hashtags = [
         str(h).lstrip("#").strip() for h in (ig.get("hashtags") or []) if str(h).strip()
     ]
-    if not hashtags:
-        logger.warning("Instagram sourcing disabled: no hashtags configured.")
+    accounts = [
+        str(a).lstrip("@").strip() for a in (ig.get("accounts") or []) if str(a).strip()
+    ]
+    if not hashtags and not accounts:
+        logger.warning(
+            "Instagram sourcing disabled: no hashtags or accounts configured.",
+        )
         return []
 
     min_likes = int(ig.get("min_likes", 5000))
     min_dur = float(ig.get("min_duration", 3))
     max_dur = float(ig.get("max_duration", 60))
+
+    if max_clips is not None and max_clips > 0:
+        duration_cap_seconds = max(
+            duration_cap_seconds,
+            max_clips * max(30, int(max_dur)) + 120,
+        )
     section_mode = str(ig.get("section", "both"))
-    limit = int(ig.get("limit_per_hashtag", 100))
+    limit_per_hashtag = int(ig.get("limit_per_hashtag", 100))
+    limit_per_account = int(ig.get("limit_per_account", limit_per_hashtag))
     delay = float(ig.get("delay", 2.0))
     session_username = str(ig.get("session_username", SESSION_USERNAME_DEFAULT))
 
@@ -280,26 +333,33 @@ def source_instagram_videos(
     seen_ids: set[str] = set()
     accepted: list[dict] = []
     total_duration = 0
+    stop_early = False
 
     random.shuffle(hashtags)
+    random.shuffle(accounts)
 
     logger.info(
-        "Instagram sourcing: cap=%ds, warn_below=%ds, hashtags=%d, "
-        "likes>=%d duration=%.1f-%.1fs section=%s limit=%d previously_used=%d",
+        "Instagram sourcing: cap=%ds, warn_below=%ds, hashtags=%d, accounts=%d, "
+        "likes>=%d duration=%.1f-%.1fs section=%s limit_ht=%d limit_acct=%d previously_used=%d",
         duration_cap_seconds,
         warn_below_seconds,
         len(hashtags),
+        len(accounts),
         min_likes,
         min_dur,
         max_dur,
         section_mode,
-        limit,
+        limit_per_hashtag,
+        limit_per_account,
         len(previously_used),
     )
-    logger.info("Instagram hashtags after shuffle: %s", ", ".join(hashtags))
+    if hashtags:
+        logger.info("Instagram hashtags after shuffle: %s", ", ".join(hashtags))
+    if accounts:
+        logger.info("Instagram accounts after shuffle: %s", ", ".join(accounts))
 
     L = build_loader(
-        session_file_path(),
+        resolve_instagram_session_path(),
         download_dir=DOWNLOADS,
         session_username=session_username,
     )
@@ -317,13 +377,176 @@ def source_instagram_videos(
         "already_used": 0,
         "low_likes": 0,
         "bad_duration": 0,
-        "not_english": 0,
+        "ai_keyword_flag": 0,
         "download_failed": 0,
         "accepted": 0,
     }
 
+    def consume_candidate(
+        *,
+        kind_tag: str,
+        section_label: str,
+        shortcode: str,
+        like_count: int,
+        duration: float,
+        caption: str,
+        author: str,
+        media: dict | None,
+        post: instaloader.Post | None,
+        bucket_stats: dict[str, int],
+    ) -> None:
+        nonlocal total_duration, stop_early
+        slot = f"{kind_tag} [{section_label}]"
+
+        if stop_early:
+            return
+
+        total_stats["raw_media_seen"] += 1
+        bucket_stats["raw_media_seen"] += 1
+
+        if not shortcode:
+            total_stats["missing_shortcode"] += 1
+            bucket_stats["missing_shortcode"] += 1
+            logger.debug(
+                "Instagram skip %s: missing shortcode | likes=%s duration=%s",
+                slot,
+                like_count,
+                duration,
+            )
+            return
+
+        if shortcode in seen_ids:
+            total_stats["duplicate_in_run"] += 1
+            bucket_stats["duplicate_in_run"] += 1
+            logger.debug(
+                "Instagram skip %s: duplicate in this run %s",
+                slot,
+                shortcode,
+            )
+            return
+
+        if shortcode in previously_used:
+            total_stats["already_used"] += 1
+            bucket_stats["already_used"] += 1
+            logger.debug(
+                "Instagram skip %s: already used %s",
+                slot,
+                shortcode,
+            )
+            return
+
+        if like_count < min_likes:
+            total_stats["low_likes"] += 1
+            bucket_stats["low_likes"] += 1
+            logger.debug(
+                "Instagram skip %s: low likes %s likes=%d < %d",
+                slot,
+                shortcode,
+                like_count,
+                min_likes,
+            )
+            return
+
+        if not (min_dur <= duration <= max_dur):
+            total_stats["bad_duration"] += 1
+            bucket_stats["bad_duration"] += 1
+            logger.debug(
+                "Instagram skip %s: bad duration %s duration=%.2fs not in %.2f-%.2fs",
+                slot,
+                shortcode,
+                duration,
+                min_dur,
+                max_dur,
+            )
+            return
+
+        logger.debug("Instagram sampling comments for %s", shortcode)
+        comment_texts = _top_instagram_comment_texts(
+            L,
+            shortcode,
+            media=media,
+            post=post,
+            limit=5,
+        )
+
+        if _caption_or_comments_signal_ai(caption=caption, comment_texts=comment_texts):
+            total_stats["ai_keyword_flag"] += 1
+            bucket_stats["ai_keyword_flag"] += 1
+            logger.info(
+                "Instagram skip %s: AI/IA/Cyrillic-II marker in caption or comments for %s",
+                slot,
+                shortcode,
+            )
+            return
+
+        seen_ids.add(shortcode)
+
+        logger.info(
+            "Instagram candidate %s: %s likes=%d duration=%.2fs",
+            slot,
+            shortcode,
+            like_count,
+            duration,
+        )
+
+        path = _download_instagram_video(
+            L,
+            shortcode,
+            delay,
+            media=media,
+            post=post,
+        )
+        if not path:
+            total_stats["download_failed"] += 1
+            bucket_stats["download_failed"] += 1
+            logger.warning(
+                "Instagram download failed for %s (%s)",
+                shortcode,
+                slot,
+            )
+            return
+
+        total_duration += int(duration)
+        title = caption
+        permalink = f"https://www.instagram.com/p/{shortcode}/"
+
+        accepted.append(
+            {
+                "id": shortcode,
+                "title": title,
+                "selftext": "",
+                "top_comments": [],
+                "permalink": permalink,
+                "source_url": permalink,
+                "subreddit": "instagram",
+                "author": author,
+                "duration_sec": int(duration),
+                "local_path": str(path.resolve()),
+                "overlay_title": len(title) <= 75,
+                "score": like_count,
+                "upvote_ratio": 1.0,
+                "source": "instagram",
+            }
+        )
+
+        total_stats["accepted"] += 1
+        bucket_stats["accepted"] += 1
+
+        if max_clips is not None and len(accepted) >= max_clips:
+            stop_early = True
+
+        logger.info(
+            "Accepted Instagram clip %s (%s, %ds, likes=%d) — total %ds/%ds",
+            shortcode,
+            slot,
+            int(duration),
+            like_count,
+            total_duration,
+            warn_below_seconds,
+        )
+
     for tag in hashtags:
-        if total_duration >= duration_cap_seconds:
+        if stop_early or total_duration >= duration_cap_seconds:
             break
 
         tag_stats = {
@@ -333,7 +556,7 @@ def source_instagram_videos(
             "already_used": 0,
             "low_likes": 0,
             "bad_duration": 0,
-            "not_english": 0,
+            "ai_keyword_flag": 0,
             "download_failed": 0,
             "accepted": 0,
         }
@@ -341,173 +564,107 @@ def source_instagram_videos(
         logger.info("Instagram tag start: #%s", tag)
 
         for section_key, label in sections_to_scan:
-            if total_duration >= duration_cap_seconds:
+            if stop_early or total_duration >= duration_cap_seconds:
                 break
 
             logger.info("Instagram tag #%s scanning section=%s", tag, label)
 
-            for media in iter_hashtag_section(L, tag, section_key, limit):
-                if total_duration >= duration_cap_seconds:
+            for media in iter_hashtag_section(L, tag, section_key, limit_per_hashtag):
+                if stop_early or total_duration >= duration_cap_seconds:
                     break
-
-                total_stats["raw_media_seen"] += 1
-                tag_stats["raw_media_seen"] += 1
 
                 shortcode = media.get("code") or ""
                 like_count = int(media.get("like_count") or 0)
                 duration = float(media.get("video_duration") or 0.0)
-
-                if not shortcode:
-                    total_stats["missing_shortcode"] += 1
-                    tag_stats["missing_shortcode"] += 1
-                    logger.debug(
-                        "Instagram skip #%s [%s]: missing shortcode | likes=%s duration=%s",
-                        tag,
-                        label,
-                        like_count,
-                        duration,
-                    )
-                    continue
-
-                if shortcode in seen_ids:
-                    total_stats["duplicate_in_run"] += 1
-                    tag_stats["duplicate_in_run"] += 1
-                    logger.debug(
-                        "Instagram skip #%s [%s]: duplicate in this run %s",
-                        tag,
-                        label,
-                        shortcode,
-                    )
-                    continue
-
-                if shortcode in previously_used:
-                    total_stats["already_used"] += 1
-                    tag_stats["already_used"] += 1
-                    logger.debug(
-                        "Instagram skip #%s [%s]: already used %s",
-                        tag,
-                        label,
-                        shortcode,
-                    )
-                    continue
-
-                if like_count < min_likes:
-                    total_stats["low_likes"] += 1
-                    tag_stats["low_likes"] += 1
-                    logger.debug(
-                        "Instagram skip #%s [%s]: low likes %s likes=%d < %d",
-                        tag,
-                        label,
-                        shortcode,
-                        like_count,
-                        min_likes,
-                    )
-                    continue
-
-                if not (min_dur <= duration <= max_dur):
-                    total_stats["bad_duration"] += 1
-                    tag_stats["bad_duration"] += 1
-                    logger.debug(
-                        "Instagram skip #%s [%s]: bad duration %s duration=%.2fs not in %.2f-%.2fs",
-                        tag,
-                        label,
-                        shortcode,
-                        duration,
-                        min_dur,
-                        max_dur,
-                    )
-                    continue
-
                 caption = _caption_text(media)
-                if not _is_likely_english(caption):
-                    # Caption looks non-English. Double check with top comments.
-                    if not _check_comments_english(L, media, shortcode):
-                        total_stats["not_english"] += 1
-                        tag_stats["not_english"] += 1
-                        logger.info(
-                            "Instagram skip #%s [%s]: non-English detected for %s",
-                            tag,
-                            label,
-                            shortcode,
-                        )
-                        continue
-
-                seen_ids.add(shortcode)
-
-                logger.info(
-                    "Instagram candidate #%s [%s]: %s likes=%d duration=%.2fs",
-                    tag,
-                    label,
-                    shortcode,
-                    like_count,
-                    duration,
-                )
-
-                path = _download_instagram_video(L, media, shortcode, delay)
-                if not path:
-                    total_stats["download_failed"] += 1
-                    tag_stats["download_failed"] += 1
-                    logger.warning(
-                        "Instagram download failed for %s (#%s, %s)",
-                        shortcode,
-                        tag,
-                        label,
-                    )
-                    continue
-
-                total_duration += int(duration)
-                title = caption
                 user = media.get("user") or {}
                 username = user.get("username") if isinstance(user, dict) else None
                 author = username or "unknown"
-                permalink = f"https://www.instagram.com/p/{shortcode}/"
 
-                accepted.append(
-                    {
-                        "id": shortcode,
-                        "title": title,
-                        "selftext": "",
-                        "top_comments": [],
-                        "permalink": permalink,
-                        "source_url": permalink,
-                        "subreddit": "instagram",
-                        "author": author,
-                        "duration_sec": int(duration),
-                        "local_path": str(path.resolve()),
-                        "overlay_title": len(title) <= 75,
-                        "score": like_count,
-                        "upvote_ratio": 1.0,
-                        "source": "instagram",
-                    }
-                )
-
-                total_stats["accepted"] += 1
-                tag_stats["accepted"] += 1
-
-                logger.info(
-                    "Accepted Instagram clip %s (#%s, %ds, likes=%d) — total %ds/%ds",
-                    shortcode,
-                    tag,
-                    int(duration),
-                    like_count,
-                    total_duration,
-                    warn_below_seconds,
+                consume_candidate(
+                    kind_tag=f"#{tag}",
+                    section_label=label,
+                    shortcode=shortcode,
+                    like_count=like_count,
+                    duration=duration,
+                    caption=caption,
+                    author=author,
+                    media=media,
+                    post=None,
+                    bucket_stats=tag_stats,
                 )
 
         logger.info(
             "Instagram tag summary #%s: raw=%d accepted=%d low_likes=%d bad_duration=%d "
-            "not_english=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
+            "ai_kw=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
             "download_failed=%d",
             tag,
             tag_stats["raw_media_seen"],
             tag_stats["accepted"],
             tag_stats["low_likes"],
             tag_stats["bad_duration"],
-            tag_stats["not_english"],
+            tag_stats["ai_keyword_flag"],
             tag_stats["already_used"],
             tag_stats["duplicate_in_run"],
             tag_stats["missing_shortcode"],
             tag_stats["download_failed"],
+        )
+
+    for username in accounts:
+        if stop_early or total_duration >= duration_cap_seconds:
+            break
+
+        acct_stats = {
+            "raw_media_seen": 0,
+            "missing_shortcode": 0,
+            "duplicate_in_run": 0,
+            "already_used": 0,
+            "low_likes": 0,
+            "bad_duration": 0,
+            "ai_keyword_flag": 0,
+            "download_failed": 0,
+            "accepted": 0,
+        }
+
+        logger.info("Instagram account start: @%s", username)
+
+        for post in iter_profile_video_posts(L, username, limit_per_account):
+            if stop_early or total_duration >= duration_cap_seconds:
+                break
+
+            shortcode = post.shortcode
+            like_count = int(post.likes or 0)
+            duration = float(post.video_duration or 0.0)
+            caption = post.caption or ""
+            author = post.owner_username or username
+
+            consume_candidate(
+                kind_tag=f"@{username}",
+                section_label="timeline",
+                shortcode=shortcode,
+                like_count=like_count,
+                duration=duration,
+                caption=caption,
+                author=author,
+                media=None,
+                post=post,
+                bucket_stats=acct_stats,
+            )
+
+        logger.info(
+            "Instagram account summary @%s: raw=%d accepted=%d low_likes=%d bad_duration=%d "
+            "ai_kw=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
+            "download_failed=%d",
+            username,
+            acct_stats["raw_media_seen"],
+            acct_stats["accepted"],
+            acct_stats["low_likes"],
+            acct_stats["bad_duration"],
+            acct_stats["ai_keyword_flag"],
+            acct_stats["already_used"],
+            acct_stats["duplicate_in_run"],
+            acct_stats["missing_shortcode"],
+            acct_stats["download_failed"],
         )
 
     if total_duration < warn_below_seconds:
@@ -520,13 +677,13 @@ def source_instagram_videos(
 
     logger.info(
         "Instagram overall summary: raw=%d accepted=%d low_likes=%d bad_duration=%d "
-        "not_english=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
+        "ai_kw=%d already_used=%d duplicate_in_run=%d missing_shortcode=%d "
         "download_failed=%d",
         total_stats["raw_media_seen"],
         total_stats["accepted"],
         total_stats["low_likes"],
         total_stats["bad_duration"],
-        total_stats["not_english"],
+        total_stats["ai_keyword_flag"],
         total_stats["already_used"],
         total_stats["duplicate_in_run"],
         total_stats["missing_shortcode"],

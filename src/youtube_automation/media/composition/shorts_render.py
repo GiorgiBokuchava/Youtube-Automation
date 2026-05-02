@@ -25,7 +25,7 @@ def _default_font_path() -> Path | None:
             return p
     if platform.system() == "Windows":
         windir = Path(os.environ.get("WINDIR", r"C:\Windows"))
-        for name in ("seguiemj.ttf", "arialbd.ttf", "calibrib.ttf"):
+        for name in ("arialbd.ttf", "calibrib.ttf", "seguiemj.ttf"):
             p = windir / "Fonts" / name
             if p.exists():
                 return p
@@ -71,7 +71,9 @@ def _ffmpeg_path_literal(path: Path) -> str:
 def _text_wrap_title(text: str, width: int = 88) -> str:
     import textwrap
 
-    return "\n".join(textwrap.wrap((text or "").replace("\n", " ").strip(), width=width))
+    return "\n".join(
+        textwrap.wrap((text or "").replace("\n", " ").strip(), width=width)
+    )
 
 
 def render_shorts_segment(
@@ -83,16 +85,17 @@ def render_shorts_segment(
     font_path: str | Path | None = None,
     title_font_path: str | Path | None = None,
     title_fontcolor: str = "0xffe082",
-    title_font_size: int = 52,
-    body_font_size: int = 32,
-    list_margin_x: int = 56,
-    title_border_w: int = 3,
-    body_border_w: int = 2,
+    title_font_size: int = 58,
+    body_font_size: int = 40,
+    body_fontcolor: str = "0xfffef8",
+    list_margin_x: int = 52,
+    title_border_w: int = 4,
+    body_border_w: int = 3,
 ) -> Path:
     """
     Overlay main title at top and one drawtext per list line (left-middle stack).
-    No textwrap on list lines — each line is rendered as a single drawtext so numbering
-    cannot merge. Text via UTF-8 sidecar files. Boxes disabled (transparent).
+    No textwrap on list lines - each line is rendered as a single drawtext so line
+    numbering stays aligned. UTF-8 sidecar files. Stronger borders/shadows for readability.
     """
     body_font = Path(font_path) if font_path else _default_font_path()
     if body_font is None:
@@ -114,11 +117,15 @@ def render_shorts_segment(
     if title_color.startswith("#"):
         title_color = "0x" + title_color[1:]
 
+    body_color = (body_fontcolor or "0xfffef8").strip()
+    if body_color.startswith("#"):
+        body_color = "0x" + body_color[1:]
+
     title_txt = _text_wrap_title((main_title or "").strip(), width=88)
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
     n = len(list_lines)
-    line_step = body_font_size + 10
+    line_step = body_font_size + 14
 
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
@@ -142,9 +149,9 @@ def render_shorts_segment(
 
         parts.append(
             f"[{prev}]drawtext=fontfile='{title_font_lit}':textfile='{title_lit}':reload=0:fontsize={title_font_size}:"
-            f"fontcolor={title_color}:x=(w-text_w)/2:y=48:line_spacing=10:box=0:"
-            f"borderw={title_border_w}:bordercolor=black@0.92:"
-            f"shadowcolor=black@0.88:shadowx=4:shadowy=4[v{tag}]"
+            f"fontcolor={title_color}:x=(w-text_w)/2:y=42:line_spacing=12:box=0:"
+            f"borderw={title_border_w}:bordercolor=black@0.94:"
+            f"shadowcolor=black@0.90:shadowx=5:shadowy=5[v{tag}]"
         )
         prev = f"v{tag}"
         tag += 1
@@ -155,9 +162,9 @@ def render_shorts_segment(
             y_expr = f"(h-{line_step}*{n})/2+{line_step}*{i}"
             parts.append(
                 f"[{prev}]drawtext=fontfile='{body_font_lit}':textfile='{lit}':reload=0:fontsize={body_font_size}:"
-                f"fontcolor=white:x={list_margin_x}:y={y_expr}:line_spacing=0:box=0:"
-                f"borderw={body_border_w}:bordercolor=black@0.92:"
-                f"shadowcolor=black@0.88:shadowx=3:shadowy=3[{out}]"
+                f"fontcolor={body_color}:x={list_margin_x}:y={y_expr}:line_spacing=0:box=0:"
+                f"borderw={body_border_w}:bordercolor=black@0.94:"
+                f"shadowcolor=black@0.90:shadowx=4:shadowy=4[{out}]"
             )
             if out != "vout":
                 prev = out
@@ -180,9 +187,20 @@ def render_shorts_segment(
         ]
         has_audio = probe_container_streams(fitted_video).has_audio
         if has_audio:
-            # Re-encoded video can end a few ms before copied audio; muxer would then
-            # hold the last video frame while audio plays. Trim to the shorter stream.
-            cmd.extend(["-map", "0:a", "-c:a", "copy", "-shortest"])
+            # Re-encode segment audio so concat stitches cleanly (copy can drift / peak oddly).
+            cmd.extend(
+                [
+                    "-map",
+                    "0:a",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                    "-ar",
+                    "48000",
+                    "-shortest",
+                ]
+            )
         cmd.extend(
             [
                 "-c:v",

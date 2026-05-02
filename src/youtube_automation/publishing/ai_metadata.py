@@ -15,6 +15,7 @@ Hard rules:
 - Do NOT use purple prose, thesaurus words, or AI-sounding filler language.
 - Titles MUST include 1-2 relevant emojis and stay under 70 characters.
 - Write like a real human creator: direct, punchy, authentic to the channel tone.
+  Invent fresh wording every time and vary openings across uploads.
 """
 
 
@@ -26,60 +27,63 @@ _TONE_CONFIGS = {
     "fun": {
         "emojis": "😂 😹 🤣 💀 (pick 1-2 that match the specific content)",
         "desc_tone": "casual, funny",
+        "title_angle": (
+            "the specific funny beat: who is doing something absurd, surprising, or perfectly timed "
+            "- grounded in the clip titles below"
+        ),
         "banned": [
-            "antics", "chaos makers", "wholesome moments", "furry roommates",
-            "living their best life", "adorable", "delightful", "steal the spotlight",
-        ],
-        "patterns": [
-            'These [X] Just [Did Y] 😂',
-            'When [X] Completely Loses It 😂',
-            '[X] Built Different 💀',
-            'POV: [Relatable Funny Scenario] 😂',
-            '[X] 😂 | [Short Punchy Phrase]',
+            "antics",
+            "chaos makers",
+            "wholesome moments",
+            "furry roommates",
+            "living their best life",
+            "adorable",
+            "delightful",
+            "steal the spotlight",
         ],
     },
     "dramatic": {
         "emojis": "😳 😱 🚨 💥 ⚡ (pick 1-2 that match the specific content)",
         "desc_tone": "tense, gripping",
+        "title_angle": (
+            "stakes or tension suggested by the clips - vivid but honest, no fake disasters"
+        ),
         "banned": [
-            "heartwarming", "wholesome", "delightful", "adorable", "sweet",
+            "heartwarming",
+            "wholesome",
+            "delightful",
+            "adorable",
+            "sweet",
             "brightens your day",
-        ],
-        "patterns": [
-            'You Won\'t Believe What This [X] Did 😳',
-            'When [X] Goes Horribly Wrong 😱',
-            '[X] That Left Everyone Speechless 😳',
-            'POV: You Just Witnessed [X] 😱',
-            '[X] 🚨 | [Short Tense Phrase]',
         ],
     },
     "wholesome": {
         "emojis": "🥹 ❤️ 🥰 ✨ 💛 (pick 1-2 that match the specific content)",
         "desc_tone": "warm, genuine",
+        "title_angle": (
+            "the quietly sweet or uplifting detail that makes these clips land - specific, not syrupy"
+        ),
         "banned": [
-            "heartwarming", "chaos makers", "hijinks", "furry roommates",
-            "packed with", "living their best life",
-        ],
-        "patterns": [
-            'These [X] Will Make Your Day ❤️',
-            'When [X] Does [Something Sweet] 🥹',
-            '[X] That Restored My Faith in Humanity ❤️',
-            'POV: You Found [The Sweetest X] ✨',
-            '[X] ❤️ | [Short Heartfelt Phrase]',
+            "heartwarming",
+            "chaos makers",
+            "hijinks",
+            "furry roommates",
+            "packed with",
+            "living their best life",
         ],
     },
     "educational": {
         "emojis": "🤯 💡 🔍 📌 (pick 1-2 that match the specific content)",
         "desc_tone": "informative, engaging",
+        "title_angle": (
+            "the curiosity gap or takeaway viewers get - tied to what's actually in the clips"
+        ),
         "banned": [
-            "heartwarming", "wholesome", "delightful", "chaos makers", "adorable",
-        ],
-        "patterns": [
-            'Most People Don\'t Know This About [X] 🤯',
-            '[X] Explained in Under a Minute 💡',
-            'Why [X] Always [Does Y] 🔍',
-            'The Truth About [X] Nobody Talks About 📌',
-            '[X] 🤯 | [Short Surprising Phrase]',
+            "heartwarming",
+            "wholesome",
+            "delightful",
+            "chaos makers",
+            "adorable",
         ],
     },
 }
@@ -87,28 +91,29 @@ _TONE_CONFIGS = {
 _TONE_DEFAULT = {
     "emojis": "choose 1-2 emojis that naturally fit the content mood and niche",
     "desc_tone": "direct, engaging",
+    "title_angle": (
+        "what makes this batch of clips worth clicking - concrete detail from the titles below"
+    ),
     "banned": [
-        "heartwarming", "delightful", "wholesome moments", "chaos makers",
-        "packed with", "living their best life",
-    ],
-    "patterns": [
-        '[X] Just [Did Y] [emoji]',
-        'When [X] [Action/Outcome] [emoji]',
-        '[X] Built Different [emoji]',
-        'POV: [Relatable Scenario] [emoji]',
-        '[X] [emoji] | [Short Punchy Phrase]',
+        "heartwarming",
+        "delightful",
+        "wholesome moments",
+        "chaos makers",
+        "packed with",
+        "living their best life",
     ],
 }
 
 
 def _tone_hints(tone: str) -> dict:
-    """Return tone-specific guidance for emoji choice, title patterns, and banned phrases."""
+    """Return tone-specific guidance for emoji choice, title angle, and banned phrases."""
     return _TONE_CONFIGS.get(tone.lower().strip(), _TONE_DEFAULT)
 
 
 # ---------------------------------------------------------------------------
 # Channel context extraction
 # ---------------------------------------------------------------------------
+
 
 def _extract_channel_context(channel_cfg: dict) -> dict:
     channel = channel_cfg.get("channel", {})
@@ -137,6 +142,7 @@ def _extract_channel_context(channel_cfg: dict) -> dict:
 # Prompt builder
 # ---------------------------------------------------------------------------
 
+
 def _build_prompt(
     *,
     clips: List[dict],
@@ -151,7 +157,6 @@ def _build_prompt(
     tags = ctx["tags"]
 
     hints = _tone_hints(tone)
-    patterns_block = "\n".join(f'    "{p}"' for p in hints["patterns"])
     banned_block = ", ".join(f'"{p}"' for p in hints["banned"])
 
     titles = [c.get("title", "") for c in clips if c.get("title")]
@@ -182,12 +187,13 @@ CLIP TITLES FROM THIS VIDEO (use for flavour, not verbatim):
 TITLE RULES:
 - Under 70 characters including emojis
 - Include 1-2 emojis: {hints["emojis"]}
-- Punchy, clickable — something a real person would stop scrolling for
-- Use action verbs, strong words, numbers, or a first-person/POV setup
+- Punchy, clickable - something a real person would stop scrolling for
+- Original wording only: steal concrete nouns and situations from the clip titles below, not generic labels
+- Vary rhythm (statement vs short fragment vs question); avoid repeating the same title shape every upload
+- Title angle for this tone: {hints["title_angle"]}
+- Use action verbs, strong words, numbers, or first-person / POV only when they fit naturally
 - Do NOT lead with: Compilation, Moments, Best Of, Top, Content
 - Avoid these AI-sounding phrases: {banned_block}
-- Good patterns for a {tone} {niche} channel:
-{patterns_block}
 
 DESCRIPTION RULES:
 - Write 1-2 SHORT {hints["desc_tone"]} sentences about what is in the video (1-2 emojis inline)
@@ -202,18 +208,16 @@ All clips belong to their respective owners – I do not claim ownership. This c
 
 HASHTAG RULES:
 - Write exactly {max_hashtags} hashtags on ONE line, space-separated
-- Mix broad viral tags (#funny #viral #trending) with niche-specific tags for {niche}
+- Mix some broad viral discovery tags with niche-specific tags for {niche}; rotate wording - do not paste the same generic trio every upload
 - All lowercase, no spaces inside individual hashtags
 
 ---
 
-FORMAT YOUR RESPONSE EXACTLY AS SHOWN (nothing outside these three sections):
+OUTPUT FORMAT (use exactly these three section headings; put your real title as the first non-empty line after TITLE:, with no quotes or parentheses):
 
 TITLE:
-<your title here>
 
 DESCRIPTION:
-<1-2 {hints["desc_tone"]} sentences with emojis>
 
 If you enjoyed the video:
 👍 Like
@@ -223,13 +227,14 @@ If you enjoyed the video:
 All clips belong to their respective owners – I do not claim ownership. This channel is purely for entertainment purposes under fair use.
 
 HASHTAGS:
-#tag1 #tag2 #tag3
+
 """.strip()
 
 
 # ---------------------------------------------------------------------------
 # Model selection
 # ---------------------------------------------------------------------------
+
 
 def _pick_metadata_model() -> str | None:
     """Pick a text model for metadata, preferring non-Gemini to avoid burning
@@ -247,6 +252,7 @@ def _pick_metadata_model() -> str | None:
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
 
 def generate_ai_metadata(
     *,
@@ -294,8 +300,7 @@ def generate_ai_metadata(
         return {
             "title": f"Moments from {ctx['niche']}",
             "description": (
-                f"Selected moments related to {ctx['niche']}.\n\n"
-                f"{call_to_action}"
+                f"Selected moments related to {ctx['niche']}.\n\n" f"{call_to_action}"
             ),
             "hashtags": [],
         }
@@ -304,6 +309,7 @@ def generate_ai_metadata(
 # ---------------------------------------------------------------------------
 # Response parser
 # ---------------------------------------------------------------------------
+
 
 def _parse_response(text: str) -> Dict[str, object]:
     title = ""

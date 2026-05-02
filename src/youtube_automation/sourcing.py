@@ -7,13 +7,18 @@ logger = logging.getLogger(__name__)
 
 
 def instagram_sourcing_enabled(settings: dict) -> bool:
-    """True when YAML requests Instagram and hashtags are configured."""
+    """True when YAML requests Instagram and hashtags or seed accounts are configured."""
     split = float((settings.get("source_split") or {}).get("instagram", 0.0))
     if split <= 0:
         return False
     ig = settings.get("instagram") or {}
     hashtags = [h for h in (ig.get("hashtags") or []) if str(h).strip()]
-    return bool(hashtags)
+    accounts = [
+        str(a).lstrip("@").strip()
+        for a in (ig.get("accounts") or [])
+        if str(a).strip()
+    ]
+    return bool(hashtags or accounts)
 
 
 def _split_budget(
