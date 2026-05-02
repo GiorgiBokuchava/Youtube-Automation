@@ -19,6 +19,7 @@ from youtube_automation.media.music import add_background_music
 from youtube_automation.media.ffprobe_streams import probe_audio_duration
 from youtube_automation.media.shorts_fit import fit_video_to_portrait_box
 from youtube_automation.media.shorts_sourcing import source_shorts_clips
+from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.pipeline import _record_error
 from youtube_automation.publishing.shorts_metadata import build_shorts_metadata
 from youtube_automation.storage.sessions import new_session, save_session
@@ -239,6 +240,8 @@ def run_shorts_pipeline(
             shutil.copy2(stitched, final_out)
             final_path = final_out
 
+        thumb = source_thumbnail(settings)
+
         meta = build_shorts_metadata(settings, main_title, clips)
 
         ai_cfg = settings.get("publishing", {}).get("ai_metadata", {})
@@ -269,7 +272,7 @@ def run_shorts_pipeline(
                 tags=meta["tags"],
                 category_id=meta["category_id"],
                 privacy_status=meta["privacy_status"],
-                thumbnail_path=None,
+                thumbnail_path=Path(thumb["path"]) if thumb else None,
             )
 
         session = new_session(
@@ -284,7 +287,7 @@ def run_shorts_pipeline(
                 },
                 "main_title": main_title,
                 "shorts_commentaries": segment_commentaries,
-                "thumbnail": {},
+                "thumbnail": thumb or {},
                 "output_path": str(final_path),
                 "youtube_url": url,
                 "pipeline_errors": pipeline_errors,

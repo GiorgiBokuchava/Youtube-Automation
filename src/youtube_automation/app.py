@@ -78,13 +78,28 @@ def main() -> None:
         action="store_true",
         help="Disable commentary and music (AI metadata still runs).",
     )
+    parser.add_argument(
+        "--thumbnail-shorts-orientation",
+        action="store_true",
+        help=(
+            "With --mode thumbnail, load shorts config and source a portrait (9:16) thumbnail."
+        ),
+    )
     args = parser.parse_args()
 
+    if args.thumbnail_shorts_orientation and args.mode != "thumbnail":
+        parser.error(
+            "--thumbnail-shorts-orientation is only allowed with --mode thumbnail"
+        )
     load_env(args.channel)
     setup_logging(args.debug)
 
     logger = logging.getLogger(__name__)
-    settings = load_settings(args.channel, shorts=(args.mode == "shorts"))
+    use_shorts_config = (
+        args.mode == "shorts"
+        or (args.mode == "thumbnail" and args.thumbnail_shorts_orientation)
+    )
+    settings = load_settings(args.channel, shorts=use_shorts_config)
 
     if args.no_commentary or args.core_only:
         settings.setdefault("commentary", {})["every_nth"] = 0
@@ -141,6 +156,15 @@ def main() -> None:
         )
 
     if args.mode == "thumbnail":
+        logger.info(
+            "Thumbnail canvas: %s (content_type=%s)",
+            (
+                "portrait 1080×1920"
+                if settings.get("content_type") == "shorts"
+                else "landscape 1920×1080"
+            ),
+            settings.get("content_type", "long_form"),
+        )
         thumb = source_thumbnail(settings)
         session = new_session({"thumbnail": thumb or {}, "clips": [], "num_clips": 0})
         save_session(session, settings)

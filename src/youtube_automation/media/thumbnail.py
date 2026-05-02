@@ -277,6 +277,32 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
     return canvas.convert("RGB")
 
 
+def _effective_thumbnail_canvas(settings: dict, cfg: dict) -> tuple[int, int, float]:
+    """
+    Long-form: widescreen canvas (default 1920×1080). Shorts: portrait (default 1080×1920).
+
+    Overrides dimensions when YAML still has the wrong orientation for ``content_type``
+    after merging base/channel/shorts.
+    """
+    tol = float(cfg.get("aspect_ratio_tolerance", 0.3))
+    ctype = str(settings.get("content_type", "long_form")).strip()
+
+    if ctype == "shorts":
+        default_w, default_h = 1080, 1920
+        tw = int(cfg.get("target_width", default_w))
+        th = int(cfg.get("target_height", default_h))
+        if tw >= th:
+            tw, th = default_w, default_h
+        return tw, th, tol
+
+    default_w, default_h = 1920, 1080
+    tw = int(cfg.get("target_width", default_w))
+    th = int(cfg.get("target_height", default_h))
+    if tw <= th:
+        tw, th = default_w, default_h
+    return tw, th, tol
+
+
 DEFAULT_SEARCH_STAGES = [
     ("hot", 200),
     ("top_day", 200),
@@ -482,9 +508,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
     min_score = int(cfg.get("min_score", 0))
     min_ratio = float(cfg.get("min_ratio", 0.0))
     allow_nsfw = bool(cfg.get("allow_nsfw", False))
-    target_w = int(cfg.get("target_width", 1920))
-    target_h = int(cfg.get("target_height", 1080))
-    tolerance = float(cfg.get("aspect_ratio_tolerance", 0.3))
+    target_w, target_h, tolerance = _effective_thumbnail_canvas(settings, cfg)
     target_ratio = target_w / target_h
     banned_words = cfg.get("banned_words", [])
     max_title_words = int(cfg.get("max_title_words", 0))

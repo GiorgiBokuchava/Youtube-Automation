@@ -6,7 +6,8 @@ shorts:
   clip_count_max: 7
   randomize_clip_count: true
   # reddit_first | instagram_first | interleave (interleave uses source_split weights).
-  multi_source_strategy: reddit_first
+  # Instagram is mobile-first and typically portrait; prefer it for Shorts.
+  multi_source_strategy: instagram_first
   search_time_filter: month
   search_sort: top
   search_limit_per_subreddit: 80
@@ -18,8 +19,9 @@ shorts:
   # Stricter than legacy shorts defaults (min_score 10, min_ratio 0.10).
   min_score: 400
   min_ratio: 0.78
-  # Reddit is often landscape; fit converts to portrait. Raise only if you want native vertical sources.
-  min_height_width_ratio: 0.50
+  # Require portrait/square sources (h >= w). Landscape Reddit clips are skipped;
+  # the blur-fill fit handles any minor pillarboxing for near-square clips.
+  min_height_width_ratio: 1.0
   # Abort unless clip_count_min is met OR stitched runtime reaches this (~60s goal).
   target_compilation_duration_sec: 60
   overlay_comment_max_len: 100
