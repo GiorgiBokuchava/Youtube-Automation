@@ -13,8 +13,11 @@ from youtube_automation.media.composition import (
     stitch_clips,
 )
 from youtube_automation.media.thumbnail import source_thumbnail
-from youtube_automation.instagram.client import ensure_instagram_session_ok
-from youtube_automation.sourcing import instagram_sourcing_enabled, source_all_videos
+from youtube_automation.sourcing import (
+    instagram_sourcing_enabled,
+    source_all_videos,
+    try_prepare_instagram_session,
+)
 from youtube_automation.media.video_processing import batch_normalize_videos
 from youtube_automation.media.music import add_background_music
 from youtube_automation.storage.sessions import new_session, save_session
@@ -120,8 +123,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         if not dry_run:
             ensure_youtube_refresh_token()
 
-        if instagram_sourcing_enabled(settings):
-            ensure_instagram_session_ok(settings)
+        try_prepare_instagram_session(settings)
 
         clips = source_all_videos(settings)
         if not clips:

@@ -33,7 +33,10 @@ _SESSION_HELP = (
     "If you only see graphql 401 / ``wait a few minutes``, wait and retry, try another network; or set "
     "``INSTAGRAM_SKIP_TEST_LOGIN=1`` to skip the hashtag/profile session probe (downloads may still fail). "
     "When ``INSTAGRAM_SESSION_B64`` is set (e.g. CI), it is decoded and written to ``sessions/instagram.session`` "
-    "on each run and takes precedence over any existing file there. "
+    "on each run and takes precedence over any existing file there, unless "
+    "``INSTAGRAM_PREFER_DISK_SESSION=1`` — then an existing validated on-disk session is used first. "
+    "If Instagram returns ``checkpoint_required``, complete the in-app or web security challenge, then export a "
+    "fresh session from a trusted network (home/mobile); datacenter IPs often trigger checkpoints. "
     "Without base64, session path order is: ``INSTAGRAM_SESSION_PATH``, ``sessions/instagram.session``, then "
     "``%LOCALAPPDATA%\\\\Instaloader\\\\session-<user>`` on Windows. "
     "YAML ``instagram.session_username`` must match the session’s account."
@@ -160,10 +163,29 @@ def resolve_instagram_session_path(
     Path Instaloader can ``load_session_from_file`` from.
 
     **Precedence**: when ``INSTAGRAM_SESSION_B64`` is set, decode and write ``sessions/instagram.session``
-    (overwriting any stale file). Otherwise, first validated path from ``INSTAGRAM_SESSION_PATH``,
-    project ``sessions/instagram.session``, then Instaloader defaults.
+    (overwriting any stale file), unless ``INSTAGRAM_PREFER_DISK_SESSION=1`` and a validated on-disk file exists first.
+    Without base64: first validated path from ``INSTAGRAM_SESSION_PATH``, project ``sessions/instagram.session``,
+    then Instaloader defaults.
     """
     b64 = _instagram_b64_from_env(env_var)
+    uname = (session_username or SESSION_USERNAME_DEFAULT).strip() or SESSION_USERNAME_DEFAULT
+
+    if b64 and _env_truthy_flag("INSTAGRAM_PREFER_DISK_SESSION"):
+        for candidate in _disk_candidates(uname):
+            if candidate.is_file():
+                logger.info(
+                    "Instagram: INSTAGRAM_PREFER_DISK_SESSION — using on-disk session %s (%d bytes) "
+                    "(skipping %s overwrite)",
+                    candidate,
+                    candidate.stat().st_size,
+                    env_var,
+                )
+                _validate_instaloader_session_pickled_dict(candidate)
+                return candidate
+        logger.warning(
+            "Instagram: INSTAGRAM_PREFER_DISK_SESSION set but no valid on-disk session — falling back to %s",
+            env_var,
+        )
 
     if b64:
         logger.info(
@@ -174,7 +196,6 @@ def resolve_instagram_session_path(
         )
         return _materialize_b64_to_project_session(b64)
 
-    uname = (session_username or SESSION_USERNAME_DEFAULT).strip() or SESSION_USERNAME_DEFAULT
     for candidate in _disk_candidates(uname):
         if candidate.is_file():
             logger.info(
@@ -284,14 +305,29 @@ def _probe_instagram_session(L: instaloader.Instaloader, ig: dict) -> None:
     _probe_hashtag_web_info(L, "instagram")
 
 
+def _instagram_exception_text(exc: BaseException) -> str:
+    parts: list[str] = [str(exc)]
+    cur: BaseException | None = exc
+    while cur and cur.__cause__ is not None:
+        cur = cur.__cause__
+        parts.append(str(cur))
+    return " ".join(parts).lower()
+
+
+def _is_checkpoint_required(exc: BaseException) -> bool:
+    return "checkpoint_required" in _instagram_exception_text(exc)
+
+
 def _is_nonretryable_instagram(exc: BaseException) -> bool:
-    return isinstance(
+    if isinstance(
         exc,
         (
             instaloader.exceptions.BadCredentialsException,
             FileNotFoundError,
         ),
-    )
+    ):
+        return True
+    return _is_checkpoint_required(exc)
 
 
 def _is_transient_instagram_failure(exc: BaseException) -> bool:
@@ -349,6 +385,13 @@ def _load_session_and_probe(
                 "or INSTAGRAM_SESSION_B64. From datacenter IPs (e.g. GitHub Actions) graphql may stay "
                 "blocked; try refreshing the session from your home network, or set "
                 "INSTAGRAM_SKIP_TEST_LOGIN=1 to skip the probe (downloads can still fail)."
+            )
+        if "checkpoint_required" in detail:
+            hints.append(
+                "Instagram checkpoint — open the Instagram app or instagram.com, complete the security "
+                "check, then export a NEW session (same account) from a normal home/mobile network and "
+                "update INSTAGRAM_SESSION_B64. CI/datacenter IPs often trigger this; skipping probe "
+                "(INSTAGRAM_SKIP_TEST_LOGIN=1) may allow some iPhone API calls but can still fail later."
             )
         suffix = ("\n" + "\n".join(hints)) if hints else ""
         raise RuntimeError(

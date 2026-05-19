@@ -5,9 +5,12 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
+# Set at runtime when session probe or Instagram sourcing fails; sourcing then falls back to Reddit only.
+INSTAGRAM_UNAVAILABLE_KEY = "__instagram_unavailable__"
 
-def instagram_sourcing_enabled(settings: dict) -> bool:
-    """True when YAML requests Instagram and hashtags or seed accounts are configured."""
+
+def _instagram_config_active(settings: dict) -> bool:
+    """True when YAML requests Instagram (positive split and hashtags or accounts)."""
     split = float((settings.get("source_split") or {}).get("instagram", 0.0))
     if split <= 0:
         return False
@@ -19,6 +22,40 @@ def instagram_sourcing_enabled(settings: dict) -> bool:
         if str(a).strip()
     ]
     return bool(hashtags or accounts)
+
+
+def instagram_sourcing_enabled(settings: dict) -> bool:
+    """True when YAML requests Instagram and this run has not disabled it after a failure."""
+    if settings.get(INSTAGRAM_UNAVAILABLE_KEY):
+        return False
+    return _instagram_config_active(settings)
+
+
+def disable_instagram_for_run(settings: dict, reason: str) -> None:
+    """Force Reddit-only for the rest of this run (session or scraper failure)."""
+    settings[INSTAGRAM_UNAVAILABLE_KEY] = reason
+    logger.warning("Instagram disabled for this run: %s", reason)
+
+
+def try_prepare_instagram_session(settings: dict) -> None:
+    """
+    Verify Instaloader session when Instagram is configured. On failure, log and
+    ``disable_instagram_for_run`` so ``source_all_videos`` / shorts can fall back to Reddit.
+    """
+    if settings.get(INSTAGRAM_UNAVAILABLE_KEY):
+        return
+    if not _instagram_config_active(settings):
+        return
+    from youtube_automation.instagram.client import ensure_instagram_session_ok
+
+    try:
+        ensure_instagram_session_ok(settings)
+    except Exception as e:
+        logger.warning(
+            "Instagram session check failed; continuing with Reddit-only for this run: %s",
+            e,
+        )
+        disable_instagram_for_run(settings, str(e))
 
 
 def _split_budget(
@@ -134,6 +171,19 @@ def source_all_videos(settings: dict) -> List[dict]:
             added += 1
         return added
 
+    def _instagram_batch(**kwargs) -> list[dict]:
+        if not instagram_sourcing_enabled(settings):
+            return []
+        try:
+            return source_instagram_videos(settings, **kwargs)
+        except Exception as e:
+            logger.warning(
+                "Instagram sourcing failed (%s); continuing with Reddit-only for this run.",
+                e,
+            )
+            disable_instagram_for_run(settings, str(e))
+            return []
+
     if r_w > 0 and reddit_budget > 0:
         batch = source_videos(
             settings,
@@ -145,8 +195,7 @@ def source_all_videos(settings: dict) -> List[dict]:
         logger.info("Reddit contributed %d clip(s) in initial pass.", added)
 
     if i_w > 0 and ig_budget > 0 and instagram_sourcing_enabled(settings):
-        batch = source_instagram_videos(
-            settings,
+        batch = _instagram_batch(
             duration_cap_seconds=ig_budget,
             warn_below_seconds=ig_warn,
             exclude_ids=used_ids_in_run,
@@ -194,8 +243,7 @@ def source_all_videos(settings: dict) -> List[dict]:
             else:
                 if not can_ig:
                     continue
-                batch = source_instagram_videos(
-                    settings,
+                batch = _instagram_batch(
                     duration_cap_seconds=remaining,
                     warn_below_seconds=remaining,
                     exclude_ids=used_ids_in_run,

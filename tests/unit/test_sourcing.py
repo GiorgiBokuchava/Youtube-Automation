@@ -4,9 +4,11 @@ from unittest.mock import patch
 
 from youtube_automation.instagram import scraper as ig_scraper
 from youtube_automation.sourcing import (
+    INSTAGRAM_UNAVAILABLE_KEY,
     _interleave_weighted,
     instagram_sourcing_enabled,
     source_all_videos,
+    try_prepare_instagram_session,
 )
 
 
@@ -83,7 +85,51 @@ def test_source_all_top_up_switches_to_instagram_when_reddit_exhausted():
     assert mock_i.call_count >= 2
 
 
-def test_interleave_weighted_balances_sources():
+def test_instagram_sourcing_disabled_when_runtime_flag_set():
+    base = {
+        "source_split": {"instagram": 0.5},
+        "instagram": {"hashtags": ["cats"]},
+    }
+    assert instagram_sourcing_enabled(base)
+    s = {**base, INSTAGRAM_UNAVAILABLE_KEY: "checkpoint"}
+    assert not instagram_sourcing_enabled(s)
+
+
+def test_source_all_continues_when_instagram_raises():
+    settings = {
+        "channel": {"name": "test"},
+        "final_target_duration": 1,
+        "post": {"over_source_pct": 0},
+        "subreddits": ["pics"],
+        "source_split": {"reddit": 0.5, "instagram": 0.5},
+        "instagram": {"hashtags": ["cats"]},
+    }
+    reddit_clip = [{"id": "r1", "duration_sec": 60, "source": "reddit"}]
+
+    with patch("youtube_automation.media.video.source_videos") as mock_r:
+        mock_r.return_value = reddit_clip
+        with patch.object(ig_scraper, "source_instagram_videos") as mock_i:
+            mock_i.side_effect = RuntimeError("checkpoint_required")
+            clips = source_all_videos(settings)
+
+    assert INSTAGRAM_UNAVAILABLE_KEY in settings
+    assert clips == reddit_clip
+    assert mock_i.call_count == 1
+
+
+def test_try_prepare_instagram_session_sets_fallback_on_failure():
+    settings = {
+        "source_split": {"instagram": 0.5},
+        "instagram": {"hashtags": ["x"]},
+    }
+    with patch(
+        "youtube_automation.instagram.client.ensure_instagram_session_ok",
+        side_effect=RuntimeError("bad session"),
+    ):
+        try_prepare_instagram_session(settings)
+    assert INSTAGRAM_UNAVAILABLE_KEY in settings
+
+
     reddit = [{"id": "r1"}, {"id": "r2"}, {"id": "r3"}]
     instagram = [{"id": "i1"}, {"id": "i2"}, {"id": "i3"}]
 

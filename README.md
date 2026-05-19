@@ -134,6 +134,8 @@ docker compose run --rm test
 
 **FFmpeg** — Log lines like `render_clip clip=… path_kind=…` show which render path ran. Errors distinguish preflight (bad input), ffmpeg (non-zero exit), and output validation (empty or no video stream after encode).
 
+**Instagram `checkpoint_required` / 400 on GraphQL** — Meta wants a security check before API use. Complete it in the Instagram app or on the web while logged in as the same account, then export a **fresh** Instaloader session from a normal network (not a datacenter), base64 it into `INSTAGRAM_SESSION_B64`, and re-run. For emergencies only, set `INSTAGRAM_SKIP_TEST_LOGIN=1` to skip the session probe (sourcing may still fail). Optional: `INSTAGRAM_PREFER_DISK_SESSION=1` prefers an existing validated `sessions/instagram.session` over rewriting from the secret.
+
 ## Repository layout
 
 - `src/youtube_automation/` — application code
