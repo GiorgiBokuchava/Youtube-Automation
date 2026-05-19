@@ -51,16 +51,12 @@ def load_settings(channel: str, *, shorts: bool = False) -> dict:
 
     merged = _deep_merge(base, channel_cfg)
     if shorts:
-        # Load shorts-specific channel config
         shorts_path = BASE_DIR / "config" / "shorts" / f"{channel}.yaml"
         if shorts_path.exists():
             merged = _deep_merge(merged, _load_yaml(shorts_path))
-        
-        # Load shared shorts publishing/general config
         publish_path = BASE_DIR / "config" / "shorts" / "publish.yaml"
         if publish_path.exists():
             merged = _deep_merge(merged, _load_yaml(publish_path))
-            
         merged["content_type"] = "shorts"
     else:
         merged["content_type"] = "long_form"

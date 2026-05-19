@@ -1,0 +1,57 @@
+# Git / CI (not needed in image)
+.git
+.github
+
+# Secrets and local env (mount at runtime or inject via -e / env_file)
+.env
+.env.*
+.env.channels
+
+# Runtime artifacts (use bind mounts; keep out of build context)
+sessions/
+downloads/
+out/
+thumbnails/
+logs/
+scratch/
+
+# Reddit / OAuth material from local runs
+reddit_cookies.txt
+reddit_cookies.b64
+client_secret.json
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# FFmpeg / media temp patterns from .gitignore
+pipe
+pipe.*
+*.concat.txt
+*.music.m4a
+*.music.txt
+*.rendered.mp4
+
+# Local scratch
+project_dump.txt
+tmp_*.py

@@ -128,7 +128,6 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             logger.error("%s", _no_clips_hint(settings))
             raise NoClipsSourcedError(_no_clips_hint(settings))
 
-        # Move the highest-scored clip to position 0 so the video opens strong.
         best_idx = max(range(len(clips)), key=lambda i: clips[i].get("score", 0))
         if best_idx != 0:
             clips.insert(0, clips.pop(best_idx))
@@ -150,8 +149,6 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
         thumb = source_thumbnail(settings)
 
-        # Normalize video aspect ratios (never skip just because the YAML block is empty:
-        # `if {}` is false in Python; use `enabled: false` to opt out.)
         video_norm_cfg = settings.get("video_normalization") or {}
         target_width = int(video_norm_cfg.get("target_width", 1920))
         target_height = int(video_norm_cfg.get("target_height", 1080))
@@ -160,7 +157,6 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         if video_norm_cfg.get("enabled", True):
             normalized_dir = base_out / "normalized_videos"
             video_paths = [Path(clip["local_path"]) for clip in clips]
-            # Create mapping of video paths to authors
             authors = {
                 Path(clip["local_path"]): clip.get("author", "unknown")
                 for clip in clips
@@ -384,11 +380,9 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
 
 def _cleanup_generated_files(base_out: Path) -> None:
-    """Clean up generated media files while preserving session history."""
+    """Delete generated media; session JSON is unchanged."""
     logger = logging.getLogger(__name__)
     logger.info("Cleaning up generated files...")
-
-    # Directories to clean
     cleanup_dirs = [
         base_out / "voiceovers",
         base_out / "rendered_clips",
@@ -397,14 +391,12 @@ def _cleanup_generated_files(base_out: Path) -> None:
         Path("thumbnails"),
     ]
 
-    # Also clean downloads directory
     from youtube_automation.utils.paths import DOWNLOADS
 
     cleanup_dirs.append(DOWNLOADS)
 
     cleaned_count = 0
 
-    # Clean directories (files only; keep directory structure)
     for dir_path in cleanup_dirs:
         if dir_path.exists():
             for file_path in dir_path.iterdir():

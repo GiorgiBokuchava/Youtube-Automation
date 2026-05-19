@@ -1,137 +1,160 @@
-# YouTube Automation
+# Youtube-Automation
 
-Python toolchain that sources short videos from Reddit, optionally adds AI commentary and TTS, stitches a compilation with background music, and uploads to YouTube via the Data API.
+Automated pipeline for YouTube compilations: pull short clips from Reddit (and optionally Instagram), optionally generate AI commentary with TTS, normalize and render each clip, stitch with background music, and upload via the YouTube Data API. A separate **shorts** mode builds vertical uploads from the same stack.
 
-## Prerequisites
+## Requirements
 
-- Python 3.10+
-- [FFmpeg](https://ffmpeg.org/) and ffprobe on your `PATH` (the app also supports an embedded binary path via `youtube_automation.media.ffmpeg` if configured)
-- Reddit API credentials (PRAW) and, for many subreddits, a Reddit cookie file for yt-dlp
-- Google Cloud OAuth client (desktop or web) with YouTube Data API enabled, used with a refresh token
+- **Python** 3.10+
+- **FFmpeg** and **ffprobe** on `PATH`
+- **Reddit**: PRAW credentials; for many subreddits, a Netscape-format cookie file for yt-dlp
+- **YouTube**: Google Cloud OAuth client with YouTube Data API enabled, plus a refresh token for uploads
+- **AI (optional)** API keys for Gemini, OpenRouter, NVIDIA NIM, or Text Generator, depending on which models you enable
 
-## Install
+**Runtime split:** develop and run on your machine with a **venv**; **Docker** is the canonical runtime for GitHub Actions (and optional CI parity checks). The same `Dockerfile` defines what runs in CI.
 
-Create and activate a virtual environment:
+## Local setup (venv)
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
 ```
 
-Then install the project dependencies:
+Activate the venv (`.\.venv\Scripts\activate` on Windows, `source .venv/bin/activate` on Unix), then:
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-For development (includes pytest):
+Development dependencies (pytest, pytest-mock):
 
 ```bash
-python -m pip install -r requirements-dev.txt
+python -m pip install -e ".[dev]"
+```
+
+Optional Instaloader cookie loading (`browser_cookie3`) for Instagram:
+
+```bash
+python -m pip install -e ".[instagram]"
 ```
 
 ## Configuration
 
-- `config/base.yaml` — defaults merged into every channel.
-- `config/channels/<name>.yaml` — per-channel overrides (subreddits, scoring, commentary, YouTube copy templates).
+| Location | Role |
+|----------|------|
+| `config/base.yaml` | Defaults merged into every channel |
+| `config/channels/<name>.yaml` | Per-channel overrides (subreddits, scoring, commentary, publishing) |
+| `config/shorts/<name>.yaml` | Shorts-specific overrides when using shorts mode |
 
-Load order is implemented in `youtube_automation.config.loader.load_settings`.
+Loading logic is in `youtube_automation.config.loader.load_settings`. Used post IDs are tracked in `config/used_<channel>.json` (pruned using `used_horizon_days`). Add a channel by creating `config/channels/<name>.yaml` and passing `--channel <name>`.
 
-Session history (used post IDs) is stored in `config/used_<channel>.json` and pruned using `used_horizon_days`.
+## Environment
 
-Add a new channel by creating `config/channels/<name>.yaml` and running with `--channel <name>`.
+| Variable | Purpose |
+|----------|---------|
+| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | PRAW |
+| `REDDIT_COOKIES_FILE` | Optional Netscape cookies path for yt-dlp |
+| `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | YouTube OAuth for uploads (values are trimmed) |
+| `YT_PRIVACY` | Optional: `public`, `private`, or `unlisted`; overrides YAML `youtube.privacy_status` (e.g. in CI) |
+| `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | Text/TTS providers |
 
-## Environment variables
-
-| Variable                                                           | Purpose                                                                                                                |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`    | PRAW                                                                                                                   |
-| `REDDIT_COOKIES_FILE`                                              | Optional path to Netscape cookie file for yt-dlp                                                                       |
-| `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`             | YouTube upload OAuth (values are trimmed; use non-breaking secrets with no stray newlines)                             |
-| `YT_PRIVACY`                                                       | Optional. When set to `public`, `private`, or `unlisted`, overrides `youtube.privacy_status` from YAML (useful in CI). |
-| `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | AI providers (see code for exact usage)                                                                                |
-
-Environment loading is channel-aware:
-
-1. `.env` (global defaults)
-2. Channel-prefixed variables from `.env` (e.g. `ANIMALS_YT_CLIENT_ID`, `DASHBOARD_REDDIT_CLIENT_ID`)
-3. `.env.<channel>` (optional, overrides #1/#2)
-4. `.env.channels/<channel>.env` (optional, overrides all above)
-
-Examples:
-
-- Shared single file with prefixes:
-  - `ANIMALS_YT_CLIENT_ID=...`
-  - `DASHBOARD_YT_CLIENT_ID=...`
-- Per-channel files:
-  - `.env.animals`
-  - `.env.channels/dashboard.env`
+Resolution order: `.env` → channel-prefixed vars (e.g. `ANIMALS_YT_CLIENT_ID`) → `.env.<channel>` → `.env.channels/<channel>.env`.
 
 ## CLI
 
 ```bash
-# Inside your activated virtual environment:
 python -m youtube_automation.app --mode pipeline --channel animals
 ```
 
-Modes:
+| Mode | Behavior |
+|------|-----------|
+| `pipeline` | Source → render → optional upload |
+| `videos` | Source clips only (Reddit + Instagram per `source_split`; same budgeting/filters as pipeline) |
+| `thumbnail` | Generate thumbnail only |
+| `shorts` | Shorts pipeline (requires shorts config) |
 
-- `pipeline` — full run (source → render → optional upload)
-- `videos` — download and list clips only
-- `thumbnail` — pick thumbnail only
+Useful flags: `--dry-run` (no upload), `--cleanup` (remove generated media after a successful run), `--target-duration-minutes`, `--no-commentary`, `--no-music`, `--no-ai-metadata`, `--core-only`, `--debug`.
 
-Useful flags:
+Partial failures (commentary, TTS, per-clip render) are logged and stored on the session under `pipeline_errors`.
 
-- `--dry-run` — build everything but skip YouTube upload
-- `--cleanup` — when the run completes successfully, delete generated media under `out/<channel>/`, `thumbnails/`, and `downloads/` (session JSON is kept). If the pipeline aborts, cleanup is skipped so intermediates remain for debugging.
-- `--target-duration-minutes` — temporarily override `final_target_duration` from channel YAML (great for quick testing)
-- `--no-commentary` — disable AI commentary and TTS for this run
-- `--no-music` — disable background music mix for this run
-- `--no-ai-metadata` — disable AI-generated title/description/hashtags for this run
-- `--core-only` — disable commentary and music (AI metadata still runs)
-- `--debug` — verbose logging
+## GitHub Actions (Docker)
 
-Partial failures (commentary, TTS, per-clip render, etc.) are logged and recorded under `pipeline_errors` on the saved session.
+`.github/workflows/publish.yml` builds the `Dockerfile` and runs preflight steps and the pipeline **inside the container**. The workspace is mounted at `/app` so `config/used_*.json` updates land in the repo for the commit step. Set repository or environment secrets as documented in the workflow file. Optional Actions variable `YT_PRIVACY_STATUS` overrides YAML privacy when set. Jobs can target per-channel GitHub Environments so credentials stay isolated.
 
-## GitHub Actions
+### Container image on GHCR
 
-`.github/workflows/publish.yml` runs the pipeline on a schedule or manually.
+[`.github/workflows/build-image.yml`](.github/workflows/build-image.yml) builds the Dockerfile **`runtime`** stage and pushes to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry):
 
-1. Optional **Actions variable** `YT_PRIVACY_STATUS` (`public` \| `private` \| `unlisted`) overrides `youtube.privacy_status` in YAML when set. If unset, **channel YAML** controls visibility (same as local runs).
-2. Provide secrets as referenced in the workflow file (Reddit, YouTube OAuth, AI keys, base64-encoded Reddit cookies).
+- `ghcr.io/<owner>/<repo>:latest`
+- `ghcr.io/<owner>/<repo>:<commit-sha>`
 
-Jobs target a GitHub **Environment** named after the `channel` input value. If you define secrets on those environments, they override repository secrets—this lets multiple channels run from one repo with isolated credentials.
+It uses Docker Buildx and GitHub Actions layer caching (`cache-from` / `cache-to: type=gha`). It runs on pushes to `main` when `Dockerfile`, `.dockerignore`, `compose.yaml`, `requirements.txt`, `pyproject.toml`, or the workflow file change, and via **Actions → Build Docker image → Run workflow**.
 
-### YouTube `invalid_grant` / weekly failures
+Local development does not use GHCR. Build on your machine with `docker compose build` or `docker build` (see below). The publish workflow still builds the image each run for now; a later change will **pull** this prebuilt image instead of rebuilding.
 
-If CI logs show `invalid_grant` or `RefreshError` when refreshing the token:
+If CI shows `invalid_grant` on token refresh, typical causes are OAuth app still in **Testing** (refresh tokens expire ~weekly), mismatched client vs refresh token, or stale secrets. The workflow includes a YouTube OAuth preflight so bad tokens fail early.
 
-- **Testing mode:** In [Google Cloud Console](https://console.cloud.google.com/) → _APIs & Services_ → _OAuth consent screen_, apps in **Testing** often get refresh tokens that stop working after about **seven days**. **Publish** the app to **Production** (complete verification if Google requires it for the `youtube.upload` scope) so refresh tokens last until revoked.
-- **Mismatched client:** `YT_REFRESH_TOKEN` must be issued for the **same** OAuth client as `YT_CLIENT_ID` / `YT_CLIENT_SECRET`.
-- **Stale environment secret:** Re-copy the three values from Cloud Console into the Environment secrets GitHub actually uses for that job.
+## Docker (CI / optional parity)
 
-The workflow runs a **YouTube OAuth preflight** (and the pipeline does the same before any Reddit download when not in `--dry-run`) so a bad token fails in seconds instead of after a long render.
+You do not need Docker for day-to-day development. Use it to reproduce the CI environment or debug container-only issues.
 
-The workflow does not print cookie file contents; the Reddit preflight only checks that yt-dlp can read metadata with the cookie file.
+Build the runtime image:
+
+```bash
+docker compose build
+# or: docker build -t youtube-automation:local .
+```
+
+Run the same CLI as locally (entrypoint is `python -m youtube_automation.app`). On Linux/macOS, match the host user when bind-mounting the repo. On Windows, omit `--user` / `-e HOME=/tmp`.
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp \
+  -v "${PWD}:/app" \
+  -w /app \
+  youtube-automation:local \
+  --mode pipeline --channel animals --dry-run
+```
+
+[`compose.yaml`](compose.yaml) mirrors CI bind mounts (`config/`, `out/`, `downloads/`, `sessions/`, etc.) for optional local parity:
+
+```bash
+docker compose run --rm app --mode pipeline --channel animals --dry-run
+```
+
+To run pytest the same way CI could:
+
+```bash
+docker compose run --rm test
+```
 
 ## Troubleshooting
 
-### Some clips fail to render, but the final video still builds
+**Some clips fail to render but the video completes** — Individual clip failures are skipped if at least one clip renders. Inspect the latest session JSON (`config/used_<channel>.json`) under `pipeline_errors` for `clip_id`, paths, and FFmpeg stderr when present.
 
-The pipeline renders **each** sourced clip; failures on individual clips are **skipped** (with a warning) as long as **at least one** clip renders successfully. The compilation step then stitches **only** the rendered outputs that succeeded.
+**FFmpeg** — Log lines like `render_clip clip=… path_kind=…` show which render path ran. Errors distinguish preflight (bad input), ffmpeg (non-zero exit), and output validation (empty or no video stream after encode).
 
-Check the saved session JSON (`config/used_<channel>.json`, last entry) under **`pipeline_errors`**. For render failures, entries include **`clip_id`**, **`local_path`**, **`output_path`**, whether **`commentary_present`** was expected, **`voiceover_path`**, and for FFmpeg failures **`ffmpeg_command`**, **`ffmpeg_returncode`**, **`ffmpeg_stderr`**, and **`full_error_text`**.
-
-Logs also include a line per clip such as `render_clip clip=… path_kind=…` showing which of the four paths ran (e.g. `no_commentary_source_has_audio`, `commentary_source_no_audio`).
-
-### Diagnosing FFmpeg issues
-
-- **Preflight** errors mean the input file was missing, empty, had no video stream, or ffprobe could not read it.
-- **ffmpeg** stage: the raised error string includes the **full command** and **complete stderr** from FFmpeg (stdout if any).
-- **output_validate** means FFmpeg exited 0 but the output file was missing, empty, or had no video stream after encoding.
-
-## Project layout
+## Repository layout
 
 - `src/youtube_automation/` — application code
-- `tests/` — unit, contract, integration, and mocked pipeline tests
+- `tests/` — unit, contract, integration, and pipeline tests
+- `config/` — YAML defaults and channel definitions
+
+## Tests
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest
+```
+
+By default, tests marked `integration` (live APIs, network) are skipped. To run them:
+
+```bash
+python -m pytest -m integration
+```
+
+Optional CI parity:
+
+```bash
+docker compose run --rm test
+```

@@ -19,10 +19,6 @@ Hard rules:
 """
 
 
-# ---------------------------------------------------------------------------
-# Tone-aware hints
-# ---------------------------------------------------------------------------
-
 _TONE_CONFIGS = {
     "fun": {
         "emojis": "😂 😹 🤣 💀 (pick 1-2 that match the specific content)",
@@ -110,11 +106,6 @@ def _tone_hints(tone: str) -> dict:
     return _TONE_CONFIGS.get(tone.lower().strip(), _TONE_DEFAULT)
 
 
-# ---------------------------------------------------------------------------
-# Channel context extraction
-# ---------------------------------------------------------------------------
-
-
 def _extract_channel_context(channel_cfg: dict) -> dict:
     channel = channel_cfg.get("channel", {})
     youtube = channel_cfg.get("youtube", {})
@@ -136,11 +127,6 @@ def _extract_channel_context(channel_cfg: dict) -> dict:
         "audience": audience,
         "tags": youtube.get("tags", []),
     }
-
-
-# ---------------------------------------------------------------------------
-# Prompt builder
-# ---------------------------------------------------------------------------
 
 
 def _build_prompt(
@@ -231,11 +217,6 @@ HASHTAGS:
 """.strip()
 
 
-# ---------------------------------------------------------------------------
-# Model selection
-# ---------------------------------------------------------------------------
-
-
 def _pick_metadata_model() -> str | None:
     """Pick a text model for metadata, preferring non-Gemini to avoid burning
     video-capable quota on a text-only task. Returns None if no models exist
@@ -247,11 +228,6 @@ def _pick_metadata_model() -> str | None:
     if models:
         return models[0]["model"]
     return None
-
-
-# ---------------------------------------------------------------------------
-# Public entry point
-# ---------------------------------------------------------------------------
 
 
 def generate_ai_metadata(
@@ -306,11 +282,6 @@ def generate_ai_metadata(
         }
 
 
-# ---------------------------------------------------------------------------
-# Response parser
-# ---------------------------------------------------------------------------
-
-
 def _parse_response(text: str) -> Dict[str, object]:
     title = ""
     description = ""
@@ -336,7 +307,7 @@ def _parse_response(text: str) -> Dict[str, object]:
 
         if section == "title":
             title = line
-            section = None  # Only capture the first non-empty line after TITLE:
+            section = None
         elif section == "description":
             description += line + "\n"
         elif section == "hashtags":

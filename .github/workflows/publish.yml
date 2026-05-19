@@ -61,7 +61,8 @@ jobs:
       REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
       REDDIT_COOKIES_FILE: reddit_cookies.txt
 
-      # Instaloader session (base64 of sessions/instagram.session); optional if channel uses Reddit only
+      # Instaloader pickle as single-line standard base64 (no data: URI). Runner has no Firefox profile —
+      # encode your local ``session-<user>`` file (same bytes Instaloader saved). Omit if Instagram sourcing is off.
       INSTAGRAM_SESSION_B64: ${{ secrets.INSTAGRAM_SESSION_B64 }}
 
     steps:
@@ -69,66 +70,90 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+      - name: Build Docker image
+        run: docker build -t youtube-automation:ci .
 
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-
+      # Same env surface as the app; HOME writable for caches when using --user.
       - name: Preflight — YouTube OAuth refresh token
         run: |
-          python -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint python \
+            -e CHANNEL \
+            -e YT_CLIENT_ID \
+            -e YT_CLIENT_SECRET \
+            -e YT_REFRESH_TOKEN \
+            youtube-automation:ci \
+            -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
         run: |
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
           test -s "$REDDIT_COOKIES_FILE"
 
-      - name: Preflight - test cookies with yt-dlp
+      - name: Preflight — yt-dlp and cookies
         run: |
-          yt-dlp --version
-          yt-dlp --cookies "$REDDIT_COOKIES_FILE" --skip-download \
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint yt-dlp \
+            youtube-automation:ci \
+            --version
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint yt-dlp \
+            youtube-automation:ci \
+            --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
             "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
 
-      - name: Decode Instagram session (if configured)
+      - name: Preflight — Instagram session file (if configured)
         run: |
           if [ -n "${INSTAGRAM_SESSION_B64:-}" ]; then
-            python -c "from youtube_automation.instagram.client import decode_session; decode_session()"
-          fi
-
-      - name: Preflight — Instagram session (if configured)
-        run: |
-          if [ -n "${INSTAGRAM_SESSION_B64:-}" ]; then
-            python <<'PY'
-          import os
-          from youtube_automation.config.loader import load_env, load_settings
-          from youtube_automation.instagram.client import ensure_instagram_session_ok
-          from youtube_automation.sourcing import instagram_sourcing_enabled
-
-          ch = os.environ.get("CHANNEL", "animals")
-          load_env(ch)
-          shorts_run = os.environ.get("APP_MODE") == "shorts"
-          settings = load_settings(ch, shorts=shorts_run)
-          if instagram_sourcing_enabled(settings):
-              ensure_instagram_session_ok(settings)
-          PY
+            docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -e HOME=/tmp \
+              -v "${GITHUB_WORKSPACE}:/app" \
+              -w /app \
+              --entrypoint python \
+              -e CHANNEL \
+              -e APP_MODE \
+              -e INSTAGRAM_SESSION_B64 \
+              youtube-automation:ci \
+              /app/.github/scripts/preflight_instagram.py
           fi
 
       - name: Run pipeline
         run: |
           echo "APP_MODE=${APP_MODE} (event=${GITHUB_EVENT_NAME}, channel=${CHANNEL})"
-          python -m youtube_automation.app \
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            -e CHANNEL \
+            -e APP_MODE \
+            -e YT_PRIVACY \
+            -e REDDIT_CLIENT_ID \
+            -e REDDIT_CLIENT_SECRET \
+            -e REDDIT_USER_AGENT \
+            -e YT_CLIENT_ID \
+            -e YT_CLIENT_SECRET \
+            -e YT_REFRESH_TOKEN \
+            -e GEMINI_API_KEYS \
+            -e OPENROUTER_API_KEYS \
+            -e NVIDIA_API_KEYS \
+            -e TEXT_GENERATOR_API_KEY \
+            -e REDDIT_COOKIES_FILE \
+            -e INSTAGRAM_SESSION_B64 \
+            youtube-automation:ci \
             --mode "$APP_MODE" \
             --channel "$CHANNEL" \
             --cleanup

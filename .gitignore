@@ -32,8 +32,10 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Debug files
+# Debug / local scratch
 project_dump.txt
+scratch/
+tmp_*.py
 
 # FFmpeg / media temp artifacts
 pipe

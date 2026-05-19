@@ -1,8 +1,5 @@
 """
-Integration tests for NVIDIA NIM provider.
-
-These tests make real API calls and require NVIDIA_API_KEYS to be set.
-They are skipped automatically when the key is absent.
+Live NVIDIA NIM checks (require ``NVIDIA_API_KEYS``). Run with ``pytest -m integration``.
 """
 
 import os
@@ -12,10 +9,13 @@ from youtube_automation.config.loader import load_env
 
 load_env("dashcam")
 
-pytestmark = pytest.mark.skipif(
-    not os.getenv("NVIDIA_API_KEYS"),
-    reason="NVIDIA_API_KEYS not set",
-)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not os.getenv("NVIDIA_API_KEYS"),
+        reason="NVIDIA_API_KEYS not set",
+    ),
+]
 
 # A local thumbnail used for image-to-text tests
 _THUMBNAIL = Path(__file__).parents[3] / "thumbnails" / "dashcam_1sbasca_yt_auto.jpg"

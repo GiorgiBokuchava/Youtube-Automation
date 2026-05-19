@@ -358,10 +358,12 @@ def source_instagram_videos(
     if accounts:
         logger.info("Instagram accounts after shuffle: %s", ", ".join(accounts))
 
+    session_path = resolve_instagram_session_path(session_username=session_username)
     L = build_loader(
-        resolve_instagram_session_path(),
+        session_path,
         download_dir=DOWNLOADS,
         session_username=session_username,
+        instagram_settings=ig,
     )
 
     sections_to_scan: list[tuple[str, str]] = []

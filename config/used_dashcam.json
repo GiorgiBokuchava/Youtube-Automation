@@ -1708,5 +1708,172 @@
     "youtube_url": null,
     "pipeline_errors": [],
     "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-02T21:53:05.938899+00:00",
+    "clips": [
+      {
+        "id": "1t07pbr",
+        "title": "[OC] Uses a turn lane to make an illegal pass while speeding in a school zone\u2026 past an undercover cop.",
+        "selftext": "",
+        "top_comments": [
+          "r/ConvenientCop",
+          "![gif](giphy|iUTz8DS7f3KVbq7KFf)",
+          "Unmarked.",
+          "![gif](giphy|FDJpdHgjRJWkU) Yes!",
+          "Aaahhhhh convenient cop. There s nothing sweeter."
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1t07pbr/oc_uses_a_turn_lane_to_make_an_illegal_pass_while/",
+        "source_url": "https://v.redd.it/8pshfj7mydyg1",
+        "subreddit": "IdiotsInCars",
+        "author": "HopOnMyArk",
+        "duration_sec": 37,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1t07pbr.mp4",
+        "overlay_title": false,
+        "score": 4041,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads\\1t07pbr.mp4",
+        "commentary_text": "r/ConvenientCop",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -40.1,
+          "max_volume_db": -20.3,
+          "silence_ratio": 0.23644691759534933,
+          "has_sustained_audio": true,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1t07pbr_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1svaq31",
+        "title": "Happened to me yesterday, I turned the audio off for PG reasons.",
+        "selftext": "",
+        "top_comments": [
+          "You did well in the circumstances. What a bell end though!",
+          "Imagine living your life like that.",
+          "I hope you re sending this to Operation Snap",
+          "Actually deserves to be locked up.",
+          "I think I'd have been swearing at that one too!"
+        ],
+        "permalink": "https://www.reddit.com/r/drivingUK/comments/1svaq31/happened_to_me_yesterday_i_turned_the_audio_off/",
+        "source_url": "https://v.redd.it/k0b5gnm3xbxg1",
+        "subreddit": "drivingUK",
+        "author": "Neither-Cry-1597",
+        "duration_sec": 27,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1svaq31.mp4",
+        "overlay_title": true,
+        "score": 1689,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads\\1svaq31.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1svaq31_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1sui2iu",
+        "title": "No words \ud83d\ude36",
+        "selftext": "I won\u2019t be taking any advice from this guy. That\u2019s for sure \ud83d\ude2c",
+        "top_comments": [
+          "An abundance of confidence, a scarcity of wisdom.",
+          "WTF? The fact he shared this afterwards as well!",
+          "How to disappear completely",
+          "Overtaking on a bend. What a Bellend",
+          "Dangerous driving is never a good look for the bereaved."
+        ],
+        "permalink": "https://www.reddit.com/r/drivingUK/comments/1sui2iu/no_words/",
+        "source_url": "https://v.redd.it/liy6mrajj5xg1",
+        "subreddit": "drivingUK",
+        "author": "TaxDazzling9608",
+        "duration_sec": 25,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sui2iu.mp4",
+        "overlay_title": true,
+        "score": 2239,
+        "upvote_ratio": 0.93,
+        "source": "reddit",
+        "original_local_path": "downloads\\1sui2iu.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -9.7,
+          "max_volume_db": 0.0,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sui2iu_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1t1u0mx",
+        "title": "[OC] Immaculate zipper merge (sped up 2x)",
+        "selftext": "",
+        "top_comments": [
+          "I would gladly let this guy in no problem. Well done, Zipper.",
+          "I love when that happens",
+          "Why do people crowd one lane like that?",
+          "Haters gonna hate",
+          "The hero we needed"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1t1u0mx/oc_immaculate_zipper_merge_sped_up_2x/",
+        "source_url": "https://v.redd.it/0tcycmiqzqyg1",
+        "subreddit": "IdiotsInCars",
+        "author": "Junetizzle",
+        "duration_sec": 22,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1t1u0mx.mp4",
+        "overlay_title": true,
+        "score": 1512,
+        "upvote_ratio": 0.87,
+        "source": "reddit",
+        "original_local_path": "downloads\\1t1u0mx.mp4",
+        "commentary_text": "[OC] Immaculate zipper merge (sped up 2x)",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -31.4,
+          "max_volume_db": -3.5,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1t1u0mx_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 4,
+    "thumbnail": {
+      "submission_id": "1stka3y",
+      "path": "thumbnails\\1stka3y_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/ejdsaWxreHUxeXdnMco-eEgMPZd5WtYsCyENnpfgjUBeokV_WKW60Bn2YU5Q.png?auto=webp&s=0a4f315e620ca5409be55875a2b59ecd172ead3e"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": null,
+    "pipeline_errors": [
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1t07pbr_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1t07pbr_vo.mp3'",
+        "clip_id": "1t07pbr"
+      },
+      {
+        "step": "commentary_tts",
+        "error": "FileNotFoundError: [Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1t1u0mx_vo.mp3'",
+        "full_error_text": "[Errno 2] No such file or directory: 'out\\\\dashcam\\\\voiceovers\\\\1t1u0mx_vo.mp3'",
+        "clip_id": "1t1u0mx"
+      }
+    ],
+    "channel": "dashcam"
   }
 ]

@@ -35,6 +35,9 @@ dev = [
     "pytest>=9.0.2",
     "pytest-mock>=3.15.1",
 ]
+instagram = [
+    "browser_cookie3>=0.19",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -46,3 +49,4 @@ where = ["src"]
 markers = [
     "integration: requires network and/or API keys",
 ]
+addopts = '-m "not integration"'

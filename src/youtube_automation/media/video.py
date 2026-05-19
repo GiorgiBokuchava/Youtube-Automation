@@ -37,7 +37,6 @@ def _get_reddit_source_config(settings: dict) -> dict:
     return merged
 
 
-# Helpers
 def _get_reddit_video_duration(submission) -> Optional[int]:
     try:
         if (
@@ -70,9 +69,6 @@ def _word_count(text: str) -> int:
     return len(text.split())
 
 
-# Comprehensive word list used to filter top_comments before they can appear
-# as TTS commentary.  Checked as a substring match against the lowercased text
-# so partial matches (e.g. "kill" inside "killing") are also caught.
 _COMMENT_BANNED: frozenset[str] = frozenset({
     # profanity
     "fuck", "fucking", "fucked", "fucker", "motherfuck", "motherfucker",

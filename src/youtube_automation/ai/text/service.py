@@ -1,8 +1,6 @@
-from typing import Optional
-import time
 import logging
-
-logger = logging.getLogger(__name__)
+import time
+from typing import Optional
 
 from youtube_automation.ai.text.registry import (
     get_models_by_capabilities,
@@ -13,13 +11,13 @@ from youtube_automation.ai.text.providers.openrouter import OpenRouterProvider
 from youtube_automation.ai.text.providers.nvidia import NvidiaProvider
 from youtube_automation.ai.text.types import TextRequest
 
+logger = logging.getLogger(__name__)
+
 
 class TextService:
-    # Central AI service with smart model selection and fallback
-
-    MAX_MODEL_TIME = 30  # seconds before a single model result is considered too slow
-    MAX_TOTAL_TIME = 90  # hard wall across ALL model attempts combined
-    MAX_MODELS_PER_PROVIDER = 15  # max models tried per provider before moving on
+    MAX_MODEL_TIME = 30
+    MAX_TOTAL_TIME = 90
+    MAX_MODELS_PER_PROVIDER = 15
 
     def __init__(self):
         self._providers: dict[str, object] = {}
@@ -42,8 +40,6 @@ class TextService:
     def generate(
         self, request: TextRequest, preferred_model: Optional[str] = None
     ) -> str:
-        # Generate response with automatic model selection and fallback
-
         required_caps = request.get_required_capabilities()
 
         if preferred_model:
@@ -62,7 +58,6 @@ class TextService:
                         logger.debug(
                             "Preferred model %s failed: %s", preferred_model, e
                         )
-                        # Fall back to automatic selection
 
                     elapsed = time.time() - start
                     if elapsed > self.MAX_MODEL_TIME:
@@ -71,19 +66,15 @@ class TextService:
                             preferred_model,
                             self.MAX_MODEL_TIME,
                         )
-                        # Fall back to automatic selection
 
                     if result:
                         return result
 
-        # Get all models that support required capabilities
         suitable_models = get_models_by_capabilities(required_caps)
 
         if not suitable_models:
             raise ValueError(f"No models found for capabilities: {required_caps}")
 
-        # Fast-fail: only keep models from providers that are actually initialised.
-        # This avoids wasting time trying providers whose keys are not set.
         suitable_models = [
             m for m in suitable_models if self._providers.get(m["provider"])
         ]
@@ -92,7 +83,6 @@ class TextService:
                 f"No initialised providers available for capabilities: {required_caps}"
             )
 
-        # Group models by provider
         provider_models: dict[str, list] = {}
         for model in suitable_models:
             provider_name = model["provider"]
@@ -160,5 +150,4 @@ class TextService:
         raise RuntimeError("No suitable providers available")
 
 
-# Global instance for easy access
 text_service = TextService()

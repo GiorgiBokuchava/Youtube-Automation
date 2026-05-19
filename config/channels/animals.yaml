@@ -68,6 +68,9 @@ instagram:
   min_likes: 2500
   # Must match `python -m instaloader --login ...` handle (Instaloader session is per-user).
   session_username: argon54637
+  limit_per_hashtag: 20
+  limit_per_account: 15
+  delay: 8.0
   section: both
   hashtags:
     - funnyanimals

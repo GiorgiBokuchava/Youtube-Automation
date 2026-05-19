@@ -4,7 +4,8 @@ import logging
 from youtube_automation.config.loader import load_env, load_settings
 from youtube_automation.pipeline import run_pipeline
 from youtube_automation.media.thumbnail import source_thumbnail
-from youtube_automation.media.video import source_videos
+from youtube_automation.instagram.client import ensure_instagram_session_ok
+from youtube_automation.sourcing import instagram_sourcing_enabled, source_all_videos
 from youtube_automation.storage.sessions import save_session, new_session
 
 
@@ -172,10 +173,13 @@ def main() -> None:
         return
 
     if args.mode == "videos":
-        clips = source_videos(settings)
+        if instagram_sourcing_enabled(settings):
+            ensure_instagram_session_ok(settings)
+        clips = source_all_videos(settings)
         session = new_session({"clips": clips, "num_clips": len(clips)})
         save_session(session, settings)
-        print(f"Sourced {len(clips)} clips.")
+        ig_n = sum(1 for c in clips if c.get("source") == "instagram")
+        print(f"Sourced {len(clips)} clips ({ig_n} Instagram, {len(clips) - ig_n} Reddit).")
         return
 
     if args.mode == "shorts":

@@ -1,0 +1,39 @@
+# Optional CI parity — primary local workflow is venv (see README).
+# Bind-mount stateful dirs so outputs, configs, and downloads survive container exit.
+# Secrets: `.env` via env_file below, or `docker run -e` / Compose `environment`.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: youtube-automation:local
+    working_dir: /app
+    volumes:
+      - ./config:/app/config
+      - ./out:/app/out
+      - ./downloads:/app/downloads
+      - ./sessions:/app/sessions
+      - ./logs:/app/logs
+      - ./thumbnails:/app/thumbnails
+      - ./assets:/app/assets
+    env_file:
+      - path: .env
+        required: false
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    image: youtube-automation:test
+    working_dir: /app
+    volumes:
+      - ./tests:/app/tests
+      - ./src:/app/src
+      - ./config:/app/config:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    env_file:
+      - path: .env
+        required: false

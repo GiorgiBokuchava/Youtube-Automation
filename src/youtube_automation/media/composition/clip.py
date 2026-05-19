@@ -179,12 +179,6 @@ def render_clip(
 
         if has_source_audio:
             path_kind = COMMENTARY_HAS_AUDIO
-
-            # Build a volume filter that only ducks during the commentary window.
-            # Outside that window the original audio plays at full volume.
-            # FFmpeg's `enable` expression disables the filter (passes audio unchanged)
-            # when the condition is false, so volume=X only applies inside [duck_start,duck_end].
-            # Commas inside between() must be escaped as \, in the filter_complex string.
             commentary_dur = probe_audio_duration(commentary_audio)
             if commentary_dur > 0:
                 duck_start = max(0.0, commentary_offset_sec)
@@ -194,7 +188,6 @@ def render_clip(
                     f":enable=between(t\\,{duck_start:.3f}\\,{duck_end:.3f})"
                 )
             else:
-                # Probe failed – fall back to flat duck for the whole clip.
                 vol_filter = f"volume={orig_factor:.6f}"
 
             filter_complex = (
@@ -273,9 +266,6 @@ def render_clip(
                 str(output_video),
             ]
     else:
-        # No voiceover — pass original audio at full volume regardless of the
-        # duck setting (original_volume_db is only meaningful when a commentary
-        # track is competing for headroom over the source audio).
         if has_source_audio:
             path_kind = NO_COMMENTARY_HAS_AUDIO
             filter_complex = (
