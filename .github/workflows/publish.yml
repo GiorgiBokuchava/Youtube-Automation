@@ -2,6 +2,7 @@ name: Publish video
 
 permissions:
   contents: write
+  packages: read
 
 on:
   schedule:
@@ -21,6 +22,9 @@ on:
         options:
           - long_form
           - shorts
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
   run:
@@ -70,8 +74,25 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Build Docker image
-        run: docker build -t youtube-automation:ci .
+      # ghcr.io/${{ github.repository }}:latest — registry paths must be lowercase.
+      - name: Configure container image
+        run: |
+          image="${REGISTRY}/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):latest"
+          echo "IMAGE=${image}" >> "${GITHUB_ENV}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull runtime image from GHCR
+        run: |
+          if ! docker pull "${IMAGE}"; then
+            echo "::error::Could not pull ${IMAGE}. Run the \"Build Docker image\" workflow first (Actions → Build Docker image → Run workflow on main) so :latest exists on GHCR."
+            exit 1
+          fi
 
       # Same env surface as the app; HOME writable for caches when using --user.
       - name: Preflight — YouTube OAuth refresh token
@@ -86,7 +107,7 @@ jobs:
             -e YT_CLIENT_ID \
             -e YT_CLIENT_SECRET \
             -e YT_REFRESH_TOKEN \
-            youtube-automation:ci \
+            "${IMAGE}" \
             -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
@@ -102,7 +123,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             --entrypoint yt-dlp \
-            youtube-automation:ci \
+            "${IMAGE}" \
             --version
           docker run --rm \
             --user "$(id -u):$(id -g)" \
@@ -110,7 +131,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             --entrypoint yt-dlp \
-            youtube-automation:ci \
+            "${IMAGE}" \
             --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
             "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
 
@@ -126,7 +147,7 @@ jobs:
               -e CHANNEL \
               -e APP_MODE \
               -e INSTAGRAM_SESSION_B64 \
-              youtube-automation:ci \
+              "${IMAGE}" \
               /app/.github/scripts/preflight_instagram.py
           fi
 
@@ -153,7 +174,7 @@ jobs:
             -e TEXT_GENERATOR_API_KEY \
             -e REDDIT_COOKIES_FILE \
             -e INSTAGRAM_SESSION_B64 \
-            youtube-automation:ci \
+            "${IMAGE}" \
             --mode "$APP_MODE" \
             --channel "$CHANNEL" \
             --cleanup

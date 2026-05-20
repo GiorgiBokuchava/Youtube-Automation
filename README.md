@@ -78,7 +78,9 @@ Partial failures (commentary, TTS, per-clip render) are logged and stored on the
 
 ## GitHub Actions (Docker)
 
-`.github/workflows/publish.yml` builds the `Dockerfile` and runs preflight steps and the pipeline **inside the container**. The workspace is mounted at `/app` so `config/used_*.json` updates land in the repo for the commit step. Set repository or environment secrets as documented in the workflow file. Optional Actions variable `YT_PRIVACY_STATUS` overrides YAML privacy when set. Jobs can target per-channel GitHub Environments so credentials stay isolated.
+**Order:** run [`.github/workflows/build-image.yml`](.github/workflows/build-image.yml) first so `ghcr.io/<owner>/<repo>:latest` exists, then [`.github/workflows/publish.yml`](.github/workflows/publish.yml). Publish **pulls** that image (no local build, pip, or ffmpeg install on the runner).
+
+Publish runs preflight steps and the pipeline **inside the container**, with the repo mounted at `/app` so `config/used_*.json` updates land in the workspace for the commit step. Set repository or environment secrets as documented in the workflow file. Optional Actions variable `YT_PRIVACY_STATUS` overrides YAML privacy when set. Jobs can target per-channel GitHub Environments so credentials stay isolated.
 
 ### Container image on GHCR
 
@@ -87,9 +89,9 @@ Partial failures (commentary, TTS, per-clip render) are logged and stored on the
 - `ghcr.io/<owner>/<repo>:latest`
 - `ghcr.io/<owner>/<repo>:<commit-sha>`
 
-It uses Docker Buildx and GitHub Actions layer caching (`cache-from` / `cache-to: type=gha`). It runs on pushes to `main` when `Dockerfile`, `.dockerignore`, `compose.yaml`, `requirements.txt`, `pyproject.toml`, or the workflow file change, and via **Actions → Build Docker image → Run workflow**.
+It uses Docker Buildx and GitHub Actions layer caching. It runs on pushes to `main` when image-related files change, or via **Actions → Build Docker image → Run workflow**.
 
-Local development does not use GHCR. Build on your machine with `docker compose build` or `docker build` (see below). The publish workflow still builds the image each run for now; a later change will **pull** this prebuilt image instead of rebuilding.
+Local development does not use GHCR. Build on your machine with `docker compose build` or `docker build` (see below).
 
 If CI shows `invalid_grant` on token refresh, typical causes are OAuth app still in **Testing** (refresh tokens expire ~weekly), mismatched client vs refresh token, or stale secrets. The workflow includes a YouTube OAuth preflight so bad tokens fail early.
 
