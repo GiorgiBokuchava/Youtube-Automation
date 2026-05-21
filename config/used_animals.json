@@ -37127,5 +37127,165 @@
     "youtube_url": "https://www.youtube.com/watch?v=PaYSV25oz8M",
     "pipeline_errors": [],
     "channel": "animals"
+  },
+  {
+    "created_at": "2026-05-21T09:07:51.082418+00:00",
+    "clips": [
+      {
+        "id": "1tj11d6",
+        "title": "The tiniest 'awoo' you'll hear today",
+        "selftext": "",
+        "top_comments": [
+          "^awoo!",
+          "Cute",
+          "Too tired for those last two roos",
+          "This makes me want more dogs to pet",
+          "So adorable"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1tj11d6/the_tiniest_awoo_youll_hear_today/",
+        "source_url": "https://v.redd.it/dvillrbpad2h1",
+        "subreddit": "Awww",
+        "author": "quietnothinge",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1tj11d6.mp4",
+        "overlay_title": true,
+        "score": 3712,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1tj11d6.mp4",
+        "commentary_text": "From ferocious bark to instant nap, what a mood.",
+        "commentary_model": "gemini",
+        "commentary_fallback": false,
+        "voiceover_path": "out/animals/voiceovers/1tj11d6_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.3,
+          "max_volume_db": 0.0,
+          "silence_ratio": 0.6042008745558896,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1tj11d6_rendered.mp4",
+        "render_path_kind": "commentary_source_has_audio"
+      },
+      {
+        "id": "1tj6iig",
+        "title": "Honey bun on the runnn",
+        "selftext": "",
+        "top_comments": [
+          "floppy loppy",
+          "That's one happy bun!",
+          "should have put it in slow mo. For the dramatics!",
+          "10/10 happy bun",
+          "Hun Bun Run"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1tj6iig/honey_bun_on_the_runnn/",
+        "source_url": "https://v.redd.it/ihk35an9fe2h1",
+        "subreddit": "Rabbits",
+        "author": "Think-Pair1872",
+        "duration_sec": 4,
+        "local_path": "out/animals/normalized_videos/normalized_1tj6iig.mp4",
+        "overlay_title": true,
+        "score": 947,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1tj6iig.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -58.1,
+          "max_volume_db": -43.9,
+          "silence_ratio": 0.9999238051258368,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1tj6iig_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tia1it",
+        "title": "I have two hands for a reason",
+        "selftext": "",
+        "top_comments": [
+          "THEY LET YOU TOUCH THE SACRED BELLIES ?!?!?!?!",
+          "Same energy as me on weekends",
+          "What else did you think you had TWO (!!!) hands for hooman?",
+          "So sweet and cute!",
+          "r/donotthecat"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1tia1it/i_have_two_hands_for_a_reason/",
+        "source_url": "https://v.redd.it/135mepi3s72h1",
+        "subreddit": "funnycats",
+        "author": "matthewtoby3241",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1tia1it.mp4",
+        "overlay_title": true,
+        "score": 545,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1tia1it.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -57.6,
+          "max_volume_db": -36.5,
+          "silence_ratio": 0.9999655496398372,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out/animals/rendered_clips/1tia1it_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tilp2u",
+        "title": "Otters are so funny and cute",
+        "selftext": "",
+        "top_comments": [
+          "So playful! they never seem to take life seriously",
+          "Elp I an tuck!",
+          "What a dork lol",
+          "Nice keychain you got there. Can I have it?",
+          "...and playful! Lol"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1tilp2u/otters_are_so_funny_and_cute/",
+        "source_url": "https://v.redd.it/1gjlrsvpna2h1",
+        "subreddit": "Awww",
+        "author": "Thin-Tennis9223",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1tilp2u.mp4",
+        "overlay_title": true,
+        "score": 3625,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1tilp2u.mp4",
+        "commentary_text": "This otter is having a blast on its human swing.",
+        "commentary_model": "gemini",
+        "commentary_fallback": false,
+        "voiceover_path": "out/animals/voiceovers/1tilp2u_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.6,
+          "max_volume_db": -2.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out/animals/rendered_clips/1tilp2u_rendered.mp4",
+        "render_path_kind": "commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 4,
+    "thumbnail": {
+      "submission_id": "1sz0qj9",
+      "path": "thumbnails/1sz0qj9_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/rxtbv8ij45yg1.jpeg"
+    },
+    "output_path": "out/animals/outputs/final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=B9kHSgkZLQ8",
+    "pipeline_errors": [],
+    "channel": "animals"
   }
 ]
