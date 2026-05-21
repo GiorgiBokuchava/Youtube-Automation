@@ -1,6 +1,7 @@
 import pytest
 
 from youtube_automation.pipeline import (
+    InsufficientOutputDurationError,
     InsufficientSourceDurationError,
     run_pipeline,
 )

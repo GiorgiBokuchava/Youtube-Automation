@@ -12,6 +12,7 @@ from youtube_automation.media.composition import (
     render_clip,
     stitch_clips,
 )
+from youtube_automation.media.ffprobe_streams import probe_av_stream_durations
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.sourcing import (
     instagram_sourcing_enabled,
@@ -43,6 +44,10 @@ class InsufficientSourceDurationError(ValueError):
     """Sourced clips do not sum to the minimum duration required for this target."""
 
 
+class InsufficientOutputDurationError(ValueError):
+    """Rendered or final output is shorter than final_target_duration requires."""
+
+
 def target_duration_seconds(settings: dict) -> int:
     return int(float(settings.get("final_target_duration", 0)) * 60)
 
@@ -62,24 +67,91 @@ def min_required_source_seconds(settings: dict) -> int:
     return int(target_sec * ratio)
 
 
-def assert_sufficient_source_duration(settings: dict, clips: list[dict]) -> None:
-    """Raise if sourced material is below the configured minimum for final_target_duration."""
+def probed_media_duration_seconds(path: Path) -> float:
+    """Best-effort duration in seconds from ffprobe (video stream, else audio)."""
+    video_dur, audio_dur = probe_av_stream_durations(path)
+    for dur in (video_dur, audio_dur):
+        if dur is not None and dur > 0:
+            return float(dur)
+    return 0.0
+
+
+def _insufficient_duration_hint(
+    settings: dict,
+    *,
+    phase: str,
+    actual_sec: float,
+    required_sec: int,
+    target_sec: int,
+) -> str:
+    pct = int(actual_sec / target_sec * 100) if target_sec else 0
+    target_min = settings.get("final_target_duration", 0)
+    lines = [
+        f"Insufficient {phase} duration — aborting before upload.",
+        f"  Actual: {int(actual_sec)}s ({pct}% of {target_min} min target)",
+        f"  Required: at least {required_sec}s",
+        "",
+        "Things to try:",
+        "  • Add subreddits or relax post.min_score / min_ratio / duration filters",
+        "  • Check render logs — clips may have failed and shortened the compilation",
+        "  • Lower min_source_duration_ratio in channel YAML (temporary) or use a longer "
+        "--target-duration-minutes for testing",
+        "  • Run --mode videos first to see how much material is available",
+        "  • Check config/used_<channel>.json — many posts may already be marked used",
+    ]
+    if instagram_sourcing_enabled(settings):
+        lines.append(
+            "  • Enable or widen Instagram sourcing (source_split, hashtags, min_likes)"
+        )
+    return "\n".join(lines)
+
+
+def assert_meets_duration_target(
+    settings: dict,
+    actual_sec: float,
+    *,
+    phase: str,
+) -> None:
+    """Raise if ``actual_sec`` is below the configured minimum for final_target_duration."""
     required = min_required_source_seconds(settings)
     if required <= 0:
         return
-    sourced = sourced_duration_seconds(clips)
-    if sourced >= required:
+    if actual_sec >= required:
         return
     target_sec = target_duration_seconds(settings)
-    pct = int(sourced / target_sec * 100) if target_sec else 0
-    raise InsufficientSourceDurationError(
-        _insufficient_source_hint(
-            settings,
-            sourced_sec=sourced,
-            required_sec=required,
-            target_sec=target_sec,
-            pct=pct,
-        )
+    hint = _insufficient_duration_hint(
+        settings,
+        phase=phase,
+        actual_sec=actual_sec,
+        required_sec=required,
+        target_sec=target_sec,
+    )
+    if phase == "sourced":
+        raise InsufficientSourceDurationError(hint)
+    raise InsufficientOutputDurationError(hint)
+
+
+def assert_sufficient_source_duration(settings: dict, clips: list[dict]) -> None:
+    """Raise if sourced material is below the configured minimum for final_target_duration."""
+    assert_meets_duration_target(
+        settings,
+        float(sourced_duration_seconds(clips)),
+        phase="sourced",
+    )
+
+
+def assert_rendered_meets_target(settings: dict, rendered_paths: list[Path]) -> None:
+    """Raise if successfully rendered clips are too short to reach the target."""
+    total = sum(probed_media_duration_seconds(p) for p in rendered_paths)
+    assert_meets_duration_target(settings, total, phase="rendered")
+
+
+def assert_final_output_meets_target(settings: dict, video_path: Path) -> None:
+    """Raise if the final muxed file is shorter than the configured target."""
+    assert_meets_duration_target(
+        settings,
+        probed_media_duration_seconds(video_path),
+        phase="final output",
     )
 
 
@@ -98,34 +170,6 @@ def _no_clips_hint(settings: dict) -> str:
         lines.append(
             "  • Instagram-only: confirm videos from those hashtags/accounts meet likes "
             "and duration limits (very strict defaults often yield zero downloads)."
-        )
-    return "\n".join(lines)
-
-
-def _insufficient_source_hint(
-    settings: dict,
-    *,
-    sourced_sec: int,
-    required_sec: int,
-    target_sec: int,
-    pct: int,
-) -> str:
-    target_min = settings.get("final_target_duration", 0)
-    lines = [
-        "Insufficient sourced duration — aborting before render/upload.",
-        f"  Sourced: {sourced_sec}s ({pct}% of {target_min} min target)",
-        f"  Required: at least {required_sec}s",
-        "",
-        "Things to try:",
-        "  • Add subreddits or relax post.min_score / min_ratio / duration filters",
-        "  • Lower min_source_duration_ratio in channel YAML (temporary) or use a longer "
-        "--target-duration-minutes for testing",
-        "  • Run --mode videos first to see how much material is available",
-        "  • Check config/used_<channel>.json — many posts may already be marked used",
-    ]
-    if instagram_sourcing_enabled(settings):
-        lines.append(
-            "  • Enable or widen Instagram sourcing (source_split, hashtags, min_likes)"
         )
     return "\n".join(lines)
 
@@ -210,11 +254,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             logger.error("%s", _no_clips_hint(settings))
             raise NoClipsSourcedError(_no_clips_hint(settings))
 
-        try:
-            assert_sufficient_source_duration(settings, clips)
-        except InsufficientSourceDurationError as e:
-            logger.error("%s", e)
-            raise
+        assert_sufficient_source_duration(settings, clips)
 
         best_idx = max(range(len(clips)), key=lambda i: clips[i].get("score", 0))
         if best_idx != 0:
@@ -398,6 +438,15 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         if not rendered_paths:
             raise ValueError("No successfully rendered clips available for stitching")
 
+        assert_rendered_meets_target(settings, rendered_paths)
+        rendered_total = sum(probed_media_duration_seconds(p) for p in rendered_paths)
+        logger.info(
+            "Rendered %d clip(s) totalling %.1fs (min required %ds)",
+            len(rendered_paths),
+            rendered_total,
+            min_required_source_seconds(settings),
+        )
+
         stitched = stitch_clips(
             clip_paths=rendered_paths,
             output_path=OUTPUT_DIR / "final_raw.mp4",
@@ -407,6 +456,14 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             video_path=stitched,
             output_path=OUTPUT_DIR / "final.mp4",
             settings=settings,
+        )
+
+        assert_final_output_meets_target(settings, Path(final_with_music))
+        final_sec = probed_media_duration_seconds(Path(final_with_music))
+        logger.info(
+            "Final output duration %.1fs (target %ds)",
+            final_sec,
+            target_duration_seconds(settings),
         )
 
         meta = build_metadata(settings, clips)
