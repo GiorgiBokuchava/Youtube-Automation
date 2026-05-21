@@ -27,8 +27,60 @@ from youtube_automation.youtube.upload import upload_video
 from youtube_automation.publishing.metadata import build_metadata
 
 
+def commentary_enabled(settings: dict) -> bool:
+    """True when long-form AI commentary + TTS should run for this channel/run."""
+    cfg = settings.get("commentary") or {}
+    if cfg.get("enabled") is False:
+        return False
+    return int(cfg.get("every_nth", 3)) > 0
+
+
 class NoClipsSourcedError(ValueError):
     """Sourcing returned no clips (filters too strict, empty feeds, or API limits)."""
+
+
+class InsufficientSourceDurationError(ValueError):
+    """Sourced clips do not sum to the minimum duration required for this target."""
+
+
+def target_duration_seconds(settings: dict) -> int:
+    return int(float(settings.get("final_target_duration", 0)) * 60)
+
+
+def sourced_duration_seconds(clips: list[dict]) -> int:
+    return sum(int(c.get("duration_sec") or 0) for c in clips)
+
+
+def min_required_source_seconds(settings: dict) -> int:
+    post = settings.get("post") or {}
+    if not post.get("enforce_min_source_duration", True):
+        return 0
+    ratio = float(post.get("min_source_duration_ratio", 1.0))
+    target_sec = target_duration_seconds(settings)
+    if target_sec <= 0 or ratio <= 0:
+        return 0
+    return int(target_sec * ratio)
+
+
+def assert_sufficient_source_duration(settings: dict, clips: list[dict]) -> None:
+    """Raise if sourced material is below the configured minimum for final_target_duration."""
+    required = min_required_source_seconds(settings)
+    if required <= 0:
+        return
+    sourced = sourced_duration_seconds(clips)
+    if sourced >= required:
+        return
+    target_sec = target_duration_seconds(settings)
+    pct = int(sourced / target_sec * 100) if target_sec else 0
+    raise InsufficientSourceDurationError(
+        _insufficient_source_hint(
+            settings,
+            sourced_sec=sourced,
+            required_sec=required,
+            target_sec=target_sec,
+            pct=pct,
+        )
+    )
 
 
 def _no_clips_hint(settings: dict) -> str:
@@ -46,6 +98,34 @@ def _no_clips_hint(settings: dict) -> str:
         lines.append(
             "  • Instagram-only: confirm videos from those hashtags/accounts meet likes "
             "and duration limits (very strict defaults often yield zero downloads)."
+        )
+    return "\n".join(lines)
+
+
+def _insufficient_source_hint(
+    settings: dict,
+    *,
+    sourced_sec: int,
+    required_sec: int,
+    target_sec: int,
+    pct: int,
+) -> str:
+    target_min = settings.get("final_target_duration", 0)
+    lines = [
+        "Insufficient sourced duration — aborting before render/upload.",
+        f"  Sourced: {sourced_sec}s ({pct}% of {target_min} min target)",
+        f"  Required: at least {required_sec}s",
+        "",
+        "Things to try:",
+        "  • Add subreddits or relax post.min_score / min_ratio / duration filters",
+        "  • Lower min_source_duration_ratio in channel YAML (temporary) or use a longer "
+        "--target-duration-minutes for testing",
+        "  • Run --mode videos first to see how much material is available",
+        "  • Check config/used_<channel>.json — many posts may already be marked used",
+    ]
+    if instagram_sourcing_enabled(settings):
+        lines.append(
+            "  • Enable or widen Instagram sourcing (source_split, hashtags, min_likes)"
         )
     return "\n".join(lines)
 
@@ -130,6 +210,12 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             logger.error("%s", _no_clips_hint(settings))
             raise NoClipsSourcedError(_no_clips_hint(settings))
 
+        try:
+            assert_sufficient_source_duration(settings, clips)
+        except InsufficientSourceDurationError as e:
+            logger.error("%s", e)
+            raise
+
         best_idx = max(range(len(clips)), key=lambda i: clips[i].get("score", 0))
         if best_idx != 0:
             clips.insert(0, clips.pop(best_idx))
@@ -139,8 +225,8 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                 clips[0].get("score", 0),
             )
 
-        sourced_duration = sum(c.get("duration_sec", 0) for c in clips)
-        target_dur = settings.get("final_target_duration", 0) * 60
+        sourced_duration = sourced_duration_seconds(clips)
+        target_dur = target_duration_seconds(settings)
         logger.info(
             "Sourced %d clips totalling %ds (target %ds, %.0f%%)",
             len(clips),
@@ -180,7 +266,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
         commentary_cfg = settings.get("commentary", {})
         every_n = int(commentary_cfg.get("every_nth", 3))
 
-        if every_n > 0:
+        if commentary_enabled(settings):
             from youtube_automation.ai.text.commentary import generate_commentary_video_first
             from youtube_automation.ai.tts.service import tts_service
             from youtube_automation.ai.tts.types import TTSRequest
@@ -248,7 +334,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     _record_error(pipeline_errors, step="commentary_tts", exc=e, clip=clip)
                     continue
         else:
-            logger.info("Commentary disabled (every_nth=0), skipping.")
+            logger.info("Commentary disabled, skipping.")
 
         for clip in clips:
             try:

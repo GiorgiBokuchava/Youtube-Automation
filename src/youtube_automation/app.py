@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from youtube_automation.config.loader import load_env, load_settings
-from youtube_automation.pipeline import run_pipeline
+from youtube_automation.pipeline import commentary_enabled, run_pipeline
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.sourcing import (
     instagram_sourcing_enabled,
@@ -26,7 +26,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=["videos", "thumbnail", "pipeline", "shorts"],
+        choices=["videos", "thumbnail", "pipeline", "shorts", "ai-preview"],
         required=True,
     )
     parser.add_argument(
@@ -106,7 +106,7 @@ def main() -> None:
     settings = load_settings(args.channel, shorts=use_shorts_config)
 
     if args.no_commentary or args.core_only:
-        settings.setdefault("commentary", {})["every_nth"] = 0
+        settings.setdefault("commentary", {})["enabled"] = False
 
     if args.no_music or args.core_only:
         settings.setdefault("music", {})["enabled"] = False
@@ -123,8 +123,18 @@ def main() -> None:
 
     target_dur = settings.get("final_target_duration")
     every_n = settings.get("commentary", {}).get("every_nth", 3)
+    commentary_on = commentary_enabled(settings)
     music_on = settings.get("music", {}).get("enabled", True)
     ai_meta_on = settings.get("publishing", {}).get("ai_metadata", {}).get("enabled", False)
+    commentary_status = (
+        f"every {every_n}" if commentary_on and every_n > 0 else "off"
+    )
+
+    if args.mode == "ai-preview":
+        from youtube_automation.ai.preview import run_ai_preview
+
+        run_ai_preview(settings)
+        return
 
     if args.mode == "shorts":
         sc = settings.get("shorts") or {}
@@ -144,7 +154,7 @@ def main() -> None:
             clip_mx,
             seg_cap,
             extra_txt,
-            f"every {every_n}" if every_n and every_n > 0 else "off",
+            commentary_status,
             "on" if music_on else "off",
             "on" if ai_meta_on else "off",
         )
@@ -154,7 +164,7 @@ def main() -> None:
             args.channel,
             args.mode,
             target_dur,
-            f"every {every_n}" if every_n and every_n > 0 else "off",
+            commentary_status,
             "on" if music_on else "off",
             "on" if ai_meta_on else "off",
         )

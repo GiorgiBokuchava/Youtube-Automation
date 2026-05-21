@@ -20,6 +20,10 @@ from youtube_automation.storage.sessions import (
     save_session,
     new_session,
 )
+from youtube_automation.media.thumbnail_arrow import (
+    compose_arrow_pointing_at,
+    detect_point_of_interest,
+)
 from youtube_automation.utils.paths import THUMBS
 
 
@@ -220,48 +224,78 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
     placed_arrow: Optional[Image.Image] = None
     placed_emoji: Optional[Image.Image] = None
     ax = ay = ex = ey = 0
+    arrow_dynamic = False
 
-    if want_arrow and want_emoji:
+    # Emoji first (top-right); arrow may target a YOLO detection elsewhere.
+    if want_emoji:
         sf = 1.0
         while sf >= 0.52:
-            ar_im = build_arrow(sf)
             em_im = build_emoji(sf)
-            if ar_im and em_im and tl_tr_horizontal_room(w, margin, gap, ar_im.width, em_im.width):
-                placed_arrow, placed_emoji = ar_im, em_im
-                ax, ay = margin, margin
+            if em_im:
+                placed_emoji = em_im
                 ex = w - margin - em_im.width
                 ey = margin
                 break
             sf *= 0.88
 
-    if want_arrow and placed_arrow is None:
-        sf = 1.0
-        while sf >= 0.52:
-            ar_im = build_arrow(sf)
-            if ar_im:
-                placed_arrow = ar_im
-                ax, ay = margin, margin
-                break
-            sf *= 0.88
+    emoji_avoid: Optional[tuple[int, int, int, int]] = None
+    if placed_emoji is not None:
+        emoji_avoid = (ex, ey, placed_emoji.width, placed_emoji.height)
 
-    if want_emoji and placed_emoji is None:
-        sf = 1.0
-        while sf >= 0.52:
-            em_im = build_emoji(sf)
-            if not em_im:
-                sf *= 0.88
-                continue
-            ex_i = w - margin - em_im.width
-            ey_i = margin
+    use_dynamic = bool(arrow_cfg.get("dynamic_detection", True))
+    if want_arrow and use_dynamic and arrow_orig is not None:
+        target = detect_point_of_interest(base_rgb, arrow_cfg)
+        if target is not None:
+            # Try larger ratios first (square arrow assets need more width budget).
+            ratio_candidates = [
+                min(0.42, arrow_base_ratio * 2.0),
+                min(0.34, arrow_base_ratio * 1.5),
+                arrow_base_ratio,
+                arrow_base_ratio * 0.85,
+            ]
+            for max_ratio in ratio_candidates:
+                composed = compose_arrow_pointing_at(
+                    arrow_orig.copy(),
+                    canvas_w=w,
+                    canvas_h=h,
+                    target_xy=target,
+                    max_width_ratio=max_ratio,
+                    band_h=band_h,
+                    margin=margin,
+                    avoid_rect=emoji_avoid,
+                )
+                if composed:
+                    placed_arrow, (ax, ay) = composed
+                    arrow_dynamic = True
+                    break
             if placed_arrow is None:
-                placed_emoji = em_im
-                ex, ey = ex_i, ey_i
-                break
-            if tl_tr_horizontal_room(w, margin, gap, placed_arrow.width, em_im.width):
-                placed_emoji = em_im
-                ex, ey = ex_i, ey_i
-                break
-            sf *= 0.88
+                logger.warning(
+                    "Thumbnail arrow: detection at (%.0f, %.0f) but could not place "
+                    "without overlapping emoji — try a smaller emoji size_ratio",
+                    target[0],
+                    target[1],
+                )
+
+    if want_arrow and placed_arrow is None and not use_dynamic:
+        if want_emoji and placed_emoji is not None:
+            sf = 1.0
+            while sf >= 0.52:
+                ar_im = build_arrow(sf)
+                em_im = placed_emoji
+                if ar_im and tl_tr_horizontal_room(w, margin, gap, ar_im.width, em_im.width):
+                    placed_arrow = ar_im
+                    ax, ay = margin, margin
+                    break
+                sf *= 0.88
+        if placed_arrow is None:
+            sf = 1.0
+            while sf >= 0.52:
+                ar_im = build_arrow(sf)
+                if ar_im:
+                    placed_arrow = ar_im
+                    ax, ay = margin, margin
+                    break
+                sf *= 0.88
 
     canvas = base_rgb.convert("RGBA")
     if placed_arrow:
@@ -270,8 +304,9 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
         canvas.paste(placed_emoji, (ex, ey), placed_emoji)
 
     logger.info(
-        "Thumbnail overlays applied: arrow=%s emoji=%s",
+        "Thumbnail overlays applied: arrow=%s (dynamic=%s) emoji=%s",
         placed_arrow is not None,
+        arrow_dynamic,
         placed_emoji is not None,
     )
     return canvas.convert("RGB")

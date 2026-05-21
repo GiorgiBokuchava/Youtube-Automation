@@ -31,6 +31,41 @@ def _ffprobe_bin() -> str:
     return "ffprobe" if ffmpeg_dir is None else str(Path(ffmpeg_dir) / "ffprobe")
 
 
+def probe_av_stream_durations(path: Path) -> tuple[float | None, float | None]:
+    """Return (video_duration_sec, audio_duration_sec) for the first of each stream."""
+    cmd = [
+        _ffprobe_bin(),
+        "-v",
+        "error",
+        "-show_entries",
+        "stream=codec_type,duration",
+        "-of",
+        "json",
+        str(path),
+    ]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    if p.returncode != 0:
+        return None, None
+    try:
+        data = json.loads(p.stdout or "{}")
+    except json.JSONDecodeError:
+        return None, None
+    video_dur: float | None = None
+    audio_dur: float | None = None
+    for stream in data.get("streams") or []:
+        if stream.get("codec_type") == "video" and video_dur is None:
+            try:
+                video_dur = float(stream["duration"])
+            except (KeyError, TypeError, ValueError):
+                pass
+        elif stream.get("codec_type") == "audio" and audio_dur is None:
+            try:
+                audio_dur = float(stream["duration"])
+            except (KeyError, TypeError, ValueError):
+                pass
+    return video_dur, audio_dur
+
+
 def probe_audio_duration(path: Path) -> float:
     """Return the duration of a media file in seconds, or 0.0 on failure."""
     cmd = [

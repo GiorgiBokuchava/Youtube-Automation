@@ -53,7 +53,7 @@ def _fit_caption_to_line(
     return out if out else "Nice one"
 
 
-def generate_shorts_overlay_commentary(
+def build_shorts_overlay_prompt(
     settings: dict,
     clip: dict,
     *,
@@ -62,9 +62,7 @@ def generate_shorts_overlay_commentary(
     segment_rank: int,
     total_segments: int,
 ) -> str:
-    """
-    One short on-screen line from full Reddit + channel context (not stolen comments).
-    """
+    """Full prompt for one Shorts on-screen caption line."""
     sc = settings.get("shorts") or {}
     ctx_cfg = settings.get("post_context", {})
     ch = settings.get("channel") or {}
@@ -83,8 +81,6 @@ def generate_shorts_overlay_commentary(
         sc.get("overlay_comment_max_words", ctx_cfg.get("comment_max_words", _cap))
     )
     max_words = max(1, min(max_words, _cap))
-    max_line_chars = overlay_line_max_chars(settings)
-    preferred = sc.get("preferred_overlay_model") or None
 
     comments_block = (
         "\n".join(f"- {t}" for t in top_comments[:12])
@@ -92,7 +88,7 @@ def generate_shorts_overlay_commentary(
         else "(no comments collected)"
     )
 
-    prompt = f"""You write ultra-short on-screen captions for a YouTube Shorts compilation.
+    return f"""You write ultra-short on-screen captions for a YouTube Shorts compilation.
 
 Channel name: {channel_name}
 Channel niche: {niche}
@@ -125,6 +121,38 @@ Rules:
 - Do not start your caption with the digit **{segment_rank}** followed by punctuation - it duplicates the label.
 - Output a single line of plain text, nothing else.
 """
+
+
+def generate_shorts_overlay_commentary(
+    settings: dict,
+    clip: dict,
+    *,
+    topic_title: str,
+    video_main_title: str,
+    segment_rank: int,
+    total_segments: int,
+) -> str:
+    """
+    One short on-screen line from full Reddit + channel context (not stolen comments).
+    """
+    sc = settings.get("shorts") or {}
+    ctx_cfg = settings.get("post_context", {})
+    _cap = 5
+    max_words = int(
+        sc.get("overlay_comment_max_words", ctx_cfg.get("comment_max_words", _cap))
+    )
+    max_words = max(1, min(max_words, _cap))
+    max_line_chars = overlay_line_max_chars(settings)
+    preferred = sc.get("preferred_overlay_model") or None
+
+    prompt = build_shorts_overlay_prompt(
+        settings,
+        clip,
+        topic_title=topic_title,
+        video_main_title=video_main_title,
+        segment_rank=segment_rank,
+        total_segments=total_segments,
+    )
     try:
         req = TextRequest(text=prompt)
         raw = text_service.generate(req, preferred_model=preferred).strip()

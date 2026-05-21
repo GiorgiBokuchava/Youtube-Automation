@@ -1875,5 +1875,588 @@
       }
     ],
     "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-20T20:28:33.925105+00:00",
+    "clips": [
+      {
+        "id": "1stvjld",
+        "title": "[USA][FL] Woman drives lifted truck over Lamborghini in parking lot",
+        "selftext": "",
+        "top_comments": [
+          "Of all things to run over in a 500 mile radius lol",
+          "If not a ramp, why is the Lambo ramp-shaped?",
+          "Increase your premiums with these 3 simple steps",
+          "Of course it s Florida.",
+          "Her Insurance provider: > YOU DID WHAT NOW?!?"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1stvjld/usafl_woman_drives_lifted_truck_over_lamborghini/",
+        "source_url": "https://v.redd.it/v8icu4to90xg1",
+        "subreddit": "Roadcam",
+        "author": "tefunka",
+        "duration_sec": 43,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1stvjld.mp4",
+        "overlay_title": true,
+        "score": 13299,
+        "upvote_ratio": 0.96,
+        "source": "reddit",
+        "original_local_path": "downloads\\1stvjld.mp4",
+        "commentary_text": "[USA][FL] Woman drives lifted truck over Lamborghini in parking lot",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "voiceover_path": "out\\dashcam\\voiceovers\\1stvjld_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.5,
+          "max_volume_db": -0.4,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1stvjld_rendered.mp4",
+        "render_path_kind": "commentary_source_has_audio"
+      },
+      {
+        "id": "1tfq6mi",
+        "title": "[UK] Kid jumps on car to impress friends then regrets it",
+        "selftext": "",
+        "top_comments": [
+          "Nicer than I would have been about it.",
+          "Little prick.",
+          "Draco Malfoy lookin little turd.",
+          "Hopefully he grows out of the obnoxious behavior.",
+          "I condone teaching kids a hard lesson"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1tfq6mi/uk_kid_jumps_on_car_to_impress_friends_then/",
+        "source_url": "https://v.redd.it/x66mk4ymdp1h1",
+        "subreddit": "Roadcam",
+        "author": "minecrafGoBRRRR",
+        "duration_sec": 19,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1tfq6mi.mp4",
+        "overlay_title": true,
+        "score": 1443,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads\\1tfq6mi.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -25.3,
+          "max_volume_db": -2.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1tfq6mi_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tcq2yd",
+        "title": "[USA] Tesla full self driving almost driving itself into a lake.",
+        "selftext": "",
+        "top_comments": [
+          "Michael Scott has some words.",
+          "Car was ready to end it all.",
+          "The machine knows!! Dwight the machine knows!!",
+          "\"Self-driving cars are so much safer than human drivers!\"",
+          "No Michael its a lake! ITS A LAKE!"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1tcq2yd/usa_tesla_full_self_driving_almost_driving_itself/",
+        "source_url": "https://v.redd.it/g0vu58ntu11h1",
+        "subreddit": "Roadcam",
+        "author": "minecrafGoBRRRR",
+        "duration_sec": 15,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1tcq2yd.mp4",
+        "overlay_title": true,
+        "score": 1685,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads\\1tcq2yd.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1tcq2yd_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1t6ewf8",
+        "title": "[USA] Waymo said \"out my wayho\"",
+        "selftext": "",
+        "top_comments": [
+          "when your waymo was trained in LA",
+          "That one took notes from a BMW driver.",
+          "He s just in waymo of a hurry",
+          "Waymo was the better driver",
+          "Waymo said f*** it"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1t6ewf8/usa_waymo_said_out_my_wayho/",
+        "source_url": "https://v.redd.it/xhnynz1unqzg1",
+        "subreddit": "Roadcam",
+        "author": "yeettetis",
+        "duration_sec": 53,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1t6ewf8.mp4",
+        "overlay_title": true,
+        "score": 2444,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads\\1t6ewf8.mp4",
+        "commentary_text": "[USA] Waymo said \"out my wayho\"",
+        "commentary_model": "text_fallback",
+        "commentary_fallback": true,
+        "voiceover_path": "out\\dashcam\\voiceovers\\1t6ewf8_vo.mp3",
+        "voiceover_provider": "edge",
+        "voiceover_model": "edge-tts",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -23.5,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.7258396712852887,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1t6ewf8_rendered.mp4",
+        "render_path_kind": "commentary_source_has_audio"
+      },
+      {
+        "id": "1szptyn",
+        "title": "[India] Road Safety fail on all fronts",
+        "selftext": "Himachal, India. \n\nI was not expecting that, my jaw hit the floor. \n\nEdit- for details, see below\n\nThe accident occurred on a rather sharp turn, where the car veered off the highway, launched into the air, and fell into a deep gorge, which is reported to be around 200 meters deep. Based on the footage, the driver of the Maruti Suzuki Dzire lost control after what seems to be a tyre burst. After the loss of steering control, the airbags in the car seemed to have been inflated, which worsened the situation. Eventually, the car ended up falling into the gorge and reportedly caught fire upon impact, trapping the occupants inside.",
+        "top_comments": [
+          "This is one of the wilder videos I ve seen in ages",
+          "Oof! That's not the sort of thing you walk away from...",
+          "Hope he landed in someone's pool",
+          "That's not a shortcut",
+          "Does India just not have any safety regulations at all?"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1szptyn/india_road_safety_fail_on_all_fronts/",
+        "source_url": "https://v.redd.it/so3lv8bjdayg1",
+        "subreddit": "Roadcam",
+        "author": "Potatopotayto",
+        "duration_sec": 12,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1szptyn.mp4",
+        "overlay_title": true,
+        "score": 2739,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads\\1szptyn.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1szptyn_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1so8nag",
+        "title": "[USA] Overtaking cars in the fog",
+        "selftext": "",
+        "top_comments": [
+          "Wish they had learned their lesson without hitting someone else.",
+          "Idiot.",
+          "That footage should be sufficient for a charge of attempted vehicular manslaughter.",
+          "Revoke! That! License!",
+          "Cammer is the biggest of idiots."
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1so8nag/usa_overtaking_cars_in_the_fog/",
+        "source_url": "https://v.redd.it/8pftbi4wisvg1",
+        "subreddit": "Roadcam",
+        "author": "undercoverciaagent",
+        "duration_sec": 40,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1so8nag.mp4",
+        "overlay_title": true,
+        "score": 4205,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads\\1so8nag.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -14.5,
+          "max_volume_db": -2.1,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1so8nag_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 6,
+    "thumbnail": {
+      "submission_id": "1tgl7fs",
+      "path": "thumbnails\\1tgl7fs_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/NjFidWswcXpwdjFoMWz20kAuHX6WLlKHMHJVriwP3Oz3qRoTkayo5q15Hei7.png?auto=webp&s=59d2c5220783b1ddf7a7b582912b3846cec07f7c"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=9EZK9KTSDdE",
+    "pipeline_errors": [],
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-20T20:44:50.775560+00:00",
+    "clips": [
+      {
+        "id": "1sj77bi",
+        "title": "[USA] Semi truck plows into traffic causing 3 deaths",
+        "selftext": "On the evening of September 28, 2025, a terrible crash unfolded on northbound Interstate 55 in Jefferson County, Missouri, in the United States. Traffic had already slowed down and a line of cars was either moving very slowly or nearly stopped when a semi\u2011truck came up from behind. For reasons investigators say are linked to inattention, the truck driver did not react in time to what was happening ahead. As he reached the end of the line of vehicles, the truck plowed into the back of a car at high speed, crushing it and violently shoving it forward into the traffic in front of it. The impact set off a devastating chain reaction. The first car that was hit was pushed into the next one, and that one slammed into another, until a total of eight vehicles were involved, including the semi\u2011truck. Some cars were spun sideways, others were pinned between vehicles, and a few ended up barely recognizable because of how badly they were crushed. Pieces of metal, glass, and plastic were scattered across the highway, and people in nearby vehicles watched the whole thing happen in just a few seconds. As an result, three people died at the scene from the injuries they suffered in the crash. Five others were hurt, some of them badly enough to be taken to nearby hospitals in critical condition. Because of the size of the crash, police shut down the northbound lanes of I\u201155 for hours. The semi\u2011truck driver, a 45\u2011year\u2011old man from Greensburg, Louisiana, was taken into custody as the investigation progressed.  Based on the evidence, prosecutors charged him with three counts of involuntary manslaughter for the lives lost in the collisionn.",
+        "top_comments": [
+          "In the police report, he told police I may have dozed off",
+          "I m sick at how the first car disappeared. RIP",
+          "Never hit the brakes that entire time.",
+          "This is why I hate driving on Highways!",
+          "Camera was one only thing looking where it was going."
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1sj77bi/usa_semi_truck_plows_into_traffic_causing_3_deaths/",
+        "source_url": "https://v.redd.it/io31nbttipug1",
+        "subreddit": "Roadcam",
+        "author": "Calm_Preparation2993",
+        "duration_sec": 30,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sj77bi.mp4",
+        "overlay_title": true,
+        "score": 6674,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads\\1sj77bi.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sj77bi_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1sh9mu1",
+        "title": "[USA] Texas pickup truck slams into freeway sign which caused the entire highway to be closed",
+        "selftext": "The driver only had minor injuries\n\nHe said he was \u201ccut off by another driver\u201d which made him lose control.",
+        "top_comments": [
+          "Cut off by another driver...yeah, right.",
+          "Looks like they fell asleep.",
+          "Canyonero... Canyonero!",
+          "He was probably \"cut off\" alright...by the bartender ten minutes before this.",
+          "Did dude fall asleep"
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1sh9mu1/usa_texas_pickup_truck_slams_into_freeway_sign/",
+        "source_url": "https://v.redd.it/x4zmuv89v9ug1",
+        "subreddit": "Roadcam",
+        "author": "Calm_Preparation2993",
+        "duration_sec": 34,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sh9mu1.mp4",
+        "overlay_title": false,
+        "score": 3395,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads\\1sh9mu1.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -15.1,
+          "max_volume_db": -1.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sh9mu1_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1sh0roy",
+        "title": "[USA] Tesla drives 100 MPH through a busy intersection resulting in his own death",
+        "selftext": "The driver of the speeding Tesla is the only person who died\n\nOff camera this resulted in a 7 car pileup with dozens injured. ",
+        "top_comments": [
+          "Looks like Tesla on Tesla violence.",
+          "some people treat public roads like a video game",
+          "At least they won t do that again",
+          "That s freaking bad!",
+          "Nothing of value was lost."
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1sh0roy/usa_tesla_drives_100_mph_through_a_busy/",
+        "source_url": "https://v.redd.it/f6cw7hov18ug1",
+        "subreddit": "Roadcam",
+        "author": "Calm_Preparation2993",
+        "duration_sec": 10,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sh0roy.mp4",
+        "overlay_title": false,
+        "score": 2141,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads\\1sh0roy.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.3,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sh0roy_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1sf0y5o",
+        "title": "[USA]  Quad idiot",
+        "selftext": "",
+        "top_comments": [
+          "I hope yellow highlighter is ok.",
+          "Straight to jail, breaking rocks for a decade.",
+          "I'm confused why yellow highlighter man took no evasive action.",
+          "Chicago!!!",
+          "Spas hate this one exfoliating trick."
+        ],
+        "permalink": "https://www.reddit.com/r/Roadcam/comments/1sf0y5o/usa_quad_idiot/",
+        "source_url": "https://v.redd.it/ghrrlzutostg1",
+        "subreddit": "Roadcam",
+        "author": "undercoverciaagent",
+        "duration_sec": 10,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1sf0y5o.mp4",
+        "overlay_title": true,
+        "score": 3198,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads\\1sf0y5o.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -19.7,
+          "max_volume_db": -4.0,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1sf0y5o_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 4,
+    "thumbnail": {
+      "submission_id": "1sqh4l5",
+      "path": "thumbnails\\1sqh4l5_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/hmkWd64r_u1pwPJ3jYRd4o8oxrk7GbCBTonnRBwIJyg.jpeg?auto=webp&s=8112865e9092d47d2609464d0d15e6a09ac575a4"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=j6kqnU7FocI",
+    "pipeline_errors": [],
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-20T21:20:42.493919+00:00",
+    "clips": [
+      {
+        "id": "1t4mj6w",
+        "title": "[USA] Student that tries to fight teacher gets slammed by cop",
+        "selftext": "",
+        "top_comments": [
+          "whole school saw it, your gonna have to transfer after that one",
+          "And the crowd goes wild!",
+          "Dam, right before the door closed, we saw the climax!!!",
+          "Justice was served. FAFO",
+          "Good"
+        ],
+        "permalink": "https://www.reddit.com/r/ConvenientCop/comments/1t4mj6w/usa_student_that_tries_to_fight_teacher_gets/",
+        "source_url": "https://v.redd.it/pp6u233luczg1",
+        "subreddit": "ConvenientCop",
+        "author": "CrwnViic",
+        "duration_sec": 40,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1t4mj6w.mp4",
+        "overlay_title": true,
+        "score": 6612,
+        "upvote_ratio": 0.96,
+        "source": "reddit",
+        "original_local_path": "downloads\\1t4mj6w.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.5,
+          "max_volume_db": -0.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1t4mj6w_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tgyqnu",
+        "title": "[France] Taking a shortcut at the roundabout",
+        "selftext": "",
+        "top_comments": [
+          "not very convenient for the owner of the footage",
+          "Bonjour officers",
+          "*Merde*",
+          "Aw man that s funny lol",
+          "Aww man, dudes just trying to have some fun lol"
+        ],
+        "permalink": "https://www.reddit.com/r/ConvenientCop/comments/1tgyqnu/france_taking_a_shortcut_at_the_roundabout/",
+        "source_url": "https://v.redd.it/bdjkjrii8y1h1",
+        "subreddit": "ConvenientCop",
+        "author": "discofrisko",
+        "duration_sec": 18,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1tgyqnu.mp4",
+        "overlay_title": true,
+        "score": 5200,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads\\1tgyqnu.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.2,
+          "max_volume_db": -0.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1tgyqnu_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1t8plfe",
+        "title": "[USA] Two Boston Idiots drive through red light in front of cop",
+        "selftext": "",
+        "top_comments": [
+          "THREE. The audacity of the third one!",
+          "And the cop reacts..that is crazy. Never happens in South MS",
+          "I hope he got all 3",
+          "Lmao.. literally 0 IQ",
+          "Boston idiots is redundant when behind the wheel."
+        ],
+        "permalink": "https://www.reddit.com/r/ConvenientCop/comments/1t8plfe/usa_two_boston_idiots_drive_through_red_light_in/",
+        "source_url": "https://v.redd.it/tvvii3k6y60h1",
+        "subreddit": "ConvenientCop",
+        "author": "wiseupyabuckejitt",
+        "duration_sec": 19,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1t8plfe.mp4",
+        "overlay_title": true,
+        "score": 2444,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads\\1t8plfe.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -91.0,
+          "max_volume_db": -91.0,
+          "silence_ratio": 1.0,
+          "has_sustained_audio": false,
+          "music_likely": false
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1t8plfe_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 3,
+    "thumbnail": {
+      "submission_id": "1ntyv1k",
+      "path": "thumbnails\\1ntyv1k_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/K1176Wb_RVvo1rqvRFyUzHZFCqBpKU9Ins1deIziVVY.jpg?auto=webp&s=716b1ac17b1d8daa29559eb42de455fc94c89338"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=OH_ErKg61ec",
+    "pipeline_errors": [],
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-20T21:21:36.263955+00:00",
+    "thumbnail": {
+      "submission_id": "1th7hq2",
+      "path": "thumbnails\\1th7hq2_yt.jpg",
+      "original_path": null,
+      "url": "https://i.redd.it/hloivujduz1h1.jpeg"
+    },
+    "clips": [],
+    "num_clips": 0,
+    "channel": "dashcam"
+  },
+  {
+    "created_at": "2026-05-20T21:28:34.952414+00:00",
+    "clips": [
+      {
+        "id": "1thvou5",
+        "title": "[oc] New temporary roundabout in Stara Zagora, Bulgaria",
+        "selftext": "",
+        "top_comments": [
+          "r/IdiotsInTrafficEngineering",
+          "Wow, that was extremely temporary",
+          "Is this what Bangaranga means?",
+          "Bangarangabout",
+          "I mean, it now works as a"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1thvou5/oc_new_temporary_roundabout_in_stara_zagora/",
+        "source_url": "https://v.redd.it/k61kgmk5052h1",
+        "subreddit": "IdiotsInCars",
+        "author": "Next-Wrap-7449",
+        "duration_sec": 37,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1thvou5.mp4",
+        "overlay_title": true,
+        "score": 3725,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads\\1thvou5.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.5,
+          "max_volume_db": -0.5,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1thvou5_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1thwgw8",
+        "title": "[OC] Two solid objects cannot exist in the same place at the same time.",
+        "selftext": "",
+        "top_comments": [
+          "Well those two seconds were really important for their advancement in life",
+          "You guys are both idiots.",
+          "Ayy the two for one idiot special! My favorite.",
+          "you're an idiot for speeding up",
+          "Bro you sped up lol"
+        ],
+        "permalink": "https://www.reddit.com/r/IdiotsInCars/comments/1thwgw8/oc_two_solid_objects_cannot_exist_in_the_same/",
+        "source_url": "https://v.redd.it/k8wq8b9m452h1",
+        "subreddit": "IdiotsInCars",
+        "author": "g1nko",
+        "duration_sec": 41,
+        "local_path": "out\\dashcam\\normalized_videos\\normalized_1thwgw8.mp4",
+        "overlay_title": true,
+        "score": 2470,
+        "upvote_ratio": 0.91,
+        "source": "reddit",
+        "original_local_path": "downloads\\1thwgw8.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.1,
+          "max_volume_db": -2.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true
+        },
+        "rendered_path": "out\\dashcam\\rendered_clips\\1thwgw8_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 2,
+    "thumbnail": {
+      "submission_id": "1s9uxxx",
+      "path": "thumbnails\\1s9uxxx_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/NWt1djQzNGNkbHNnMTRxhPnNvh09xc5EgSPwlkug51L1-vbc_oag0yoK0wPj.png?auto=webp&s=0cabf41d99909d3af038aa612389c0a2f617ad9e"
+    },
+    "output_path": "out\\dashcam\\outputs\\final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=RZBhiojCMC4",
+    "pipeline_errors": [],
+    "channel": "dashcam"
   }
 ]

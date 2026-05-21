@@ -71,8 +71,28 @@ python -m youtube_automation.app --mode pipeline --channel animals
 | `videos` | Source clips only (Reddit + Instagram per `source_split`; same budgeting/filters as pipeline) |
 | `thumbnail` | Generate thumbnail only |
 | `shorts` | Shorts pipeline (requires shorts config) |
+| `ai-preview` | Call real AI for YouTube title/description/hashtags only; print the full metadata prompt and model output. No downloads, commentary, render, or upload. |
 
 Useful flags: `--dry-run` (no upload), `--cleanup` (remove generated media after a successful run), `--target-duration-minutes`, `--no-commentary`, `--no-music`, `--no-ai-metadata`, `--core-only`, `--debug`.
+
+Tune metadata prompts (API keys required). By default, preview uses channel YAML only (no clip titles). To mirror a real compile, paste sourced post titles into `publishing.ai_preview.sample_clips` (optional; the pipeline never uses this block):
+
+```bash
+python -m youtube_automation.app --mode ai-preview --channel animals
+```
+
+Output is written to `out/<channel>/ai_preview/latest.txt` (and a timestamped copy). The console only shows model attempts and errors.
+
+**Where prompts and settings live**
+
+| What | Location |
+|------|----------|
+| System rules, tone tables, output format (`TITLE:` / `DESCRIPTION:` / `HASHTAGS:`) | `src/youtube_automation/publishing/ai_metadata.py` |
+| Tone, audience, CTA, max hashtags | `config/channels/<name>.yaml` → `publishing.ai_metadata` |
+| Optional real clip titles for preview only | `config/channels/<name>.yaml` → `publishing.ai_preview.sample_clips` |
+| Defaults | `config/base.yaml` → `publishing.ai_metadata` |
+
+Edit those YAML fields and re-run; use `--debug` if you need verbose provider logs.
 
 Partial failures (commentary, TTS, per-clip render) are logged and stored on the session under `pipeline_errors`.
 

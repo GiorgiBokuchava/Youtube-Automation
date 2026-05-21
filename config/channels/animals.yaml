@@ -92,6 +92,7 @@ audio:
   original_clip_volume_db: -18
 
 commentary:
+  enabled: false
   theme: funny
   every_nth: 3
   commentary_gain: 1.6
@@ -185,3 +186,18 @@ publishing:
     audience: animal lovers
     call_to_action: "Subscribe for more funny animal clips every week!"
     max_hashtags: 17
+
+    title_style:
+      format: "youtube_compilation"
+      keywords:
+        - funny animals
+        - funniest animal videos
+        - try not to laugh
+        - animal compilation
+        - cute and funny pets
+      examples:
+        - "The FUNNIEST Animals Around the World! 😂"
+        - "Try Not To Laugh: Funniest Animal Videos"
+        - "Animals Being Ridiculous for X Minutes"
+        - "Funny Animals Compilation That Gets Better Every Minute"
+        - "Dramatic Pets Who Deserve an Oscar"

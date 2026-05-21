@@ -191,7 +191,7 @@ def render_clip(
                 vol_filter = f"volume={orig_factor:.6f}"
 
             filter_complex = (
-                f"[0:v]setpts=PTS-STARTPTS[vout];"
+                f"[0:v]setpts=PTS-STARTPTS,setsar=1[vout];"
                 f"[0:a]{vol_filter},aresample=48000,asetpts=N/SR/TB[a0];"
                 f"[1:a]adelay={delay_ms}|{delay_ms},"
                 f"volume={commentary_gain},aresample=48000,asetpts=N/SR/TB[a1];"
@@ -230,7 +230,7 @@ def render_clip(
         else:
             path_kind = COMMENTARY_NO_AUDIO
             filter_complex = (
-                f"[0:v]setpts=PTS-STARTPTS[vout];"
+                f"[0:v]setpts=PTS-STARTPTS,setsar=1[vout];"
                 f"[1:a]adelay={delay_ms}|{delay_ms},"
                 f"volume={commentary_gain},"
                 f"aresample=48000,asetpts=N/SR/TB[aout]"
@@ -269,7 +269,7 @@ def render_clip(
         if has_source_audio:
             path_kind = NO_COMMENTARY_HAS_AUDIO
             filter_complex = (
-                "[0:v]setpts=PTS-STARTPTS[vout];"
+                "[0:v]setpts=PTS-STARTPTS,setsar=1[vout];"
                 "[0:a]aresample=48000,asetpts=N/SR/TB[aout]"
             )
             cmd = [
@@ -313,7 +313,7 @@ def render_clip(
                 "-i",
                 "anullsrc=channel_layout=stereo:sample_rate=48000",
                 "-vf",
-                "setpts=PTS-STARTPTS",
+                "setpts=PTS-STARTPTS,setsar=1",
                 "-map",
                 "0:v:0",
                 "-map",

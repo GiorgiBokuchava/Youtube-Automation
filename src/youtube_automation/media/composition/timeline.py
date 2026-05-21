@@ -6,6 +6,18 @@ from pathlib import Path
 import logging
 
 from youtube_automation.media.ffmpeg import ffmpeg_bin as _ffmpeg_bin
+from youtube_automation.media.ffprobe_streams import probe_av_stream_durations
+
+
+def _assert_av_duration_match(path: Path, *, tolerance_sec: float = 0.15) -> None:
+    video_dur, audio_dur = probe_av_stream_durations(path)
+    if video_dur is None or audio_dur is None:
+        raise RuntimeError(f"Could not probe stitched output durations: {path}")
+    if abs(video_dur - audio_dur) > tolerance_sec:
+        raise RuntimeError(
+            f"Stitched output A/V mismatch (freeze risk): video={video_dur:.3f}s "
+            f"audio={audio_dur:.3f}s path={path}"
+        )
 
 
 def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
@@ -18,13 +30,6 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
     clip_count = len(clip_paths)
 
     logger.info("🎬 Stitching %d clips → %s", clip_count, output_path)
-
-    # Build concat file
-    list_file = output_path.parent / f"{output_path.stem}_concat.txt"
-    list_file.write_text(
-        "\n".join(f"file '{p.resolve().as_posix()}'" for p in clip_paths) + "\n",
-        encoding="utf-8",
-    )
 
     base_timeout = int(os.getenv("FFMPEG_BASE_TIMEOUT", "1800"))
     per_clip_timeout = int(os.getenv("FFMPEG_PER_CLIP_TIMEOUT", "30"))
@@ -40,50 +45,65 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         crf,
     )
 
+    # Filter concat normalizes SAR/fps per clip. The concat demuxer + CFR can drop
+    # video frames when inputs mix sample aspect ratios (common on Reddit clips).
+    chains: list[str] = []
+    concat_inputs: list[str] = []
+    for i in range(clip_count):
+        chains.append(
+            f"[{i}:v]setpts=PTS-STARTPTS,fps=30,"
+            f"scale=1920:1080:force_original_aspect_ratio=decrease,"
+            f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1[v{i}]"
+        )
+        chains.append(
+            f"[{i}:a]aresample=48000,asetpts=PTS-STARTPTS[a{i}]"
+        )
+        concat_inputs.append(f"[v{i}][a{i}]")
+    filter_complex = (
+        ";".join(chains)
+        + ";"
+        + "".join(concat_inputs)
+        + f"concat=n={clip_count}:v=1:a=1[vout][aout];"
+        "[aout]alimiter=limit=0.97[aout_limited]"
+    )
+
     cmd = [
         _ffmpeg_bin(),
         "-hide_banner",
         "-y",
-        # Show progress in CI logs
         "-loglevel",
         "info",
         "-stats",
-        # Concat demuxer — no +genpts; rendered clips already have clean timestamps
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        str(list_file),
-        "-fps_mode",
-        "cfr",
-        "-r",
-        "30",
-        # Re-encode (safe, drift-free)
-        "-c:v",
-        "libx264",
-        "-pix_fmt",
-        "yuv420p",
-        "-preset",
-        preset,
-        "-crf",
-        str(crf),
-        "-vf",
-        "setpts=PTS-STARTPTS",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "192k",
-        "-ar",
-        "48000",
-        # Rebuild audio timestamps from sample count so any residual concat
-        # discontinuities become invisible to the muxer.
-        "-af",
-        "aresample=48000,asetpts=N/SR/TB,alimiter=limit=0.97",
-        "-movflags",
-        "+faststart",
-        str(output_path),
     ]
+    for p in clip_paths:
+        cmd.extend(["-i", str(p.resolve())])
+    cmd.extend(
+        [
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[vout]",
+            "-map",
+            "[aout_limited]",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-preset",
+            preset,
+            "-crf",
+            str(crf),
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-ar",
+            "48000",
+            "-movflags",
+            "+faststart",
+            str(output_path),
+        ]
+    )
 
     try:
         subprocess.run(
@@ -102,5 +122,6 @@ def stitch_clips(*, clip_paths: list[Path], output_path: Path) -> Path:
         logger.error("FFmpeg concat failed with return code %s", e.returncode)
         raise RuntimeError("ffmpeg concat failed")
 
+    _assert_av_duration_match(output_path)
     logger.info("✅ Stitching completed successfully")
     return output_path

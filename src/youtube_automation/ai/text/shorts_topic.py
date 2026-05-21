@@ -60,10 +60,8 @@ def _parse_json_object(raw: str) -> dict:
     return json.loads(raw)
 
 
-def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
-    """
-    Ask the text model to pick a creative niche topic based on the channel's general focus.
-    """
+def build_shorts_topic_prompt(settings: dict) -> str:
+    """Full prompt for Shorts topic + search queries (includes suggested clip_count)."""
     sc = settings.get("shorts") or {}
     ch = settings.get("channel") or {}
     niche = str(ch.get("niche", "animals")).strip()
@@ -78,13 +76,11 @@ def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
     fixed_count: int | None = None
     if configured_count is not None:
         fixed_count = max(3, min(int(configured_count), 10))
-        # If clip_count is set and randomization is off, hard-enforce it.
         if not randomize_count:
             mn = fixed_count
             mx = fixed_count
 
     title_max_words = int(sc.get("title_max_words", 10))
-    # Optional inspiration only — never used as the final title or queries.
     topic_hints = _hint_lines(sc.get("topic_hints")) or _hint_lines(sc.get("topic_seeds"))
     search_query_hints = _hint_lines(sc.get("search_query_hints"))
 
@@ -95,9 +91,7 @@ def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
         else "(none — invent freely)"
     )
 
-    preferred = sc.get("preferred_topic_model")
-
-    prompt = f"""You are a viral YouTube Shorts content planner.
+    return f"""You are a viral YouTube Shorts content planner.
 Create a complete, natural-sounding Shorts title and Reddit search queries.
 
 Channel niche: {niche}
@@ -126,6 +120,34 @@ Return ONLY a JSON object:
   "clip_count": {random.randint(mn, mx)}
 }}
 """
+
+
+def generate_shorts_topic(settings: dict) -> ShortsTopicPlan:
+    """
+    Ask the text model to pick a creative niche topic based on the channel's general focus.
+    """
+    sc = settings.get("shorts") or {}
+    ch = settings.get("channel") or {}
+    niche = str(ch.get("niche", "animals")).strip()
+    configured_count = sc.get("clip_count")
+    randomize_count = bool(sc.get("randomize_clip_count", False))
+
+    mn = int(sc.get("clip_count_min", sc.get("clip_count", 5)))
+    mx = int(sc.get("clip_count_max", sc.get("clip_count", 5)))
+    mn = max(3, min(mn, 10))
+    mx = max(mn, min(mx, 10))
+
+    fixed_count: int | None = None
+    if configured_count is not None:
+        fixed_count = max(3, min(int(configured_count), 10))
+        if not randomize_count:
+            mn = fixed_count
+            mx = fixed_count
+
+    preferred = sc.get("preferred_topic_model")
+    title_max_words = int(sc.get("title_max_words", 10))
+
+    prompt = build_shorts_topic_prompt(settings)
 
     try:
         raw = text_service.generate(TextRequest(text=prompt), preferred_model=preferred)

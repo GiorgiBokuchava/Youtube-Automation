@@ -3,7 +3,7 @@ channel:
   niche: dashcam fails & road rage
   youtube_channel_id: UCYYYY
 
-final_target_duration: 1
+final_target_duration: 8
 
 subreddits:
   - Dashcam
@@ -12,6 +12,9 @@ subreddits:
   - dashcams
   - Dashcam
   - drivingUK
+  - RoadCam
+  - ConvenientCop
+  - TorontoDriving
 
 post:
   min_duration: 5
@@ -23,6 +26,7 @@ audio:
   original_clip_volume_db: -14
 
 commentary:
+  enabled: false
   theme: dramatic
   every_nth: 3
   commentary_gain: 1.6
@@ -43,6 +47,7 @@ thumbnail:
 
   arrow_overlay:
     enabled: true
+    dynamic_detection: true
 
   emoji_overlay:
     enabled: true

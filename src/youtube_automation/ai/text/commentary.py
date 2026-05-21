@@ -17,12 +17,18 @@ _FALLBACK_MAX_WORDS = 12
 _SENTENCE_END = re.compile(r"[.!?]+")
 
 
-def _video_prompt(theme: str) -> str:
+def video_commentary_prompt(theme: str) -> str:
+    """Text sent with the clip video to the video-capable text model."""
     return (
         "Generate a short, one-sentence commentary that matches this theme: "
         f"{theme}.\n"
-        "Rules: Max 12 words. Casual tone. No emojis. No questions."
+        "Rules: Max 12 words. Casual tone. No emojis. No questions. "
+        "PG / family-friendly wording only."
     )
+
+
+def _video_prompt(theme: str) -> str:
+    return video_commentary_prompt(theme)
 
 
 def _is_single_sentence(text: str) -> bool:

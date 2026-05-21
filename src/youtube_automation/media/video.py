@@ -13,6 +13,7 @@ from yt_dlp import YoutubeDL
 from youtube_automation.media.ffmpeg import ensure_ffmpeg
 from youtube_automation.reddit.client import create_reddit_client, fetch_feed
 from youtube_automation.storage.sessions import get_used_video_ids
+from youtube_automation.ai.content_policy import is_pg_safe_text
 from youtube_automation.utils.paths import DOWNLOADS
 from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 
@@ -69,84 +70,9 @@ def _word_count(text: str) -> int:
     return len(text.split())
 
 
-_COMMENT_BANNED: frozenset[str] = frozenset({
-    # profanity
-    "fuck", "fucking", "fucked", "fucker", "motherfuck", "motherfucker",
-    "shit", "shitty", "bullshit",
-    "bitch", "bitches",
-    "cunt", "cunts",
-    "ass", "asshole", "jackass", "dumbass", "smartass",
-    "bastard",
-    "dick", "dicks", "dickhead",
-    "cock", "cocks",
-    "pussy",
-    "piss", "pissed",
-    "damn", "damnit",
-    "crap",
-    "twat",
-    "wanker", "wank",
-    "arse",
-    # slurs
-    "nigger", "nigga", "nig",
-    "faggot", "fag",
-    "retard", "retarded",
-    "spic", "chink", "gook", "kike", "wetback", "cracker",
-    "tranny",
-    "coon",
-    # sexual content
-    "slut", "slutty",
-    "whore",
-    "rape", "rapist", "raped", "raping",
-    "molest", "molested",
-    "porn", "porno", "pornhub",
-    "nsfw",
-    "sex", "sexy", "sexist",
-    "horny",
-    "dildo",
-    "boobs", "tits", "titties",
-    "penis", "vagina", "genitals",
-    # violence / self-harm
-    "kill", "killing", "kills", "killed", "killer",
-    "murder", "murders", "murdered",
-    "suicide", "suicidal",
-    "die", "died", "dying",
-    "dead", "death",
-    "gore", "gory",
-    "blood", "bloody",
-    "stab", "stabbed",
-    "shoot", "shot",
-    "gun", "guns",
-    "bomb", "bombing",
-    "explode", "explosion",
-    "hang", "hanged", "hanging",
-    "torture", "torturing",
-    "abuse", "abused", "abusive",
-    "domestic",
-    "assault",
-    "attack", "attacked",
-    "hurt", "injury", "injured",
-    "fatal", "fatality",
-    "accident",
-    "disaster",
-    "tragedy", "tragic",
-    # drugs
-    "drug", "drugs",
-    "cocaine", "heroin", "meth", "crystal",
-    "weed", "marijuana",
-    "overdose",
-    # hate / extremism
-    "nazi", "nazis",
-    "hitler",
-    "terrorist", "terrorism",
-    "racist", "racism",
-    "hate crime",
-})
-
-
 def _comment_is_clean(text: str) -> bool:
     """Return True only if the text contains no banned words."""
-    lower = text.lower()
-    return not any(w in lower for w in _COMMENT_BANNED)
+    return is_pg_safe_text(text)
 
 
 def _extract_comments_for_clip(
