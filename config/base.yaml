@@ -53,6 +53,12 @@ thumbnail:
   max_selftext_words: 20
   require_no_selftext: false
 
+  search_stages:
+    - [top_day, 200]
+    - [hot, 200]
+    - [rising, 200]
+    - [new, 200]
+
   arrow_overlay:
     enabled: false
     dynamic_detection: true
@@ -60,6 +66,13 @@ thumbnail:
       model: yolov8n.pt
       confidence: 0.35
       classes: [0, 1, 2, 3, 5, 7]
+
+  postprocess:
+    enabled: false
+    autocontrast_cutoff: 1
+    color: 1.08
+    contrast: 1.06
+    sharpness: 1.12
 
   emoji_overlay:
     enabled: false

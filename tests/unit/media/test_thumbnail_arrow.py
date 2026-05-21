@@ -17,6 +17,40 @@ def _fake_box(cls_id: int, xyxy: tuple[float, float, float, float], conf: float)
     return box
 
 
+def test_detect_point_of_interest_respects_configured_animal_classes(mocker):
+    b_dog = _fake_box(16, (200, 150, 400, 350), 0.85)
+    b_car = _fake_box(2, (10, 10, 50, 50), 0.99)
+    boxes = MagicMock()
+    boxes.__len__ = lambda self: 2
+    boxes.cls = [b_dog.cls[0], b_car.cls[0]]
+    boxes.conf = [b_dog.conf[0], b_car.conf[0]]
+    boxes.xyxy = [b_dog.xyxy[0], b_car.xyxy[0]]
+
+    result = MagicMock()
+    result.boxes = boxes
+    model = MagicMock()
+    model.predict.return_value = [result]
+    mocker.patch(
+        "youtube_automation.media.thumbnail_arrow._get_yolo",
+        return_value=model,
+    )
+
+    img = Image.new("RGB", (640, 480), color=(128, 128, 128))
+    pt = detect_point_of_interest(
+        img,
+        {
+            "detection": {
+                "confidence": 0.3,
+                "classes": [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+            }
+        },
+    )
+
+    assert pt is not None
+    assert 280 <= pt[0] <= 320
+    assert 230 <= pt[1] <= 280
+
+
 def test_detect_point_of_interest_picks_best_vehicle(mocker):
     b_car = _fake_box(2, (100, 100, 200, 200), 0.9)
     b_person = _fake_box(0, (10, 10, 30, 30), 0.95)

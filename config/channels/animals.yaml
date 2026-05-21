@@ -110,9 +110,30 @@ commentary:
 thumbnail:
   min_score: 1000
   min_ratio: 0.85
+  require_detection: true
+  subject_aware_crop: true
+  min_source_width: 720
+  min_source_height: 480
+  blur_variance_threshold: 60.0
+  min_source_pixels: 600000
+  reject_blurry: true
+  blur_variance_threshold: 60.0
+
+  postprocess:
+    enabled: true
+    autocontrast_cutoff: 1
+    color: 1.08
+    contrast: 1.06
+    sharpness: 1.12
 
   arrow_overlay:
     enabled: true
+    dynamic_detection: true
+    detection:
+      enabled: true
+      model: yolov8n.pt
+      confidence: 0.30
+      classes: [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 
   emoji_overlay:
     enabled: true

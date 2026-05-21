@@ -8,10 +8,11 @@ import re
 import logging
 import concurrent.futures
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
+import numpy as np
 import requests
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 
 from youtube_automation.config.loader import BASE_DIR
 from youtube_automation.reddit.client import create_reddit_client
@@ -136,7 +137,104 @@ def _resolve_arrow_path(arrow_cfg: dict) -> Path:
     return _ASSETS_THUMB / p
 
 
-def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image.Image:
+def _thumbnail_needs_source_detection(cfg: dict) -> bool:
+    """True when YOLO must run on the source image before crop (gate or subject crop)."""
+    return bool(cfg.get("require_detection", False)) or bool(
+        cfg.get("subject_aware_crop", False)
+    )
+
+
+def _blur_variance(im: Image.Image) -> Optional[float]:
+    """Laplacian variance; None if OpenCV is unavailable or the check fails."""
+    try:
+        import cv2
+    except ImportError:
+        logger.debug("OpenCV not available; skipping blur check")
+        return None
+
+    try:
+        gray = np.asarray(im.convert("L"), dtype=np.uint8)
+        lap = cv2.Laplacian(gray, cv2.CV_64F)
+        return float(lap.var())
+    except Exception as exc:
+        logger.warning("Blur variance check failed: %s", exc)
+        return None
+
+
+def _passes_source_quality(im: Image.Image, cfg: dict) -> bool:
+    w, h = im.width, im.height
+    min_w = int(cfg.get("min_source_width", 0))
+    min_h = int(cfg.get("min_source_height", 0))
+    min_px = int(cfg.get("min_source_pixels", 0))
+
+    if min_w > 0 and w < min_w:
+        logger.info(
+            "Thumbnail source rejected: width %d < min_source_width %d", w, min_w
+        )
+        return False
+    if min_h > 0 and h < min_h:
+        logger.info(
+            "Thumbnail source rejected: height %d < min_source_height %d", h, min_h
+        )
+        return False
+    if min_px > 0 and w * h < min_px:
+        logger.info(
+            "Thumbnail source rejected: pixels %d < min_source_pixels %d", w * h, min_px
+        )
+        return False
+
+    if bool(cfg.get("reject_blurry", False)):
+        threshold = float(cfg.get("blur_variance_threshold", 80.0))
+        variance = _blur_variance(im)
+        if variance is None:
+            logger.debug("Thumbnail blur check skipped (OpenCV unavailable)")
+        elif variance < threshold:
+            logger.info(
+                "Thumbnail source rejected: blurry (Laplacian variance %.1f < %.1f)",
+                variance,
+                threshold,
+            )
+            return False
+
+    return True
+
+
+def _apply_postprocess(im: Image.Image, cfg: dict) -> Image.Image:
+    """Light PIL polish after crop/resize; controlled by ``thumbnail.postprocess``."""
+    pp = cfg.get("postprocess") or {}
+    if not bool(pp.get("enabled", False)):
+        return im
+
+    cutoff = int(pp.get("autocontrast_cutoff", 1))
+    im = ImageOps.autocontrast(im, cutoff=cutoff)
+
+    color = float(pp.get("color", 1.08))
+    contrast = float(pp.get("contrast", 1.06))
+    sharpness = float(pp.get("sharpness", 1.12))
+
+    if color != 1.0:
+        im = ImageEnhance.Color(im).enhance(color)
+    if contrast != 1.0:
+        im = ImageEnhance.Contrast(im).enhance(contrast)
+    if sharpness != 1.0:
+        im = ImageEnhance.Sharpness(im).enhance(sharpness)
+
+    logger.debug(
+        "Thumbnail postprocess applied (cutoff=%d color=%.2f contrast=%.2f sharpness=%.2f)",
+        cutoff,
+        color,
+        contrast,
+        sharpness,
+    )
+    return im
+
+
+def _apply_thumbnail_decorations(
+    base_rgb: Image.Image,
+    settings: dict,
+    *,
+    precomputed_poi: Optional[Tuple[float, float]] = None,
+) -> Image.Image:
     """Composite arrow / emoji on upper corners when enabled and space allows; never overlap."""
     cfg = settings.get("thumbnail") or {}
     arrow_cfg = cfg.get("arrow_overlay") or {}
@@ -193,20 +291,6 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
     arrow_base_ratio = float(arrow_cfg.get("max_width_ratio", 0.20))
     emoji_base_ratio = float(emoji_cfg.get("size_ratio", 0.18))
 
-    def build_arrow(sf: float) -> Optional[Image.Image]:
-        if not want_arrow or not arrow_orig:
-            return None
-        max_arrow_w = max(1, int(w * arrow_base_ratio * sf))
-        ar_im = _resize_arrow_to_band(arrow_orig, max_arrow_w, band_h)
-        if (
-            ar_im.width < _MIN_OVERLAY_SIDE_PX
-            or ar_im.height < _MIN_OVERLAY_SIDE_PX
-            or margin + ar_im.height > top_y_limit
-            or margin + ar_im.width > w - margin
-        ):
-            return None
-        return ar_im
-
     def build_emoji(sf: float) -> Optional[Image.Image]:
         if not want_emoji or not emoji_orig:
             return None
@@ -244,7 +328,9 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
 
     use_dynamic = bool(arrow_cfg.get("dynamic_detection", True))
     if want_arrow and use_dynamic and arrow_orig is not None:
-        target = detect_point_of_interest(base_rgb, arrow_cfg)
+        target = precomputed_poi
+        if target is None:
+            target = detect_point_of_interest(base_rgb, arrow_cfg)
         if target is not None:
             # Try larger ratios first (square arrow assets need more width budget).
             ratio_candidates = [
@@ -269,33 +355,22 @@ def _apply_thumbnail_decorations(base_rgb: Image.Image, settings: dict) -> Image
                     arrow_dynamic = True
                     break
             if placed_arrow is None:
-                logger.warning(
-                    "Thumbnail arrow: detection at (%.0f, %.0f) but could not place "
-                    "without overlapping emoji — try a smaller emoji size_ratio",
+                logger.info(
+                    "Thumbnail arrow skipped: YOLO target at (%.0f, %.0f) but arrow "
+                    "could not be placed safely (emoji overlap or bounds)",
                     target[0],
                     target[1],
                 )
-
-    if want_arrow and placed_arrow is None and not use_dynamic:
-        if want_emoji and placed_emoji is not None:
-            sf = 1.0
-            while sf >= 0.52:
-                ar_im = build_arrow(sf)
-                em_im = placed_emoji
-                if ar_im and tl_tr_horizontal_room(w, margin, gap, ar_im.width, em_im.width):
-                    placed_arrow = ar_im
-                    ax, ay = margin, margin
-                    break
-                sf *= 0.88
-        if placed_arrow is None:
-            sf = 1.0
-            while sf >= 0.52:
-                ar_im = build_arrow(sf)
-                if ar_im:
-                    placed_arrow = ar_im
-                    ax, ay = margin, margin
-                    break
-                sf *= 0.88
+        else:
+            logger.info(
+                "Thumbnail arrow skipped: dynamic_detection enabled but no valid "
+                "YOLO target for configured classes"
+            )
+    elif want_arrow and not use_dynamic:
+        logger.info(
+            "Thumbnail arrow skipped: dynamic_detection disabled (static placement "
+            "not used)"
+        )
 
     canvas = base_rgb.convert("RGBA")
     if placed_arrow:
@@ -339,10 +414,10 @@ def _effective_thumbnail_canvas(settings: dict, cfg: dict) -> tuple[int, int, fl
 
 
 DEFAULT_SEARCH_STAGES = [
-    ("hot", 200),
     ("top_day", 200),
-    ("new", 200),
+    ("hot", 200),
     ("rising", 200),
+    ("new", 200),
 ]
 
 FALLBACK_SEARCH_STAGES = [
@@ -375,6 +450,33 @@ def _exceeds_max_words(text: str, max_words: int) -> bool:
     return len(re.findall(r"\b\w+\b", text.lower())) > max_words
 
 
+def _max_selftext_words(cfg: dict) -> int:
+    """Read ``max_selftext_words``; fall back to legacy ``max_description_words``."""
+    if "max_selftext_words" in cfg:
+        return int(cfg.get("max_selftext_words") or 0)
+    return int(cfg.get("max_description_words", 0))
+
+
+def _has_selftext(submission) -> bool:
+    if not hasattr(submission, "selftext"):
+        return False
+    return bool((submission.selftext or "").strip())
+
+
+def _selftext_skip_reason(cfg: dict, submission) -> Optional[str]:
+    """Return a short skip reason when selftext filters fail, else None."""
+    if bool(cfg.get("require_no_selftext", False)) and _has_selftext(submission):
+        return "selftext present (require_no_selftext)"
+    max_words = _max_selftext_words(cfg)
+    if (
+        max_words > 0
+        and _has_selftext(submission)
+        and _exceeds_max_words(submission.selftext, max_words)
+    ):
+        return f"selftext exceeds {max_words} words"
+    return None
+
+
 def _is_acceptable_ratio(w: int, h: int, target_ratio: float, tolerance: float) -> bool:
     return abs((w / h) - target_ratio) <= tolerance
 
@@ -393,19 +495,79 @@ def _center_crop(im: Image.Image, target_ratio: float) -> Image.Image:
     return im.crop((0, y, w, y + new_h))
 
 
+def _crop_box_around_point(
+    w: int,
+    h: int,
+    target_ratio: float,
+    point_xy: Tuple[float, float],
+) -> Tuple[int, int, int, int]:
+    """Return (left, upper, right, lower) crop box with target aspect ratio near point_xy."""
+    px, py = point_xy
+    r = w / h
+    if r > target_ratio:
+        crop_h = h
+        crop_w = int(h * target_ratio)
+    else:
+        crop_w = w
+        crop_h = int(w / target_ratio)
+
+    x = int(round(px - crop_w / 2))
+    y = int(round(py - crop_h / 2))
+    x = max(0, min(x, w - crop_w))
+    y = max(0, min(y, h - crop_h))
+    return (x, y, x + crop_w, y + crop_h)
+
+
+def _crop_around_point(
+    im: Image.Image,
+    target_ratio: float,
+    point_xy: Tuple[float, float],
+) -> Tuple[Image.Image, Tuple[int, int, int, int]]:
+    box = _crop_box_around_point(im.width, im.height, target_ratio, point_xy)
+    return im.crop(box), box
+
+
+def _map_poi_through_crop(
+    poi: Tuple[float, float],
+    crop_box: Tuple[int, int, int, int],
+    out_size: Tuple[int, int],
+) -> Tuple[float, float]:
+    x0, y0, x1, y1 = crop_box
+    crop_w = max(1, x1 - x0)
+    crop_h = max(1, y1 - y0)
+    out_w, out_h = out_size
+    ox = (poi[0] - x0) * out_w / crop_w
+    oy = (poi[1] - y0) * out_h / crop_h
+    return (ox, oy)
+
+
 def _crop_and_resize(
     im: Image.Image,
     out_w: int,
     out_h: int,
     target_ratio: float,
     tolerance: float,
-) -> Optional[Image.Image]:
-
+    *,
+    crop_point: Optional[Tuple[float, float]] = None,
+    subject_aware_crop: bool = False,
+) -> Tuple[Optional[Image.Image], Optional[Tuple[float, float]]]:
     if not _is_acceptable_ratio(im.width, im.height, target_ratio, tolerance):
-        return None
+        return None, None
 
-    cropped = _center_crop(im, target_ratio)
-    return cropped.resize((out_w, out_h), _PIL_RESAMPLE)
+    mapped_poi: Optional[Tuple[float, float]] = None
+    if subject_aware_crop and crop_point is not None:
+        cropped, crop_box = _crop_around_point(im, target_ratio, crop_point)
+        mapped_poi = _map_poi_through_crop(crop_point, crop_box, (out_w, out_h))
+        logger.info(
+            "Thumbnail subject-aware crop around (%.0f, %.0f)",
+            crop_point[0],
+            crop_point[1],
+        )
+    else:
+        cropped = _center_crop(im, target_ratio)
+
+    out = cropped.resize((out_w, out_h), _PIL_RESAMPLE)
+    return out, mapped_poi
 
 
 def _composite_layout(target_w: int, target_h: int):
@@ -426,7 +588,7 @@ def _create_composite_thumb(
     processed = []
 
     for im in images:
-        col = _crop_and_resize(im, col_w, col_h, col_ratio, tolerance)
+        col, _ = _crop_and_resize(im, col_w, col_h, col_ratio, tolerance)
         if col:
             processed.append(col)
         if len(processed) == 3:
@@ -467,17 +629,44 @@ def _pick_image_url(submission) -> Optional[str]:
         u = getattr(submission, "url", None) or ""
         if u:
             lu = u.lower()
+            if lu.endswith(".gif"):
+                return None
             if "i.redd.it" in lu or any(
-                lu.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp", ".gif")
+                lu.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp")
             ):
                 return u
         preview = getattr(submission, "preview", None) or {}
         images = preview.get("images") if isinstance(preview, dict) else None
         if images:
-            src = images[0].get("source") or {}
+            img0 = images[0]
+            best_url: Optional[str] = None
+            best_pixels = 0
+
+            for res in img0.get("resolutions") or []:
+                if not isinstance(res, dict):
+                    continue
+                raw = res.get("url")
+                if not raw:
+                    continue
+                rw = int(res.get("width") or 0)
+                rh = int(res.get("height") or 0)
+                pixels = rw * rh if rw > 0 and rh > 0 else 0
+                if pixels > best_pixels:
+                    best_pixels = pixels
+                    best_url = raw
+
+            src = img0.get("source") or {}
             raw = src.get("url")
             if raw:
-                return html.unescape(raw)
+                sw = int(src.get("width") or 0)
+                sh = int(src.get("height") or 0)
+                src_pixels = sw * sh if sw > 0 and sh > 0 else 10**12
+                if src_pixels >= best_pixels:
+                    best_url = raw
+                    best_pixels = src_pixels
+
+            if best_url:
+                return html.unescape(best_url)
     except Exception:
         pass
     return None
@@ -531,6 +720,83 @@ def _fetch_feed(subreddit, mode: str, limit: int) -> List:
     return []
 
 
+def build_thumbnail_from_image(
+    im: Image.Image,
+    settings: dict,
+    *,
+    submission_id: str,
+    source_url: str,
+) -> Optional[dict]:
+    """
+    Run the same post-download pipeline as ``source_thumbnail`` (quality, YOLO gate,
+    crop, postprocess, overlays) and write ``{submission_id}_yt.jpg`` under THUMBS.
+    """
+    cfg = settings.get("thumbnail", {})
+    target_w, target_h, tolerance = _effective_thumbnail_canvas(settings, cfg)
+    target_ratio = target_w / target_h
+
+    if im.mode != "RGB":
+        im = im.convert("RGB")
+
+    if not _passes_source_quality(im, cfg):
+        return None
+
+    arrow_cfg = cfg.get("arrow_overlay") or {}
+    poi_src: Optional[Tuple[float, float]] = None
+    mapped_poi: Optional[Tuple[float, float]] = None
+
+    if _thumbnail_needs_source_detection(cfg):
+        poi_src = detect_point_of_interest(im, arrow_cfg)
+        if poi_src is None:
+            if bool(cfg.get("require_detection", False)):
+                logger.info(
+                    "Thumbnail rejected: require_detection but no YOLO target "
+                    "(submission %s)",
+                    submission_id,
+                )
+                return None
+            logger.debug(
+                "Thumbnail detection gate: no target (submission %s)", submission_id
+            )
+        else:
+            logger.debug(
+                "Thumbnail detection gate passed (submission %s)", submission_id
+            )
+
+    subject_crop = bool(cfg.get("subject_aware_crop", False))
+    crop_point = poi_src if subject_crop else None
+    out, mapped_poi = _crop_and_resize(
+        im,
+        target_w,
+        target_h,
+        target_ratio,
+        tolerance,
+        crop_point=crop_point,
+        subject_aware_crop=subject_crop,
+    )
+    if not out:
+        logger.info(
+            "Thumbnail rejected: aspect ratio outside tolerance (submission %s)",
+            submission_id,
+        )
+        return None
+
+    out = _apply_postprocess(out, cfg)
+    out = _apply_thumbnail_decorations(out, settings, precomputed_poi=mapped_poi)
+
+    THUMBS.mkdir(exist_ok=True)
+    out_path = THUMBS / f"{submission_id}_yt.jpg"
+    out.save(out_path, "JPEG", quality=90, optimize=True, progressive=True)
+
+    logger.info("Thumbnail built for submission %s -> %s", submission_id, out_path)
+    return {
+        "submission_id": submission_id,
+        "path": str(out_path),
+        "original_path": None,
+        "url": source_url,
+    }
+
+
 def source_thumbnail(settings: dict) -> Optional[dict]:
     reddit = create_reddit_client()
     used_ids = get_used_thumbnail_ids(settings)
@@ -547,7 +813,6 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
     target_ratio = target_w / target_h
     banned_words = cfg.get("banned_words", [])
     max_title_words = int(cfg.get("max_title_words", 0))
-    max_description_words = int(cfg.get("max_description_words", 0))
 
     search_stages = cfg.get("search_stages", DEFAULT_SEARCH_STAGES)
 
@@ -583,7 +848,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                         posts_skipped += 1
                         continue
 
-                    # Check content filters (banned words, max words)
+                    selftext_reason = _selftext_skip_reason(cfg, submission)
                     if (
                         _contains_banned_words(submission.title or "", banned_words)
                         or (
@@ -592,14 +857,7 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                                 submission.title or "", max_title_words
                             )
                         )
-                        or (
-                            max_description_words > 0
-                            and hasattr(submission, "selftext")
-                            and submission.selftext
-                            and _exceeds_max_words(
-                                submission.selftext, max_description_words
-                            )
-                        )
+                        or selftext_reason is not None
                     ):
                         reason = []
                         if _contains_banned_words(submission.title or "", banned_words):
@@ -608,17 +866,8 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                             submission.title or "", max_title_words
                         ):
                             reason.append(f"title exceeds {max_title_words} words")
-                        if (
-                            max_description_words > 0
-                            and hasattr(submission, "selftext")
-                            and submission.selftext
-                            and _exceeds_max_words(
-                                submission.selftext, max_description_words
-                            )
-                        ):
-                            reason.append(
-                                f"description exceeds {max_description_words} words"
-                            )
+                        if selftext_reason:
+                            reason.append(selftext_reason)
 
                         logger.debug("Skip %s: %s", submission.id, ", ".join(reason))
                         posts_skipped += 1
@@ -635,30 +884,21 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
 
                     try:
                         with Image.open(original) as im:
-                            im = im.convert("RGB")
-                            out = _crop_and_resize(
-                                im, target_w, target_h, target_ratio, tolerance
+                            result = build_thumbnail_from_image(
+                                im,
+                                settings,
+                                submission_id=submission.id,
+                                source_url=url,
                             )
                     finally:
                         original.unlink(missing_ok=True)
 
-                    if not out:
+                    if not result:
+                        posts_skipped += 1
                         continue
 
-                    out = _apply_thumbnail_decorations(out, settings)
-
-                    out_path = THUMBS / f"{submission.id}_yt.jpg"
-                    out.save(
-                        out_path, "JPEG", quality=90, optimize=True, progressive=True
-                    )
-
                     logger.info("Thumbnail sourced from r/%s (%s)", sub, stage_name)
-                    return {
-                        "submission_id": submission.id,
-                        "path": str(out_path),
-                        "original_path": None,
-                        "url": url,
-                    }
+                    return result
 
             except Exception as e:
                 pass
@@ -698,15 +938,8 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                             submission.title or "", max_title_words
                         ):
                             continue
-                        if (
-                            max_description_words > 0
-                            and hasattr(submission, "selftext")
-                            and submission.selftext
-                        ):
-                            if _exceeds_max_words(
-                                submission.selftext, max_description_words
-                            ):
-                                continue
+                        if _selftext_skip_reason(cfg, submission):
+                            continue
 
                         url = _pick_image_url(submission)
                         if not url:
@@ -719,6 +952,8 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                         try:
                             with Image.open(original) as im:
                                 im = im.convert("RGB")
+                                if not _passes_source_quality(im, cfg):
+                                    continue
                                 if im.width / im.height < 1.0:
                                     portraits.append(im.copy())
                                     fallback_used_ids.add(submission.id)
@@ -744,10 +979,11 @@ def source_thumbnail(settings: dict) -> Optional[dict]:
                     "url": f"fallback_portrait_{portrait_id}",
                 }
                 session = new_session({"thumbnail": thumb_session})
-                save_session(session, {})
+                save_session(session, settings)
 
         composite = _create_composite_thumb(portraits, target_w, target_h, tolerance)
         if composite:
+            composite = _apply_postprocess(composite, cfg)
             composite = _apply_thumbnail_decorations(composite, settings)
             out_path = THUMBS / "composite_fallback.jpg"
             composite.save(
