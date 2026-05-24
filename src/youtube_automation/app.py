@@ -2,6 +2,7 @@ import argparse
 import logging
 
 from youtube_automation.config.loader import load_env, load_settings
+from youtube_automation.utils.paths import ensure_workspace_dirs
 from youtube_automation.pipeline import commentary_enabled, run_pipeline
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.sourcing import (
@@ -104,6 +105,7 @@ def main() -> None:
         or (args.mode == "thumbnail" and args.thumbnail_shorts_orientation)
     )
     settings = load_settings(args.channel, shorts=use_shorts_config)
+    ensure_workspace_dirs()
 
     if args.no_commentary or args.core_only:
         settings.setdefault("commentary", {})["enabled"] = False

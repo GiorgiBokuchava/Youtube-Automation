@@ -111,12 +111,20 @@ jobs:
             "${IMAGE}" \
             install -e . --no-deps -q
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             -e PYTHONPATH=/app/src \
             --entrypoint python \
             "${IMAGE}" \
             -c "import youtube_automation.pipeline as p; print('pipeline:', p.__file__)"
+
+      - name: Prepare writable workspace directories
+        run: |
+          mkdir -p downloads thumbnails out
+          # pip/sync or other root-owned docker steps may have created these on the mount.
+          sudo chown -R "$(id -u):$(id -g)" downloads thumbnails out 2>/dev/null || true
 
       # Same env surface as the app; HOME writable for caches when using --user.
       - name: Preflight — YouTube OAuth refresh token
