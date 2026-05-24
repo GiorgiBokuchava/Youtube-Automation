@@ -175,16 +175,7 @@ jobs:
               --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
               "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
           else
-            echo "REDDIT_COOKIES not set for this environment; skipping cookie preflight."
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              -e HOME=/tmp \
-              -v "${GITHUB_WORKSPACE}:/app" \
-              -w /app \
-              --entrypoint yt-dlp \
-              "${IMAGE}" \
-              --skip-download \
-              "https://www.reddit.com/r/Dashcam/comments/1tjyih5/"
+            echo "::warning::REDDIT_COOKIES is not set for environment '${CHANNEL}'. Skipping Reddit download preflight — some posts may require cookies and fail during sourcing. Add the REDDIT_COOKIES secret (base64 Netscape cookie file) to this environment if downloads fail."
           fi
 
       - name: Preflight — Instagram session file (if configured)
