@@ -131,7 +131,7 @@ def source_all_videos(settings: dict) -> List[dict]:
     final_target_seconds = int(final_target_minutes * 60)
 
     post_cfg = settings.get("post", {})
-    over_source_pct = int(post_cfg.get("over_source_pct", 25))
+    over_source_pct = int(post_cfg.get("over_source_pct", 0))
     effective_target = int(final_target_seconds * (1 + over_source_pct / 100))
 
     split_cfg = settings.get("source_split") or {}

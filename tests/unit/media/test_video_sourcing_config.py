@@ -8,7 +8,6 @@ def test_reddit_sourcing_falls_back_to_post_config():
             "max_duration": 10,
             "min_score": 350,
             "min_ratio": 0.8,
-            "over_source_pct": 25,
         }
     }
 
@@ -18,7 +17,7 @@ def test_reddit_sourcing_falls_back_to_post_config():
     assert cfg["max_duration"] == 10
     assert cfg["min_score"] == 350
     assert cfg["min_ratio"] == 0.8
-    assert cfg["over_source_pct"] == 25
+    assert cfg["over_source_pct"] == 0
 
 
 def test_reddit_sourcing_overrides_post_when_present():
@@ -28,7 +27,6 @@ def test_reddit_sourcing_overrides_post_when_present():
             "max_duration": 10,
             "min_score": 350,
             "min_ratio": 0.8,
-            "over_source_pct": 25,
         },
         "sourcing": {
             "reddit": {
@@ -45,4 +43,4 @@ def test_reddit_sourcing_overrides_post_when_present():
     assert cfg["max_duration"] == 10
     assert cfg["min_score"] == 500
     assert cfg["min_ratio"] == 0.9
-    assert cfg["over_source_pct"] == 25
+    assert cfg["over_source_pct"] == 0

@@ -30,7 +30,7 @@ def _get_reddit_source_config(settings: dict) -> dict:
         "min_score": post.get("min_score", 0),
         "min_ratio": post.get("min_ratio", 0.0),
         "duration_score_factor": int(post.get("duration_score_factor", 20)),
-        "over_source_pct": int(post.get("over_source_pct", 25)),
+        "over_source_pct": int(post.get("over_source_pct", 0)),
     }
     for key, value in reddit_ov.items():
         if key in merged:
@@ -221,7 +221,7 @@ def source_videos(
     min_ratio = post_cfg.get("min_ratio", 0.0)
     duration_score_factor = int(post_cfg.get("duration_score_factor", 20))
 
-    over_source_pct = int(post_cfg.get("over_source_pct", 25))
+    over_source_pct = int(post_cfg.get("over_source_pct", 0))
     effective_target = int(final_target_seconds * (1 + over_source_pct / 100))
     if duration_cap_seconds is not None:
         effective_target = min(effective_target, int(duration_cap_seconds))
