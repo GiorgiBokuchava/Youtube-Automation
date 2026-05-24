@@ -13,7 +13,10 @@ on:
         description: "Channel to run"
         required: true
         default: animals
-        type: string
+        type: choice
+        options:
+          - animals
+          - dashcam
       pipeline_kind:
         description: "Scheduled runs always use long-form; this applies to manual Run workflow only"
         required: true
