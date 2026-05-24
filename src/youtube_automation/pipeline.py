@@ -255,11 +255,19 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
     required_sec = min_required_source_seconds(settings)
     logger.info("Pipeline module: %s", Path(_self.__file__).resolve())
+    commentary_on = commentary_enabled(settings)
+    commentary_cfg = settings.get("commentary") or {}
     logger.info(
         "Duration gate: final_target_duration=%s min, require>=%ds (enforce=%s)",
         settings.get("final_target_duration"),
         required_sec,
         (settings.get("post") or {}).get("enforce_min_source_duration", True),
+    )
+    logger.info(
+        "Commentary: %s (yaml enabled=%s, every_nth=%s)",
+        "on" if commentary_on else "off",
+        commentary_cfg.get("enabled"),
+        commentary_cfg.get("every_nth"),
     )
 
     pipeline_errors: list[dict] = []
