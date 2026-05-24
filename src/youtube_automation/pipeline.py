@@ -12,7 +12,10 @@ from youtube_automation.media.composition import (
     render_clip,
     stitch_clips,
 )
-from youtube_automation.media.ffprobe_streams import probe_av_stream_durations
+from youtube_automation.media.ffprobe_streams import (
+    probe_audio_duration,
+    probe_av_stream_durations,
+)
 from youtube_automation.media.thumbnail import source_thumbnail
 from youtube_automation.sourcing import (
     instagram_sourcing_enabled,
@@ -68,11 +71,16 @@ def min_required_source_seconds(settings: dict) -> int:
 
 
 def probed_media_duration_seconds(path: Path) -> float:
-    """Best-effort duration in seconds from ffprobe (video stream, else audio)."""
+    """Best-effort duration in seconds from ffprobe (stream, then container format)."""
     video_dur, audio_dur = probe_av_stream_durations(path)
     for dur in (video_dur, audio_dur):
         if dur is not None and dur > 0:
             return float(dur)
+    # Many MP4s only expose duration on the container, not per-stream.
+    fmt_dur = probe_audio_duration(path)
+    if fmt_dur > 0:
+        return float(fmt_dur)
+    logger.warning("Could not probe media duration: %s", path)
     return 0.0
 
 
@@ -116,6 +124,17 @@ def assert_meets_duration_target(
     required = min_required_source_seconds(settings)
     if required <= 0:
         return
+    if actual_sec <= 0:
+        target_sec = target_duration_seconds(settings)
+        hint = (
+            f"Could not probe {phase} duration — aborting before upload.\n"
+            f"  Target: {settings.get('final_target_duration', 0)} min "
+            f"({target_sec}s), required at least {required}s.\n"
+            "  Check ffprobe on the runner and that output files exist under out/<channel>/."
+        )
+        if phase == "sourced":
+            raise InsufficientSourceDurationError(hint)
+        raise InsufficientOutputDurationError(hint)
     if actual_sec >= required:
         return
     target_sec = target_duration_seconds(settings)
@@ -231,6 +250,17 @@ def _record_render_failure(
 def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -> dict:
     channel = settings.get("channel", {}).get("name", "default")
     base_out = Path("out") / channel
+
+    import youtube_automation.pipeline as _self
+
+    required_sec = min_required_source_seconds(settings)
+    logger.info("Pipeline module: %s", Path(_self.__file__).resolve())
+    logger.info(
+        "Duration gate: final_target_duration=%s min, require>=%ds (enforce=%s)",
+        settings.get("final_target_duration"),
+        required_sec,
+        (settings.get("post") or {}).get("enforce_min_source_duration", True),
+    )
 
     pipeline_errors: list[dict] = []
     run_succeeded = False

@@ -52,3 +52,26 @@ def test_assert_rendered_passes_when_total_meets_target(mocker):
 
 def test_min_required_unchanged():
     assert min_required_source_seconds(_settings()) == 120
+
+
+def test_probed_media_duration_uses_format_fallback(mocker):
+    mocker.patch(
+        "youtube_automation.pipeline.probe_av_stream_durations",
+        return_value=(None, None),
+    )
+    mocker.patch(
+        "youtube_automation.pipeline.probe_audio_duration",
+        return_value=125.5,
+    )
+    from youtube_automation.pipeline import probed_media_duration_seconds
+
+    assert probed_media_duration_seconds(Path("x.mp4")) == 125.5
+
+
+def test_assert_raises_when_duration_unprobeable(mocker):
+    mocker.patch(
+        "youtube_automation.pipeline.probed_media_duration_seconds",
+        return_value=0.0,
+    )
+    with pytest.raises(InsufficientOutputDurationError, match="Could not probe"):
+        assert_final_output_meets_target(_settings(), Path("out/final.mp4"))

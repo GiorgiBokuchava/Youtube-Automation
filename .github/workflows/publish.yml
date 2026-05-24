@@ -94,12 +94,37 @@ jobs:
             exit 1
           fi
 
+      - name: Verify checkout includes duration gate
+        run: |
+          grep -q assert_final_output_meets_target src/youtube_automation/pipeline.py
+          grep -q build_thumbnail_from_image src/youtube_automation/media/thumbnail.py
+          echo "Checkout commit: $(git rev-parse HEAD)"
+
+      # Bind-mount replaces /app; refresh editable install + PYTHONPATH so Python
+      # always imports this commit's src/, not a stale copy from image build time.
+      - name: Sync Python package from checkout
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint pip \
+            "${IMAGE}" \
+            install -e . --no-deps -q
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            -e PYTHONPATH=/app/src \
+            --entrypoint python \
+            "${IMAGE}" \
+            -c "import youtube_automation.pipeline as p; print('pipeline:', p.__file__)"
+
       # Same env surface as the app; HOME writable for caches when using --user.
       - name: Preflight — YouTube OAuth refresh token
         run: |
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp \
+            -e PYTHONPATH=/app/src \
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             --entrypoint python \
@@ -141,6 +166,7 @@ jobs:
             docker run --rm \
               --user "$(id -u):$(id -g)" \
               -e HOME=/tmp \
+              -e PYTHONPATH=/app/src \
               -v "${GITHUB_WORKSPACE}:/app" \
               -w /app \
               --entrypoint python \
@@ -157,6 +183,7 @@ jobs:
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp \
+            -e PYTHONPATH=/app/src \
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             -e CHANNEL \
@@ -180,6 +207,7 @@ jobs:
             --cleanup
 
       - name: Commit updated state
+        if: success()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
