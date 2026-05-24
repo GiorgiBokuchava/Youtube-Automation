@@ -64,7 +64,8 @@ jobs:
       NVIDIA_API_KEYS: ${{ secrets.NVIDIA_API_KEYS }}
       TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
 
-      # Cookies (base64 stored inside REDDIT_COOKIES secret)
+      # Optional: base64 Netscape cookies in REDDIT_COOKIES (per-environment secret).
+      # When unset, yt-dlp runs without cookies (same as local runs without REDDIT_COOKIES_FILE).
       REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
       REDDIT_COOKIES_FILE: reddit_cookies.txt
 
@@ -147,11 +148,12 @@ jobs:
             -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
 
       - name: Write Reddit cookies (decode secret)
+        if: env.REDDIT_COOKIES != ''
         run: |
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
           test -s "$REDDIT_COOKIES_FILE"
 
-      - name: Preflight — yt-dlp and cookies
+      - name: Preflight — yt-dlp
         run: |
           docker run --rm \
             --user "$(id -u):$(id -g)" \
@@ -161,15 +163,29 @@ jobs:
             --entrypoint yt-dlp \
             "${IMAGE}" \
             --version
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -e HOME=/tmp \
-            -v "${GITHUB_WORKSPACE}:/app" \
-            -w /app \
-            --entrypoint yt-dlp \
-            "${IMAGE}" \
-            --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
-            "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
+          if [ -n "${REDDIT_COOKIES:-}" ] && [ -s "${REDDIT_COOKIES_FILE}" ]; then
+            echo "Cookie preflight: using ${REDDIT_COOKIES_FILE}"
+            docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -e HOME=/tmp \
+              -v "${GITHUB_WORKSPACE}:/app" \
+              -w /app \
+              --entrypoint yt-dlp \
+              "${IMAGE}" \
+              --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
+              "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
+          else
+            echo "REDDIT_COOKIES not set for this environment; skipping cookie preflight."
+            docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -e HOME=/tmp \
+              -v "${GITHUB_WORKSPACE}:/app" \
+              -w /app \
+              --entrypoint yt-dlp \
+              "${IMAGE}" \
+              --skip-download \
+              "https://www.reddit.com/r/Dashcam/comments/1tjyih5/"
+          fi
 
       - name: Preflight — Instagram session file (if configured)
         run: |
