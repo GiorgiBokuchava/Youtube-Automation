@@ -58,6 +58,10 @@ def _build_author_filter(author: str | None, target_height: int) -> str:
     )
 
 
+_FFPROBE_TIMEOUT_SEC = 30
+_FFMPEG_NORMALIZE_TIMEOUT_SEC = 600  # 10 min cap per clip
+
+
 def _probe_dimensions(
     input_path: Path, ffprobe: str
 ) -> tuple[int, int] | None:
@@ -66,7 +70,11 @@ def _probe_dimensions(
         "-show_entries", "stream=width,height",
         "-of", "csv=s=x:p=0", str(input_path),
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=_FFPROBE_TIMEOUT_SEC)
+    except subprocess.TimeoutExpired:
+        logger.warning("ffprobe timed out probing %s", input_path.name)
+        return None
     if result.returncode != 0:
         return None
     try:
@@ -122,7 +130,18 @@ def normalize_video_aspect_ratio(
     else:
         cmd = _pad_cmd(ffmpeg, input_path, output_path, tw, th, author_filt)
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.debug("Normalizing %s (timeout=%ds)", input_path.name, _FFMPEG_NORMALIZE_TIMEOUT_SEC)
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=_FFMPEG_NORMALIZE_TIMEOUT_SEC
+        )
+    except subprocess.TimeoutExpired:
+        logger.warning(
+            "Normalization timed out after %ds for %s — using original",
+            _FFMPEG_NORMALIZE_TIMEOUT_SEC,
+            input_path.name,
+        )
+        return input_path
     if result.returncode != 0:
         # Skip the FFmpeg version header lines; show the actual error lines.
         error_lines = [

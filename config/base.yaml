@@ -1,5 +1,11 @@
 used_horizon_days: 90
 
+performance:
+  # Number of clips rendered concurrently in the long-form pipeline.
+  # Override at runtime with the RENDER_WORKERS environment variable.
+  # Safe default is 1 (sequential). Set to 2 in CI for a modest speedup.
+  render_workers: 1
+
 final_target_duration: 10
 
 post:

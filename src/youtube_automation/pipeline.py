@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -247,6 +249,65 @@ def _record_render_failure(
     )
 
 
+def _resolve_render_workers(settings: dict) -> int:
+    """Resolve render worker count: RENDER_WORKERS env > settings.performance.render_workers > 1."""
+    env_val = os.environ.get("RENDER_WORKERS", "").strip()
+    if env_val:
+        try:
+            n = int(env_val)
+            if n >= 1:
+                return n
+        except ValueError:
+            pass
+    cfg_val = (settings.get("performance") or {}).get("render_workers")
+    if cfg_val is not None:
+        try:
+            n = int(cfg_val)
+            if n >= 1:
+                return n
+        except (ValueError, TypeError):
+            pass
+    return 1
+
+
+def _render_one_clip(idx: int, clip: dict, settings: dict, rendered_dir: Path) -> dict:
+    """Render a single clip and return a result dict indicating success or failure.
+
+    The ``idx`` key in the returned dict preserves the original clip position so
+    callers can reconstruct deterministic output order regardless of completion order.
+    """
+    in_path = Path(clip["local_path"])
+    out_path = rendered_dir / f"{clip['id']}_rendered.mp4"
+    voiceover = clip.get("voiceover_path")
+    voiceover_path = Path(voiceover) if voiceover else None
+    orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
+    try:
+        result = render_clip(
+            input_video=in_path,
+            output_video=out_path,
+            commentary_audio=voiceover_path,
+            commentary_offset_sec=0.45,
+            original_volume_db=orig_vol,
+            commentary_gain=settings.get("commentary", {}).get("commentary_gain", 1.0),
+            clip_id=_clip_ref(clip),
+        )
+        return {
+            "ok": True,
+            "idx": idx,
+            "output_path": result.output_path,
+            "path_kind": result.path_kind,
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "idx": idx,
+            "in_path": in_path,
+            "out_path": out_path,
+            "voiceover_path": voiceover_path,
+            "exc": e,
+        }
+
+
 def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -> dict:
     channel = settings.get("channel", {}).get("name", "default")
     base_out = Path("out") / channel
@@ -436,42 +497,37 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     "music_likely": False,
                 }
 
+        render_workers = _resolve_render_workers(settings)
+        logger.info("Render workers: %d", render_workers)
+
+        render_results: list[dict | None] = [None] * len(clips)
+        with ThreadPoolExecutor(max_workers=render_workers) as executor:
+            futures = {
+                executor.submit(_render_one_clip, idx, clip, settings, RENDERED_DIR): idx
+                for idx, clip in enumerate(clips)
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                render_results[result["idx"]] = result
+
         rendered_paths: list[Path] = []
-        for clip in clips:
-            try:
-                in_path = Path(clip["local_path"])
-                out_path = RENDERED_DIR / f"{clip['id']}_rendered.mp4"
-
-                voiceover = clip.get("voiceover_path")
-                voiceover_path = Path(voiceover) if voiceover else None
-
-                orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
-
-                result = render_clip(
-                    input_video=in_path,
-                    output_video=out_path,
-                    commentary_audio=voiceover_path,
-                    commentary_offset_sec=0.45,
-                    original_volume_db=orig_vol,
-                    commentary_gain=settings.get("commentary", {}).get(
-                        "commentary_gain", 1.0
-                    ),
-                    clip_id=_clip_ref(clip),
-                )
-
-                clip["rendered_path"] = str(result.output_path)
-                clip["render_path_kind"] = result.path_kind
-                rendered_paths.append(result.output_path)
-            except Exception as e:
+        for result in render_results:
+            if result is None:
+                continue
+            clip = clips[result["idx"]]
+            if result["ok"]:
+                clip["rendered_path"] = str(result["output_path"])
+                clip["render_path_kind"] = result["path_kind"]
+                rendered_paths.append(result["output_path"])
+            else:
                 _record_render_failure(
                     pipeline_errors,
                     clip,
-                    in_path,
-                    out_path,
-                    voiceover_path,
-                    e,
+                    result["in_path"],
+                    result["out_path"],
+                    result["voiceover_path"],
+                    result["exc"],
                 )
-                continue
 
         if not rendered_paths:
             raise ValueError("No successfully rendered clips available for stitching")
