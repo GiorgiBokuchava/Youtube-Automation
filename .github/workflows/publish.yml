@@ -68,6 +68,8 @@ jobs:
       # When unset, yt-dlp runs without cookies (same as local runs without REDDIT_COOKIES_FILE).
       REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
       REDDIT_COOKIES_FILE: reddit_cookies.txt
+      # Optional repo variable REDDIT_PREFLIGHT_URL overrides this default probe URL.
+      REDDIT_PREFLIGHT_URL: ${{ vars.REDDIT_PREFLIGHT_URL || 'https://www.reddit.com/r/StartledCats/comments/17cn6g6/' }}
 
       # Instaloader pickle as single-line standard base64 (no data: URI). Runner has no Firefox profile —
       # encode your local ``session-<user>`` file (same bytes Instaloader saved). Omit if Instagram sourcing is off.
@@ -152,10 +154,45 @@ jobs:
         run: |
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
           test -s "$REDDIT_COOKIES_FILE"
-          bash .github/scripts/inspect_reddit_cookies.sh "$REDDIT_COOKIES_FILE"
 
-      - name: Preflight — Reddit (yt-dlp)
-        run: bash .github/scripts/preflight_reddit.sh
+      - name: Debug Reddit cookies (safe)
+        if: env.REDDIT_COOKIES != ''
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -e PYTHONPATH=/app/src \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint python \
+            -e REDDIT_COOKIES_FILE \
+            "${IMAGE}" \
+            /app/.github/scripts/debug_reddit_cookies.py
+
+      - name: Preflight — yt-dlp
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint yt-dlp \
+            "${IMAGE}" \
+            --version
+          if [ -n "${REDDIT_COOKIES:-}" ] && [ -s "${REDDIT_COOKIES_FILE}" ]; then
+            echo "Cookie preflight: ${REDDIT_COOKIES_FILE} → ${REDDIT_PREFLIGHT_URL}"
+            docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -e HOME=/tmp \
+              -v "${GITHUB_WORKSPACE}:/app" \
+              -w /app \
+              --entrypoint yt-dlp \
+              "${IMAGE}" \
+              --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
+              "${REDDIT_PREFLIGHT_URL}"
+          else
+            echo "::warning::REDDIT_COOKIES is not set for environment '${CHANNEL}'. Skipping Reddit download preflight — some posts may require cookies and fail during sourcing. Add the REDDIT_COOKIES secret (base64 Netscape cookie file) to this environment if downloads fail."
+          fi
 
       - name: Preflight — Instagram session file (if configured)
         run: |

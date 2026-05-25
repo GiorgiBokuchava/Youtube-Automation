@@ -19,6 +19,28 @@ from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 
 logger = logging.getLogger(__name__)
 
+REDDIT_AUTH_ERROR_MARKERS = (
+    "Account authentication is required",
+    "Use --cookies",
+)
+REDDIT_AUTH_FAILURE_THRESHOLD = 3
+
+
+def is_reddit_auth_download_error(exc: BaseException) -> bool:
+    """True when yt-dlp indicates Reddit login/cookies are required."""
+    message = str(exc)
+    return any(marker in message for marker in REDDIT_AUTH_ERROR_MARKERS)
+
+
+def _reddit_auth_abort_message(failure_count: int) -> str:
+    return (
+        f"Reddit video downloads failed {failure_count} times with authentication errors. "
+        "yt-dlp reported that account login or cookies are required. "
+        "Check REDDIT_COOKIES_FILE locally or the REDDIT_COOKIES secret in GitHub Actions "
+        "(base64-encoded Netscape cookie file). Expired or wrong-account cookies cause this. "
+        "Aborting sourcing early instead of retrying hundreds of posts."
+    )
+
 
 def _get_reddit_source_config(settings: dict) -> dict:
     """Merge `post` defaults with optional `sourcing.reddit` overrides."""
@@ -284,6 +306,7 @@ def source_videos(
         "low_score": 0,
         "download_failed": 0,
     }
+    reddit_auth_failures = 0
 
     for sub in subs:
         if total_duration >= effective_target:
@@ -329,7 +352,21 @@ def source_videos(
                     path = _download_reddit_video(submission, ffmpeg_location, timeout)
                 except Exception as exc:
                     skipped_reasons["download_failed"] += 1
-                    logger.debug("Download failed for %s: %s", sid, exc)
+                    if is_reddit_auth_download_error(exc):
+                        reddit_auth_failures += 1
+                        logger.warning(
+                            "Reddit auth download failure %d/%d for %s: %s",
+                            reddit_auth_failures,
+                            REDDIT_AUTH_FAILURE_THRESHOLD,
+                            sid,
+                            exc,
+                        )
+                        if reddit_auth_failures >= REDDIT_AUTH_FAILURE_THRESHOLD:
+                            raise RuntimeError(
+                                _reddit_auth_abort_message(reddit_auth_failures)
+                            ) from exc
+                    else:
+                        logger.debug("Download failed for %s: %s", sid, exc)
                     continue
 
                 total_duration += duration
