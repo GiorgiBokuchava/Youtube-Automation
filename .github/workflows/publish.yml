@@ -152,31 +152,10 @@ jobs:
         run: |
           echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
           test -s "$REDDIT_COOKIES_FILE"
+          bash .github/scripts/inspect_reddit_cookies.sh "$REDDIT_COOKIES_FILE"
 
-      - name: Preflight — yt-dlp
-        run: |
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -e HOME=/tmp \
-            -v "${GITHUB_WORKSPACE}:/app" \
-            -w /app \
-            --entrypoint yt-dlp \
-            "${IMAGE}" \
-            --version
-          if [ -n "${REDDIT_COOKIES:-}" ] && [ -s "${REDDIT_COOKIES_FILE}" ]; then
-            echo "Cookie preflight: using ${REDDIT_COOKIES_FILE}"
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              -e HOME=/tmp \
-              -v "${GITHUB_WORKSPACE}:/app" \
-              -w /app \
-              --entrypoint yt-dlp \
-              "${IMAGE}" \
-              --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
-              "https://www.reddit.com/r/StartledCats/comments/17cn6g6/"
-          else
-            echo "::warning::REDDIT_COOKIES is not set for environment '${CHANNEL}'. Skipping Reddit download preflight — some posts may require cookies and fail during sourcing. Add the REDDIT_COOKIES secret (base64 Netscape cookie file) to this environment if downloads fail."
-          fi
+      - name: Preflight — Reddit (yt-dlp)
+        run: bash .github/scripts/preflight_reddit.sh
 
       - name: Preflight — Instagram session file (if configured)
         run: |

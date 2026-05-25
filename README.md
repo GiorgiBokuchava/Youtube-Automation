@@ -52,7 +52,8 @@ Loading logic is in `youtube_automation.config.loader.load_settings`. Used post 
 | Variable | Purpose |
 |----------|---------|
 | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | PRAW |
-| `REDDIT_COOKIES_FILE` | Optional Netscape cookies path for yt-dlp |
+| `REDDIT_COOKIES_FILE` | Optional Netscape cookies path for yt-dlp (local) |
+| `REDDIT_COOKIES` | Optional GitHub Environment secret: base64 Netscape cookie file → `reddit_cookies.txt` in CI |
 | `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | YouTube OAuth for uploads (values are trimmed) |
 | `YT_PRIVACY` | Optional: `public`, `private`, or `unlisted`; overrides YAML `youtube.privacy_status` (e.g. in CI) |
 | `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | Text/TTS providers |
@@ -157,6 +158,8 @@ docker compose run --rm test
 **FFmpeg** — Log lines like `render_clip clip=… path_kind=…` show which render path ran. Errors distinguish preflight (bad input), ffmpeg (non-zero exit), and output validation (empty or no video stream after encode).
 
 **Instagram `checkpoint_required` / 400 on GraphQL** — Meta wants a security check before API use. Complete it in the Instagram app or on the web while logged in as the same account, then export a **fresh** Instaloader session from a normal network (not a datacenter), base64 it into `INSTAGRAM_SESSION_B64`, and re-run. For emergencies only, set `INSTAGRAM_SKIP_TEST_LOGIN=1` to skip the session probe (sourcing may still fail). Optional: `INSTAGRAM_PREFER_DISK_SESSION=1` prefers an existing validated `sessions/instagram.session` over rewriting from the secret.
+
+**Reddit cookies work locally but fail in GitHub Actions** — PRAW (`REDDIT_CLIENT_*`) and yt-dlp cookies (`REDDIT_COOKIES` / `REDDIT_COOKIES_FILE`) are separate. The publish workflow optionally decodes `REDDIT_COOKIES` into `reddit_cookies.txt` and runs a **non-blocking** download preflight against a channel-specific URL (`REDDIT_PREFLIGHT_URL`: dashcam uses a known Roadcam clip, animals uses StartledCats). A preflight warning does not stop the pipeline; individual posts can still fail or succeed during sourcing. Cookies exported on your home PC often work with yt-dlp locally but fail on Actions because Reddit may distrust the **datacenter IP**, treat the session as a new location, or require re-login. Refresh the Netscape cookie file from a normal browser session, re-encode it into the environment `REDDIT_COOKIES` secret, and re-run. If only some subreddits fail, you can omit cookies and rely on public posts (dashcam often works without them). The inspect step in CI prints cookie **names** only, never values.
 
 ## Repository layout
 
