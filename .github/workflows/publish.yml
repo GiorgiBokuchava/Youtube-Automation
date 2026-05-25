@@ -78,7 +78,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          # Full history so the commit step can rebase onto latest main before push.
+          fetch-depth: 0
 
       # ghcr.io/${{ github.repository }}:latest — registry paths must be lowercase.
       - name: Configure container image
@@ -247,5 +248,22 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add config/used_*.json || true
-          git commit -m "Update used content after pipeline run" || echo "Nothing to commit"
-          git push
+          if git diff --staged --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Update used content after pipeline run (${CHANNEL})"
+
+          # Another workflow (or push to main) may have landed while this job ran.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              echo "Pushed used-content update (attempt ${attempt})"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}/3), retrying after fetch/rebase..."
+            sleep 5
+          done
+          echo "::error::Failed to push used-content update after 3 attempts"
+          exit 1
