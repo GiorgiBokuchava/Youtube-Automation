@@ -37,6 +37,14 @@ Optional Instaloader cookie loading (`browser_cookie3`) for Instagram:
 python -m pip install -e ".[instagram]"
 ```
 
+Optional CNN-based music/speech detection (`inaSpeechSegmenter`):
+
+```bash
+python -m pip install -e ".[music-detection]"
+```
+
+> **Note:** `inaSpeechSegmenter` pulls in TensorFlow (~500 MB).  Without it the pipeline uses the legacy FFmpeg volume/silence heuristic automatically (controlled by `audio.music_detection.fallback_on_missing` in `base.yaml`).
+
 ## Configuration
 
 | Location | Role |
@@ -46,6 +54,27 @@ python -m pip install -e ".[instagram]"
 | `config/shorts/<name>.yaml` | Shorts-specific overrides when using shorts mode |
 
 Loading logic is in `youtube_automation.config.loader.load_settings`. Used post IDs are tracked in `config/used_<channel>.json` (pruned using `used_horizon_days`). Add a channel by creating `config/channels/<name>.yaml` and passing `--channel <name>`.
+
+## Music detection
+
+The pipeline analyses each source clip's audio before rendering.  When a clip is classified as *music_likely* its original audio is muted and the safe background music bed is gated in for exactly that segment (controlled by `music.replace_detected_music`).
+
+Two detection backends are available, configured under `audio.music_detection` in any YAML:
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `true` | Set to `false` to disable detection entirely (no muting). |
+| `engine` | `ina` | `ina` uses inaSpeechSegmenter; `ffmpeg` uses the legacy heuristic. |
+| `vad_engine` | `smn` | `smn` = speech/music/noise; `sm` = speech/music only (faster). |
+| `music_ratio_threshold` | `0.3` | Minimum fraction of the clip that must be labelled *music* to flag it. |
+| `fallback_on_missing` | `true` | Use FFmpeg heuristic when inaSpeechSegmenter is not installed. |
+| `fallback_on_error` | `false` | Use FFmpeg heuristic when the ina detector raises.  Default false: safer to keep original audio on unexpected errors. |
+
+**inaSpeechSegmenter** (`engine: ina`) classifies audio frames as `music`, `speech`, `noise`, or `noEnergy`.  Only frames labelled `music` count toward the ratio — loud speech, barking, engine noise and crowd noise are not muted.  The CNN models are loaded once per run and cached across all clips.
+
+**FFmpeg heuristic** (`engine: ffmpeg`) uses `volumedetect` and `silencedetect` to approximate music likelihood.  It is fast and requires no extra installation but produces more false positives on loud non-music content.
+
+Both engines always record the FFmpeg volume/silence metrics in `AudioAnalysis`; pass `--debug` to see per-clip results including `music_ratio`, `detector_used`, and muting decisions.
 
 ## Environment
 

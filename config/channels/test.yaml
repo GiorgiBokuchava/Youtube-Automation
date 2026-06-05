@@ -14,6 +14,15 @@ post:
   min_score: 100
   min_ratio: 0.7
 
+audio:
+  music_detection:
+    enabled: true
+    engine: ina
+
+music:
+  enabled: true
+  replace_detected_music: true
+
 commentary:
   theme: funny
   every_nth: 2

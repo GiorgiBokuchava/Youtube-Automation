@@ -90,6 +90,9 @@ instagram:
 
 audio:
   original_clip_volume_db: -18
+  music_detection:
+    enabled: true
+    engine: ina
 
 commentary:
   enabled: false
@@ -193,7 +196,8 @@ youtube:
 
 music:
   tags: ["fun", "upbeat", "cute"]
-  enabled: false
+  enabled: true
+  replace_detected_music: true
   music_volume_db: -14
   original_duck_db: -14
   fade_in_sec: 0.8

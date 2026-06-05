@@ -268,15 +268,25 @@ def run_shorts_pipeline(
 
         url = None
         if not dry_run:
-            url = upload_video(
+            thumb_upload_path = Path(thumb["path"]) if thumb and thumb.get("path") else None
+            upload_result = upload_video(
                 video_path=Path(final_path),
                 title=meta["title"],
                 description=meta["description"],
                 tags=meta["tags"],
                 category_id=meta["category_id"],
                 privacy_status=meta["privacy_status"],
-                thumbnail_path=Path(thumb["path"]) if thumb else None,
+                thumbnail_path=thumb_upload_path,
             )
+            url = upload_result.url
+            if thumb_upload_path and not upload_result.thumbnail_set:
+                _record_error(
+                    pipeline_errors,
+                    step="thumbnail_upload",
+                    exc=RuntimeError(
+                        "Custom thumbnail was not set on YouTube (see logs)."
+                    ),
+                )
 
         session = new_session(
             {

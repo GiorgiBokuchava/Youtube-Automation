@@ -281,6 +281,12 @@ def _render_one_clip(idx: int, clip: dict, settings: dict, rendered_dir: Path) -
     voiceover = clip.get("voiceover_path")
     voiceover_path = Path(voiceover) if voiceover else None
     orig_vol = settings.get("audio", {}).get("original_clip_volume_db", 0.0)
+    music_cfg = settings.get("music", {})
+    replace_detected = music_cfg.get("replace_detected_music", True)
+    music_enabled = music_cfg.get("enabled", False)
+    # Only mute when both the feature flag and the music bed are on — muting without
+    # a replacement bed would leave the clip silent.
+    mute_source = replace_detected and music_enabled and clip.get("audio_analysis", {}).get("music_likely", False)
     try:
         result = render_clip(
             input_video=in_path,
@@ -290,6 +296,7 @@ def _render_one_clip(idx: int, clip: dict, settings: dict, rendered_dir: Path) -
             original_volume_db=orig_vol,
             commentary_gain=settings.get("commentary", {}).get("commentary_gain", 1.0),
             clip_id=_clip_ref(clip),
+            mute_source_audio=mute_source,
         )
         return {
             "ok": True,
@@ -306,6 +313,85 @@ def _render_one_clip(idx: int, clip: dict, settings: dict, rendered_dir: Path) -
             "voiceover_path": voiceover_path,
             "exc": e,
         }
+
+
+def _log_audio_replacement_summary(
+    clips: list[dict],
+    music_audible_segments: list[tuple[float, float]] | None,
+    replace_detected_music: bool,
+) -> None:
+    """Emit a structured DEBUG summary of per-clip audio analysis and any replacements made.
+
+    *music_audible_segments* is None when the replacement feature was inactive
+    (music disabled or replace_detected_music=False); it is a (possibly empty)
+    list when the feature ran — each entry maps to a music_likely clip whose
+    source audio was muted and will be replaced by the gated music bed.
+    """
+    total = len(clips)
+    n_music = sum(1 for c in clips if c.get("audio_analysis", {}).get("music_likely", False))
+    feature_active = music_audible_segments is not None  # segments list was computed
+
+    logger.debug("=" * 60)
+    logger.debug("AUDIO REPLACEMENT SUMMARY")
+    logger.debug(
+        "  replace_detected_music: %-5s | music bed active: %-5s | "
+        "total clips: %d | music_likely: %d | safe: %d",
+        replace_detected_music,
+        feature_active,
+        total,
+        n_music,
+        total - n_music,
+    )
+    logger.debug("-" * 60)
+
+    seg_iter = iter(music_audible_segments or [])
+
+    for i, clip in enumerate(clips):
+        aa = clip.get("audio_analysis") or {}
+        cid = clip.get("id", f"clip_{i}")
+        music_likely = aa.get("music_likely", False)
+        mean_db = aa.get("mean_volume_db")
+        silence = aa.get("silence_ratio")
+        music_ratio = aa.get("music_ratio")
+        detector = aa.get("detector_used", "?")
+
+        if music_likely and feature_active:
+            seg = next(seg_iter, None)
+            seg_txt = f"{seg[0]:.1f}s–{seg[1]:.1f}s" if seg else "?"
+            action = f"SOURCE MUTED → safe music bed [{seg_txt}]"
+        elif music_likely and not replace_detected_music:
+            action = "music_likely — kept (replace_detected_music=False)"
+        elif music_likely:
+            action = "music_likely — kept (music.enabled=False)"
+        else:
+            action = "original audio kept"
+
+        logger.debug(
+            "  [%2d] %-35s  mean=%-8s  silence=%-5s  ratio=%-5s  det=%-16s  ml=%-5s  %s",
+            i,
+            str(cid)[:35],
+            f"{mean_db:.1f}dB" if mean_db is not None else "n/a",
+            f"{silence:.2f}" if silence is not None else "n/a",
+            f"{music_ratio:.2f}" if music_ratio is not None else "n/a",
+            detector,
+            str(music_likely),
+            action,
+        )
+
+    logger.debug("-" * 60)
+    if feature_active and music_audible_segments:
+        logger.debug(
+            "  Gated music bed windows (%d): %s",
+            len(music_audible_segments),
+            ", ".join(f"{s:.1f}s–{e:.1f}s" for s, e in music_audible_segments),
+        )
+    elif feature_active:
+        logger.debug("  No music_likely clips — music bed skipped (passthrough).")
+    elif not replace_detected_music:
+        logger.debug("  replace_detected_music=False — uniform bed applied (or no music).")
+    else:
+        logger.debug("  music.enabled=False — no bed applied, original audio preserved.")
+    logger.debug("=" * 60)
 
 
 def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -> dict:
@@ -477,7 +563,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
         for clip in clips:
             try:
-                analysis = analyze_clip_audio(Path(clip["local_path"]))
+                analysis = analyze_clip_audio(Path(clip["local_path"]), settings=settings)
                 clip["audio_analysis"] = {
                     "has_audio": analysis.has_audio,
                     "mean_volume_db": analysis.mean_volume_db,
@@ -485,6 +571,13 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     "silence_ratio": analysis.silence_ratio,
                     "has_sustained_audio": analysis.has_sustained_audio,
                     "music_likely": analysis.music_likely,
+                    "music_ratio": analysis.music_ratio,
+                    "music_segments": (
+                        [list(s) for s in analysis.music_segments]
+                        if analysis.music_segments is not None
+                        else None
+                    ),
+                    "detector_used": analysis.detector_used,
                 }
             except Exception as e:
                 _record_error(pipeline_errors, step="audio_analysis", exc=e, clip=clip)
@@ -495,6 +588,9 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
                     "silence_ratio": None,
                     "has_sustained_audio": False,
                     "music_likely": False,
+                    "music_ratio": None,
+                    "music_segments": None,
+                    "detector_used": "none",
                 }
 
         render_workers = _resolve_render_workers(settings)
@@ -541,6 +637,33 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             min_required_source_seconds(settings),
         )
 
+        # Compute the time windows inside the stitched video that correspond to
+        # music_likely clips (whose source audio was muted during render).  The
+        # music bed will be made audible only within these windows so that the
+        # safe replacement track plays exactly where the original music was.
+        # When replace_detected_music is false, pass None so add_background_music
+        # falls back to the original uniform-bed behaviour.
+        music_cfg = settings.get("music", {})
+        replace_detected_music = music_cfg.get("replace_detected_music", True)
+        music_audible_segments: list[tuple[float, float]] | None = None
+        if replace_detected_music and music_cfg.get("enabled", False):
+            segments: list[tuple[float, float]] = []
+            cursor = 0.0
+            for result in render_results:
+                if result is None or not result["ok"]:
+                    continue
+                clip = clips[result["idx"]]
+                clip_dur = probed_media_duration_seconds(result["output_path"])
+                if clip.get("audio_analysis", {}).get("music_likely", False):
+                    segments.append((cursor, cursor + clip_dur))
+                cursor += clip_dur
+            music_audible_segments = segments
+            logger.info(
+                "Music replacement: %d / %d rendered clips flagged music_likely",
+                len(segments),
+                len(rendered_paths),
+            )
+
         stitched = stitch_clips(
             clip_paths=rendered_paths,
             output_path=OUTPUT_DIR / "final_raw.mp4",
@@ -550,6 +673,7 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             video_path=stitched,
             output_path=OUTPUT_DIR / "final.mp4",
             settings=settings,
+            music_audible_segments=music_audible_segments,
         )
 
         assert_final_output_meets_target(settings, Path(final_with_music))
@@ -559,6 +683,8 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             final_sec,
             target_duration_seconds(settings),
         )
+
+        _log_audio_replacement_summary(clips, music_audible_segments, replace_detected_music)
 
         meta = build_metadata(settings, clips)
 
@@ -583,15 +709,34 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
 
         url = None
         if not dry_run:
-            url = upload_video(
+            thumb_upload_path = None
+            if thumb and thumb.get("path"):
+                thumb_upload_path = Path(thumb["path"])
+            upload_result = upload_video(
                 video_path=Path(final_with_music),
                 title=meta["title"],
                 description=meta["description"],
                 tags=meta["tags"],
                 category_id=meta["category_id"],
                 privacy_status=meta["privacy_status"],
-                thumbnail_path=Path(thumb["path"]) if thumb else None,
+                thumbnail_path=thumb_upload_path,
             )
+            url = upload_result.url
+            if thumb_upload_path and not upload_result.thumbnail_set:
+                _record_error(
+                    pipeline_errors,
+                    step="thumbnail_upload",
+                    exc=RuntimeError(
+                        "Custom thumbnail was not set on YouTube (see logs). "
+                        "Common causes: video still processing (retries exhausted), "
+                        "channel not verified for custom thumbnails, or image rejected."
+                    ),
+                    thumbnail_path=str(thumb_upload_path.resolve()),
+                )
+            elif not thumb:
+                logger.warning(
+                    "No thumbnail was sourced for this run; video uploaded without custom thumbnail"
+                )
 
         session = new_session(
             {

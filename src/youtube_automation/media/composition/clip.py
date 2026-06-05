@@ -158,15 +158,28 @@ def render_clip(
     original_volume_db: float = 0.0,
     commentary_gain: float = 1.0,
     clip_id: Optional[str] = None,
+    mute_source_audio: bool = False,
 ) -> RenderClipResult:
     """
     Render a single clip with optional commentary. Handles four combinations of
     commentary presence and source audio presence explicitly (no [0:a] unless present).
+
+    When ``mute_source_audio`` is True the source audio track is discarded and
+    replaced with silence, regardless of whether the clip has audio.  Use this
+    for clips where music detection flagged the original audio as unsafe so the
+    pipeline can substitute a licensed music bed at the stitching stage.
     """
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
     src_info = _preflight_input_video(input_video)
     has_source_audio = src_info.has_audio
+
+    if mute_source_audio and has_source_audio:
+        logger.info(
+            "render_clip clip=%s: discarding source audio (music_likely=True)",
+            clip_id or input_video.name,
+        )
+        has_source_audio = False
 
     use_commentary = bool(commentary_audio and commentary_audio.exists())
     if use_commentary:

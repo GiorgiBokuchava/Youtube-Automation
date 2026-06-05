@@ -38,6 +38,13 @@ dev = [
 instagram = [
     "browser_cookie3>=0.19",
 ]
+music-detection = [
+    # CNN-based audio segmenter: classifies audio as music/speech/noise.
+    # Requires tensorflow; adds ~500 MB to the install.  When absent, the
+    # pipeline falls back to the legacy FFmpeg volume/silence heuristic
+    # (controlled by audio.music_detection.fallback_on_missing in YAML).
+    "inaSpeechSegmenter>=0.7",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

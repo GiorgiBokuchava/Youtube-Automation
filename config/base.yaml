@@ -86,9 +86,38 @@ thumbnail:
 audio:
   original_clip_volume_db: -14
 
+  music_detection:
+    # Set engine: ffmpeg to use only the legacy volume/silence heuristic (no
+    # extra dependency; useful for quick test runs or when inaSpeechSegmenter
+    # is not installed and you do not want the ffmpeg fallback).
+    enabled: true
+    engine: ina              # ina | ffmpeg
+    vad_engine: smn          # smn (speech/music/noise) | sm (speech/music only)
+
+    # Minimum fraction of a clip classified as 'music' to flag it.
+    # 0.3 = at least 30 % of the clip must be music-labelled segments.
+    # Lower → more sensitive (more false positives); higher → more strict.
+    music_ratio_threshold: 0.3
+
+    # When inaSpeechSegmenter is not installed, fall back to the legacy FFmpeg
+    # heuristic so the pipeline keeps working without the extra dependency.
+    fallback_on_missing: true
+
+    # When the ina detector raises an error (e.g. corrupt audio), fall back to
+    # the FFmpeg heuristic.  Default false: safer to leave the original audio
+    # untouched on failure rather than muting a clip incorrectly.
+    fallback_on_error: false
+
 music:
   enabled: true
   library_root: "assets/music"
+
+  # When true: clips detected as music_likely have their source audio muted and
+  # a safe replacement track from the library is gated in for exactly those
+  # segments.  Set to false to revert to the original uniform-bed behaviour
+  # (music plays at a constant level over the entire video regardless of what
+  # is in the source clips).
+  replace_detected_music: true
 
   music_volume_db: -12
   original_duck_db: -14

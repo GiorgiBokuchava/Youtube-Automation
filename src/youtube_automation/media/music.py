@@ -5,7 +5,7 @@ import random
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 from youtube_automation.config.loader import BASE_DIR
 from youtube_automation.media.ffmpeg import ffmpeg_bin as _ffmpeg_bin, ffprobe_bin as _ffprobe_bin
@@ -126,6 +126,31 @@ def _build_music_bed(
     return out_path
 
 
+def _build_music_volume_filter(
+    music_factor: float,
+    audible_segments: Optional[List[Tuple[float, float]]],
+) -> str:
+    """Return the FFmpeg audio filter string for the music track.
+
+    When *audible_segments* is provided the music is only audible inside those
+    time windows (volume = music_factor); outside them the track is silenced.
+    This is achieved with a per-frame ``volume`` expression so no additional
+    re-encoding pass is required.
+
+    When *audible_segments* is None the music plays at a constant level
+    (original uniform-bed behaviour).
+    """
+    if audible_segments is None:
+        return f"volume={music_factor:.6f}"
+
+    # Build: if(gt(between(t,s1,e1)+between(t,s2,e2)+…, 0), music_factor, 0)
+    conditions = "+".join(
+        f"between(t,{s:.3f},{e:.3f})" for s, e in audible_segments
+    )
+    expr = f"if(gt({conditions},0),{music_factor:.6f},0)"
+    return f"volume=volume='{expr}':eval=frame"
+
+
 def _mix_music_into_video(
     *,
     video_path: Path,
@@ -133,6 +158,7 @@ def _mix_music_into_video(
     output_path: Path,
     original_duck_db: float,
     music_volume_db: float,
+    audible_segments: Optional[List[Tuple[float, float]]] = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -140,9 +166,11 @@ def _mix_music_into_video(
     orig_factor = 10 ** (original_duck_db / 20.0)
     music_factor = 10 ** (music_volume_db / 20.0)
 
+    music_vol_filter = _build_music_volume_filter(music_factor, audible_segments)
+
     filter_complex = (
-        f"[0:a]volume={orig_factor},apad[a0];"
-        f"[1:a]volume={music_factor},apad[a1];"
+        f"[0:a]volume={orig_factor:.6f},apad[a0];"
+        f"[1:a]{music_vol_filter},apad[a1];"
         f"[a0][a1]amix=inputs=2:duration=longest,"
         f"atrim=0:{video_dur}[aout]"
     )
@@ -196,10 +224,32 @@ def _passthrough(video_path: Path, output_path: Path) -> Path:
 
 
 def add_background_music(
-    *, video_path: Path, output_path: Path, settings: dict
+    *,
+    video_path: Path,
+    output_path: Path,
+    settings: dict,
+    music_audible_segments: Optional[List[Tuple[float, float]]] = None,
 ) -> Path:
+    """Mix a safe-music bed into *video_path* and write the result to *output_path*.
+
+    *music_audible_segments* controls when the music bed is actually heard:
+
+    * ``None``  — legacy behaviour: music plays at a constant level across the
+      entire video (used by the shorts pipeline and any caller that does not
+      perform per-clip audio analysis).
+    * ``[]``    — empty list: no clips were flagged as ``music_likely`` so there
+      is nothing to replace; the video is passed through unchanged even when
+      ``music.enabled`` is True.
+    * non-empty list of ``(start_sec, end_sec)`` pairs — music is audible only
+      within those windows (volume expression evaluated per frame by FFmpeg);
+      elsewhere the track is silenced so the original clip audio is heard.
+    """
     music_cfg = settings.get("music", {})
     if not music_cfg.get("enabled", False):
+        return _passthrough(video_path, output_path)
+
+    # Segments were explicitly computed but no music_likely clips exist — skip.
+    if music_audible_segments is not None and len(music_audible_segments) == 0:
         return _passthrough(video_path, output_path)
 
     tracks = _collect_music_tracks(settings)
@@ -234,6 +284,7 @@ def add_background_music(
         output_path=output_path,
         original_duck_db=float(music_cfg.get("original_duck_db", -6)),
         music_volume_db=float(music_cfg.get("music_volume_db", -12)),
+        audible_segments=music_audible_segments,
     )
 
     tmp_music.unlink(missing_ok=True)

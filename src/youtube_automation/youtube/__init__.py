@@ -1,3 +1,3 @@
-from .upload import upload_video
+from .upload import UploadResult, upload_video
 
-__all__ = ["upload_video"]
+__all__ = ["UploadResult", "upload_video"]
