@@ -43,6 +43,14 @@ Optional CNN-based music/speech detection (`inaSpeechSegmenter`):
 python -m pip install -e ".[music-detection]"
 ```
 
+On **Linux** (including WSL), PyPI pulls GPU TensorFlow extras — use the same CPU workaround as the Dockerfile:
+
+```bash
+python -m pip install -e .
+python -m pip install "tensorflow>=2.15,<2.21" onnxruntime pandas scikit-image pyannote.core Pyro4 pytextgrid soundfile
+python -m pip install "inaSpeechSegmenter>=0.7,<0.8" --no-deps
+```
+
 > **Note:** `inaSpeechSegmenter` pulls in TensorFlow (~500 MB).  Without it the pipeline uses the legacy FFmpeg volume/silence heuristic automatically (controlled by `audio.music_detection.fallback_on_missing` in `base.yaml`).
 
 ## Configuration

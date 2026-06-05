@@ -43,7 +43,9 @@ music-detection = [
     # Requires tensorflow; adds ~500 MB to the install.  When absent, the
     # pipeline falls back to the legacy FFmpeg volume/silence heuristic
     # (controlled by audio.music_detection.fallback_on_missing in YAML).
-    "inaSpeechSegmenter>=0.7",
+    # Note: on Linux, PyPI metadata pulls GPU extras — use the Dockerfile
+    # install path (CPU tensorflow + --no-deps) for Docker/CI.
+    "inaSpeechSegmenter>=0.7,<0.8",
 ]
 
 [tool.setuptools]

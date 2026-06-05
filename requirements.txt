@@ -1,7 +1,7 @@
 # Optional: CNN-based music/speech detection (see pyproject.toml [music-detection]).
 # Install with:  pip install -e ".[music-detection]"
 # When absent the pipeline uses the legacy FFmpeg heuristic (fallback_on_missing: true).
-inaSpeechSegmenter>=0.7
+inaSpeechSegmenter>=0.7,<0.8
 
 edge-tts>=7.2.7
 google-api-python-client>=2.161.0
