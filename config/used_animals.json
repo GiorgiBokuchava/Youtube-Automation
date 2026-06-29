@@ -46895,5 +46895,2740 @@
     "youtube_url": "https://www.youtube.com/watch?v=3kpcllXvwXY",
     "pipeline_errors": [],
     "channel": "animals"
+  },
+  {
+    "created_at": "2026-06-29T11:44:20.022199+00:00",
+    "clips": [
+      {
+        "id": "1ubny5r",
+        "title": "let him fetch the ball!",
+        "selftext": "",
+        "top_comments": [
+          "That Labrador has excellent comic timing.",
+          "Golden observer",
+          "Bro ran around the world to catch that one lol",
+          "Are all labs like that? Now I want a lab.",
+          "That dog came in like a missile"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ubny5r/let_him_fetch_the_ball/",
+        "source_url": "https://v.redd.it/wiotblc8im8h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "Fair-Performer8532",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ubny5r.mp4",
+        "overlay_title": true,
+        "score": 24046,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads/1ubny5r.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -37.9,
+          "max_volume_db": -8.6,
+          "silence_ratio": 0.34890883926923794,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ubny5r_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uid6r9",
+        "title": "My cat got distracted halfway through the massage and found my beard.",
+        "selftext": "",
+        "top_comments": [
+          "I think he wanted you to stop talking.",
+          "Shh, shhhh, just relaaaax no I said shhhhhhh, just give in",
+          "Biscuit Making will not be interrupted",
+          "She really just caressed you and went no",
+          "Shut up man!"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingFunny/comments/1uid6r9/my_cat_got_distracted_halfway_through_the_massage/",
+        "source_url": "https://v.redd.it/ll8981fz64ah1",
+        "subreddit": "AnimalsBeingFunny",
+        "author": "BringHoomanHome_",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uid6r9.mp4",
+        "overlay_title": true,
+        "score": 1115,
+        "upvote_ratio": 0.97,
+        "source": "reddit",
+        "original_local_path": "downloads/1uid6r9.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -21.4,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uid6r9_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ui87mu",
+        "title": "I accidentally recorded an anti McDonald's commercial today \ud83d\ude02",
+        "selftext": "",
+        "top_comments": [
+          "Same bird, same.",
+          "Who would blame it?",
+          "The pigeon: ![gif](giphy|10FHR5A4cXqVrO)",
+          "You should post this in the mcdonald's sub lol",
+          "Pigeons are biased thou, a seagull would demolish that."
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1ui87mu/i_accidentally_recorded_an_anti_mcdonalds/",
+        "source_url": "https://v.redd.it/wqybzfky43ah1",
+        "subreddit": "FunnyAnimals",
+        "author": "Be3ak",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1ui87mu.mp4",
+        "overlay_title": true,
+        "score": 1811,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ui87mu.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -25.5,
+          "max_volume_db": -11.1,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ui87mu_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ugepjc",
+        "title": "Let's do it in private \ud83d\ude0d",
+        "selftext": "",
+        "top_comments": [
+          "Can you hook me up with some of those skritchies?",
+          "Can t let the other cats see me!",
+          "That be 5$",
+          "Omc this is everything - private belleh rubs lol.",
+          "Wow! The chonk is strong with this one."
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1ugepjc/lets_do_it_in_private/",
+        "source_url": "https://v.redd.it/pd7qhmrz5o9h1",
+        "subreddit": "FunnyAnimals",
+        "author": "Dependent-Bend-5225",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1ugepjc.mp4",
+        "overlay_title": true,
+        "score": 4264,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ugepjc.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.8,
+          "max_volume_db": -1.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9788434414668546,
+          "music_segments": [
+            [
+              0.3,
+              14.18
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ugepjc_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uchwfo",
+        "title": "Look at this distinguished gentleman, look at the way he is sitting\ud83d\udc12",
+        "selftext": "",
+        "top_comments": [
+          "Playing Sheena Easton: \"My baby takes the morning train.\"",
+          "That s a middle monkey! Theo Vonn",
+          "He made eye contact. You have about 5 minutes to live, buddy",
+          "Years of practice i guess",
+          "I'm not the only one!"
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1uchwfo/look_at_this_distinguished_gentleman_look_at_the/",
+        "source_url": "https://v.redd.it/xti8eb3tjt8h1",
+        "subreddit": "FunnyAnimals",
+        "author": "caffeinated_muggle",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uchwfo.mp4",
+        "overlay_title": true,
+        "score": 1643,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uchwfo.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uchwfo_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1u62s08",
+        "title": "This face:",
+        "selftext": "I\u2019m thinking I own a 10 pound living muppet\u2026",
+        "top_comments": [
+          "Que hermoso perrito",
+          "Aww that face.... What a cutie",
+          "Every dog loves a good fuzzy otter!",
+          "I have that exact otter plush. My pup loves it lol",
+          "That is an adorable face!"
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1u62s08/this_face/",
+        "source_url": "https://v.redd.it/gjyyj5bznc7h1",
+        "subreddit": "FunnyAnimals",
+        "author": "RokArmPet",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1u62s08.mp4",
+        "overlay_title": true,
+        "score": 1836,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1u62s08.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -47.9,
+          "max_volume_db": -26.5,
+          "silence_ratio": 0.8957479482189693,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1u62s08_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ty042n",
+        "title": "Hummingbird bathing in tiny fountain",
+        "selftext": "",
+        "top_comments": [
+          "Think it might be drinking the water? I'm not ornithologist.",
+          "So lovely!",
+          "Spot on! Breathtaking!",
+          "Makes it worth the upkeep, huh!?",
+          "I feel like this is a real life Disney movie lol"
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1ty042n/hummingbird_bathing_in_tiny_fountain/",
+        "source_url": "https://v.redd.it/e0hz79e4nj5h1",
+        "subreddit": "FunnyAnimals",
+        "author": "Sororitybrother",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1ty042n.mp4",
+        "overlay_title": true,
+        "score": 5341,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ty042n.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -32.8,
+          "max_volume_db": -13.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ty042n_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1txyqt8",
+        "title": "Somebody's watching you.",
+        "selftext": "Ever get that tingle of being watched? Found a little peeper.",
+        "top_comments": [
+          "![gif](giphy|eCZgj8MkM07L2)",
+          "![gif](giphy|mAJalYTWfUavAZak1W)",
+          "Not just watching, but judging.",
+          "Peek-a-boo!",
+          "I have felt observed"
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1txyqt8/somebodys_watching_you/",
+        "source_url": "https://v.redd.it/sc2kalf4dj5h1",
+        "subreddit": "FunnyAnimals",
+        "author": "RebelRarity",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1txyqt8.mp4",
+        "overlay_title": true,
+        "score": 773,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1txyqt8.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -28.2,
+          "max_volume_db": -15.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1txyqt8_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tvmi4r",
+        "title": "I promise he has a fresh clean water bowl",
+        "selftext": "",
+        "top_comments": [
+          "He wants a fountain!",
+          "He just prefers draft, okay?",
+          "We know",
+          "Bowls are for sissies period.",
+          "Cats are weird about still water."
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1tvmi4r/i_promise_he_has_a_fresh_clean_water_bowl/",
+        "source_url": "https://v.redd.it/6pgnf1d0z15h1",
+        "subreddit": "FunnyAnimals",
+        "author": "WestMi_Funguy",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1tvmi4r.mp4",
+        "overlay_title": true,
+        "score": 1217,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1tvmi4r.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -49.3,
+          "max_volume_db": -14.8,
+          "silence_ratio": 0.1784761936695279,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1tvmi4r_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1tslfwv",
+        "title": "Title",
+        "selftext": "",
+        "top_comments": [
+          "wait for it wait for it byyyyyeeeeeee",
+          "Awe poor baby",
+          "comment",
+          "Is the breed Cavapoo?",
+          "So cute!"
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyAnimals/comments/1tslfwv/title/",
+        "source_url": "https://v.redd.it/mgzkkeqcke4h1",
+        "subreddit": "FunnyAnimals",
+        "author": "K_nowbody_",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1tslfwv.mp4",
+        "overlay_title": true,
+        "score": 629,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1tslfwv.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1tslfwv_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhl3i7",
+        "title": "GF and I are fostering some pups!",
+        "selftext": "",
+        "top_comments": [
+          "Fostering fail one and two. Real look like great pups.",
+          "Yeh fostering-looks like you are on your way to failing that plan.",
+          "Adorable",
+          "They are precious",
+          "B00Pz 2"
+        ],
+        "permalink": "https://www.reddit.com/r/PetsareAmazing/comments/1uhl3i7/gf_and_i_are_fostering_some_pups/",
+        "source_url": "https://v.redd.it/nucmconipx9h1",
+        "subreddit": "PetsareAmazing",
+        "author": "IceFisherP26",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1uhl3i7.mp4",
+        "overlay_title": true,
+        "score": 662,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhl3i7.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -35.6,
+          "max_volume_db": -1.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhl3i7_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uelt5j",
+        "title": "Raccoon and bubbles\u2764\ufe0f\ud83e\udd9d",
+        "selftext": "",
+        "top_comments": [
+          "Awww",
+          "This reminds me of SNL spoofing Lawrence Welk show!",
+          "Just a little guy having the time of his life"
+        ],
+        "permalink": "https://www.reddit.com/r/PetsareAmazing/comments/1uelt5j/raccoon_and_bubbles/",
+        "source_url": "https://v.redd.it/4kuozlg9y99h1",
+        "subreddit": "PetsareAmazing",
+        "author": "ZootasticTV",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1uelt5j.mp4",
+        "overlay_title": true,
+        "score": 668,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uelt5j.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -29.5,
+          "max_volume_db": -1.2,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uelt5j_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1udchqf",
+        "title": "Have you forgiven? \ud83e\uddd0\ud83d\ude02",
+        "selftext": "video taken from @indigo\\_theheelerdog",
+        "top_comments": [
+          "When Dogma eyes your Karma. ![gif](giphy|5x0Z7DDDtXWD1YHzs5)",
+          "Love the face of dog!",
+          "That eventual side-eye",
+          "\" ...What is happening...\""
+        ],
+        "permalink": "https://www.reddit.com/r/FunnyDogVideos/comments/1udchqf/have_you_forgiven/",
+        "source_url": "https://v.redd.it/b7ikdh1k509h1",
+        "subreddit": "FunnyDogVideos",
+        "author": "_Scorpio_26",
+        "duration_sec": 13,
+        "local_path": "out/animals/normalized_videos/normalized_1udchqf.mp4",
+        "overlay_title": true,
+        "score": 920,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1udchqf.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.2,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              13.84
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udchqf_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhwywc",
+        "title": "She loves snacks",
+        "selftext": "",
+        "top_comments": [
+          "A proper \"cheezey\" grin.",
+          "Can I has cheez????",
+          "The smile on her face is so genuine>>>>",
+          "Cuz she knows....",
+          "Say cheese!"
+        ],
+        "permalink": "https://www.reddit.com/r/dogvideos/comments/1uhwywc/she_loves_snacks/",
+        "source_url": "https://v.redd.it/hjg7eglauz9h1",
+        "subreddit": "dogvideos",
+        "author": "Representative-Mix-9",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1uhwywc.mp4",
+        "overlay_title": true,
+        "score": 1790,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhwywc.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -19.4,
+          "max_volume_db": -2.3,
+          "silence_ratio": 0.19693563620463492,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.1576182136602452,
+          "music_segments": [
+            [
+              3.98,
+              5.78
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhwywc_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uh090k",
+        "title": "4 legged footballer",
+        "selftext": "",
+        "top_comments": [
+          "Doesn t want to celebrate right back to business haha",
+          "I love how you can tell he's one of the boys",
+          "How was he not selected for England in this world cup?",
+          "Goal!!!!!",
+          "Pawle"
+        ],
+        "permalink": "https://www.reddit.com/r/dogvideos/comments/1uh090k/4_legged_footballer/",
+        "source_url": "https://v.redd.it/r1g2ohv78t9h1",
+        "subreddit": "dogvideos",
+        "author": "Representative-Mix-9",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uh090k.mp4",
+        "overlay_title": true,
+        "score": 2694,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh090k.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.7,
+          "max_volume_db": -2.5,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.8227611940298507,
+          "music_segments": [
+            [
+              1.9000000000000001,
+              10.72
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh090k_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uh1hgm",
+        "title": "A total cutie! \ud83e\udd70",
+        "selftext": "",
+        "top_comments": [
+          "Too cute for words!",
+          "what's this bundle of joy's name?",
+          "Sweetu baby",
+          "Absolutely!!",
+          "Beautiful pup!"
+        ],
+        "permalink": "https://www.reddit.com/r/dogvideos/comments/1uh1hgm/a_total_cutie/",
+        "source_url": "https://v.redd.it/sfq494ynjt9h1",
+        "subreddit": "dogvideos",
+        "author": "NoTaste5535",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1uh1hgm.mp4",
+        "overlay_title": true,
+        "score": 967,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh1hgm.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.0,
+          "max_volume_db": -2.8,
+          "silence_ratio": 0.04683836250251459,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9153225806451611,
+          "music_segments": [
+            [
+              0.0,
+              4.12
+            ],
+            [
+              4.58,
+              9.0
+            ],
+            [
+              9.38,
+              9.92
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh1hgm_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhfnw4",
+        "title": "My son",
+        "selftext": "My son passed away today\ud83d\ude14 we took him to get cremated. I have posted him before a while ago when he was alive and well. I feel like I lost a piece of my heart and soul. Any grieving advice is much appreciated and requested. Edit: thanks to everyone giving condolences. I was very vague, but he died after his body couldn\u2019t fully heal after having pneumonia and spending two days in the hospital. Yesterday morning I went to buy him pellets because he was extremely skinny, falling asleep a lot, and being very weird. I came home to him flopped over and shaking. He\u2019s being cremated and I found someone to turn his ashes into jewelry. \ud83e\udd0d ",
+        "top_comments": [
+          "I m so sorry to hear",
+          "I'm so sorry for the loss of your precious little bun",
+          "I'm so sorry. Thank you for loving your baby",
+          "Thank you so much",
+          "Thank you !! I am finding new ways to hold onto him."
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1uhfnw4/my_son/",
+        "source_url": "https://v.redd.it/kcc7s433hw9h1",
+        "subreddit": "Rabbits",
+        "author": "Imikalitai",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1uhfnw4.mp4",
+        "overlay_title": true,
+        "score": 604,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhfnw4.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -49.9,
+          "max_volume_db": -23.9,
+          "silence_ratio": 0.9115940991620111,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhfnw4_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ufv2bb",
+        "title": "we enjoy being all up in eachothers space",
+        "selftext": "i haven't moved in like 30 minutes ",
+        "top_comments": [
+          "it tickles right?",
+          "This is like the peak of human bunny relationship",
+          "What a sweetie! I love her so much",
+          "Oh my goodness that s the most adorable thing I ve ever seen.",
+          "His gaze at you is worth it all"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1ufv2bb/we_enjoy_being_all_up_in_eachothers_space/",
+        "source_url": "https://v.redd.it/8fwt515doj9h1",
+        "subreddit": "Rabbits",
+        "author": "Salty-Scallion2530",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1ufv2bb.mp4",
+        "overlay_title": true,
+        "score": 1362,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufv2bb.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -48.8,
+          "max_volume_db": -36.2,
+          "silence_ratio": 0.9977952755905513,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufv2bb_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uft07j",
+        "title": "My bunny is really bad at thumping",
+        "selftext": "",
+        "top_comments": [
+          "The boba eyes on the black one",
+          "Awww, that s perfect for alerting you to small hazards and minor inconveniences.",
+          "The widest eyes in the west",
+          "Wanted to make sure you see it",
+          "p e r t u r b e d"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1uft07j/my_bunny_is_really_bad_at_thumping/",
+        "source_url": "https://v.redd.it/g2o1k0877j9h1",
+        "subreddit": "Rabbits",
+        "author": "bunny-rain",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uft07j.mp4",
+        "overlay_title": true,
+        "score": 1012,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uft07j.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -46.4,
+          "max_volume_db": -17.9,
+          "silence_ratio": 0.9042131190212793,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uft07j_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uf079o",
+        "title": "BREAKING NEWS: evil bnuy becomes one with the leaves",
+        "selftext": "",
+        "top_comments": [
+          ":o It disappeared!",
+          "Now bnuuy can Comuflage now >:D",
+          "\"I am a leaf on the wind\"",
+          "p l o p",
+          "Nose:"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1uf079o/breaking_news_evil_bnuy_becomes_one_with_the/",
+        "source_url": "https://v.redd.it/q4ri7awuyc9h1",
+        "subreddit": "Rabbits",
+        "author": "4ri3ll4",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uf079o.mp4",
+        "overlay_title": true,
+        "score": 1483,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uf079o.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -30.8,
+          "max_volume_db": -4.4,
+          "silence_ratio": 0.23767013968399356,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uf079o_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ueopf1",
+        "title": "fred demanding his daily snuggles",
+        "selftext": "my needy smol son\ud83e\udd0d\n\nps: please don't mind my face lmao",
+        "top_comments": [
+          "A cuddle fluff",
+          "Fred is an angel",
+          "bnuuuu is extra cuddly",
+          "lil man is Melted",
+          "Fred is a very good bun"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1ueopf1/fred_demanding_his_daily_snuggles/",
+        "source_url": "https://v.redd.it/dyd4bh3zga9h1",
+        "subreddit": "Rabbits",
+        "author": "Logical_Experience81",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ueopf1.mp4",
+        "overlay_title": true,
+        "score": 1140,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ueopf1.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -44.2,
+          "max_volume_db": -24.9,
+          "silence_ratio": 0.7798283816202252,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ueopf1_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uedjgo",
+        "title": "Is he enjoying this?",
+        "selftext": "Got little Hagrid here 3 weeks ago, he's not as petting-friendly as my previous bunny so not as easy to read. ",
+        "top_comments": [
+          "Yes. Very much so.",
+          "Oh, he loves it! Sweet baby!",
+          "Seriously? when the bun is relaxing in sheer bliss????",
+          "Nobody has ever enjoyed anything more than this bun is enjoying that",
+          "Where's that flippin' meme again?"
+        ],
+        "permalink": "https://www.reddit.com/r/Rabbits/comments/1uedjgo/is_he_enjoying_this/",
+        "source_url": "https://v.redd.it/9ssaj90wf89h1",
+        "subreddit": "Rabbits",
+        "author": "UncertifiedForklift",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uedjgo.mp4",
+        "overlay_title": true,
+        "score": 1300,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uedjgo.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -41.8,
+          "max_volume_db": -7.6,
+          "silence_ratio": 0.865793760489683,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uedjgo_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ugtkfb",
+        "title": "Sweet Annie",
+        "selftext": "She loved a good head pat",
+        "top_comments": [
+          "Oh my goodness. She is beautiful.",
+          "hi Annie",
+          "She is in heaven",
+          "So happy with her smile",
+          "Past tense?"
+        ],
+        "permalink": "https://www.reddit.com/r/PuppySmiles/comments/1ugtkfb/sweet_annie/",
+        "source_url": "https://v.redd.it/9zg26ruybr9h1",
+        "subreddit": "PuppySmiles",
+        "author": "coacocoaco",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1ugtkfb.mp4",
+        "overlay_title": true,
+        "score": 489,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ugtkfb.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -51.3,
+          "max_volume_db": -39.0,
+          "silence_ratio": 1.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ugtkfb_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ucon3a",
+        "title": "Cat.",
+        "selftext": "",
+        "top_comments": [
+          "Cat.",
+          "Cat.",
+          "Cat.",
+          "Cat.",
+          "Cat."
+        ],
+        "permalink": "https://www.reddit.com/r/CatsStandingUp/comments/1ucon3a/cat/",
+        "source_url": "https://v.redd.it/8b4egds8xu8h1",
+        "subreddit": "CatsStandingUp",
+        "author": "protopigeon",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1ucon3a.mp4",
+        "overlay_title": true,
+        "score": 676,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ucon3a.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.7,
+          "max_volume_db": -2.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.638148667601683,
+          "music_segments": [
+            [
+              0.0,
+              7.66
+            ],
+            [
+              11.38,
+              12.82
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ucon3a_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uckm1l",
+        "title": "Cat.",
+        "selftext": "",
+        "top_comments": [
+          "Cat.",
+          "Cat.",
+          "Cat.",
+          "Cat.",
+          "Cat."
+        ],
+        "permalink": "https://www.reddit.com/r/CatsStandingUp/comments/1uckm1l/cat/",
+        "source_url": "https://v.redd.it/doe57mv36u8h1",
+        "subreddit": "CatsStandingUp",
+        "author": "Koffievos",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uckm1l.mp4",
+        "overlay_title": true,
+        "score": 1021,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uckm1l.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -49.8,
+          "max_volume_db": -7.3,
+          "silence_ratio": 0.8869514757969303,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uckm1l_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uhz8vf",
+        "title": "First swim with Leo",
+        "selftext": "",
+        "top_comments": [
+          "Looks like a new salmon species!",
+          "I love the floating Corgi booties",
+          "Awww, don't call him back, let him splash around",
+          "corgious clear water.",
+          "Wait I literally cackled"
+        ],
+        "permalink": "https://www.reddit.com/r/corgi/comments/1uhz8vf/first_swim_with_leo/",
+        "source_url": "https://v.redd.it/kyn6zwb4d1ah1",
+        "subreddit": "corgi",
+        "author": "Ready_Sprinkles7792",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uhz8vf.mp4",
+        "overlay_title": true,
+        "score": 855,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhz8vf.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -29.3,
+          "max_volume_db": -4.0,
+          "silence_ratio": 0.21668860499600778,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhz8vf_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uh506d",
+        "title": "BONK!",
+        "selftext": "",
+        "top_comments": [
+          "\"What? What did I do?\" https://preview.redd.it/oie202px7v9h1.png?width=1008&format=png&auto=webp&s=ffbb45f4853f2c95125c30e152f2e14706f9363a",
+          "The worst!! They know what they re doing.",
+          "It was a light bonk. But sent the message.",
+          "The light poof of corgi-sparkles was just",
+          "Guilty as charged."
+        ],
+        "permalink": "https://www.reddit.com/r/corgi/comments/1uh506d/bonk/",
+        "source_url": "https://v.redd.it/w06a4gshbu9h1",
+        "subreddit": "corgi",
+        "author": "soozerain",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1uh506d.mp4",
+        "overlay_title": true,
+        "score": 1089,
+        "upvote_ratio": 0.96,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh506d.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -19.2,
+          "max_volume_db": -0.0,
+          "silence_ratio": 0.46090751290724585,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh506d_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ug0hm6",
+        "title": "I love him",
+        "selftext": "",
+        "top_comments": [
+          "\"Can I help you?\" At the end.",
+          "Lol the \"What do you want\" stare when he caught you filming",
+          "So fluffy!",
+          "Lil Stompy!!",
+          "\"You're filming me again aren't you?\""
+        ],
+        "permalink": "https://www.reddit.com/r/corgi/comments/1ug0hm6/i_love_him/",
+        "source_url": "https://v.redd.it/qdn6i0bh3l9h1",
+        "subreddit": "corgi",
+        "author": "Catrecht",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ug0hm6.mp4",
+        "overlay_title": true,
+        "score": 3686,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ug0hm6.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ug0hm6_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ueqsjt",
+        "title": "\u201cMust be nice going on long walks with your dog\u201d. Me going on walks with Thomas:",
+        "selftext": "",
+        "top_comments": [
+          "My fitness watch: 31 minutes of activity 0 zone minutes",
+          "And then pukes it all up at home lol",
+          "https://preview.redd.it/ifqf6a319b9h1.jpeg?width=1536&format=pjpg&auto=webp&s=02617d8938f3c279e2fcbd1c2c46972e7a881137",
+          "You have a cowgi as well?!",
+          "Am cow"
+        ],
+        "permalink": "https://www.reddit.com/r/corgi/comments/1ueqsjt/must_be_nice_going_on_long_walks_with_your_dog_me/",
+        "source_url": "https://v.redd.it/3u79vxp0va9h1",
+        "subreddit": "corgi",
+        "author": "Catrecht",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ueqsjt.mp4",
+        "overlay_title": false,
+        "score": 1636,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ueqsjt.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ueqsjt_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ucj52c",
+        "title": "Burned with desire",
+        "selftext": "",
+        "top_comments": [
+          "Ours love smoked salmon.",
+          "If that were my guy, he would have been drooling puddles",
+          "Awe he would love that!! So cute!",
+          "That face!!!! Awwwwwww!",
+          "It s even made my mouth water!"
+        ],
+        "permalink": "https://www.reddit.com/r/corgi/comments/1ucj52c/burned_with_desire/",
+        "source_url": "https://v.redd.it/125tcolqut8h1",
+        "subreddit": "corgi",
+        "author": "Catrecht",
+        "duration_sec": 2,
+        "local_path": "out/animals/normalized_videos/normalized_1ucj52c.mp4",
+        "overlay_title": true,
+        "score": 785,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ucj52c.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ucj52c_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhyie7",
+        "title": "Puppy first day at forever home..look at those eyes \ud83e\udd7a",
+        "selftext": "",
+        "top_comments": [
+          "Looks scared and confused",
+          "I ve been kidnapped",
+          "Congratulations on gaining a lifelong friend and companion. Spoil them.",
+          "A little scared, a little unsure but he will make it",
+          "A face made for boops and kisses"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1uhyie7/puppy_first_day_at_forever_homelook_at_those_eyes/",
+        "source_url": "https://v.redd.it/gowtw7zo81ah1",
+        "subreddit": "Awww",
+        "author": "Adventurous_Most_558",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uhyie7.mp4",
+        "overlay_title": true,
+        "score": 8568,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhyie7.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -19.2,
+          "max_volume_db": -4.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9844155844155844,
+          "music_segments": [
+            [
+              0.24,
+              15.4
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhyie7_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uid4xx",
+        "title": "My daily massage therapist works for treats.",
+        "selftext": "",
+        "top_comments": [
+          "She like \"Shut up. Can't you see I'm working?!\".",
+          "Silence fool, don t talk to me while I m working",
+          "So cute",
+          "She even combs your beard - how cute!",
+          "\"Can't you see I'm making biscuits!?\" - Peggy Hill voice."
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1uid4xx/my_daily_massage_therapist_works_for_treats/",
+        "source_url": "https://v.redd.it/57jtjfqk64ah1",
+        "subreddit": "Awww",
+        "author": "BringHoomanHome_",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uid4xx.mp4",
+        "overlay_title": true,
+        "score": 988,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uid4xx.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -21.4,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uid4xx_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uh9act",
+        "title": "Perfect jump",
+        "selftext": "",
+        "top_comments": [
+          "Trust level 100+",
+          "So much trust in that leap",
+          "Majestic beast! 11/10",
+          "Such a talented kitty.",
+          "That jump was epic"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1uh9act/perfect_jump/",
+        "source_url": "https://v.redd.it/jk2osorc6v9h1",
+        "subreddit": "Awww",
+        "author": "BringHoomanHome_",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1uh9act.mp4",
+        "overlay_title": true,
+        "score": 4302,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh9act.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.5,
+          "max_volume_db": -1.4,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              11.46
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh9act_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ugc0ih",
+        "title": "Best feeling \ud83e\udd7a\ud83d\ude0d",
+        "selftext": "",
+        "top_comments": [
+          "I miss my dog so much",
+          "Just a dog? . \\-John Wick",
+          "Both gorgeous",
+          "top 10 feelings of all time",
+          "Swear dogs are angels in a furry disguise"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1ugc0ih/best_feeling/",
+        "source_url": "https://v.redd.it/5eftf4o8on9h1",
+        "subreddit": "Awww",
+        "author": "Adventurous_Most_558",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ugc0ih.mp4",
+        "overlay_title": true,
+        "score": 9200,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ugc0ih.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.8,
+          "max_volume_db": -2.4,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              10.1
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ugc0ih_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ug1agz",
+        "title": "So cute \ud83e\udd70",
+        "selftext": "",
+        "top_comments": [
+          "Cute yes. Munchkin no. Stop buying designer pets. It's messed up.",
+          "Not a fan of pets being dressed up. Kinda creeps me out",
+          "Poor deformed munchkin cat",
+          "Wow!!!! What a cutie!!!",
+          "Such a pretty cat"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1ug1agz/so_cute/",
+        "source_url": "https://v.redd.it/o0h2nhy5cl9h1",
+        "subreddit": "Awww",
+        "author": "Big_Recognition_940",
+        "duration_sec": 13,
+        "local_path": "out/animals/normalized_videos/normalized_1ug1agz.mp4",
+        "overlay_title": true,
+        "score": 1817,
+        "upvote_ratio": 0.96,
+        "source": "reddit",
+        "original_local_path": "downloads/1ug1agz.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.0,
+          "max_volume_db": -2.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              13.52
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ug1agz_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ufg05t",
+        "title": "He was like \u201cHi mommyy!\u201d look at my dino outfitt",
+        "selftext": "",
+        "top_comments": [
+          "OMG! I'm still laughing",
+          "Whippersaurus",
+          "I think he likes it",
+          "Ridiculousauras",
+          "I miss my greyhound soooo much"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1ufg05t/he_was_like_hi_mommyy_look_at_my_dino_outfitt/",
+        "source_url": "https://v.redd.it/udpnvgcpng9h1",
+        "subreddit": "Awww",
+        "author": "vaeloriea",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1ufg05t.mp4",
+        "overlay_title": true,
+        "score": 3636,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufg05t.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -22.5,
+          "max_volume_db": -0.7,
+          "silence_ratio": 0.30131143398610233,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufg05t_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ufqkc2",
+        "title": "The welcoming committee has arrived.",
+        "selftext": "",
+        "top_comments": [
+          "The itty-bitty kitty committee!",
+          "It is good to be loved.",
+          "The smallest ginger one!!!!",
+          "Kitten Choir",
+          "Oh, no doubt! Adorable!"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1ufqkc2/the_welcoming_committee_has_arrived/",
+        "source_url": "https://v.redd.it/90zqtcopni9h1",
+        "subreddit": "Awww",
+        "author": "BringHoomanHome_",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1ufqkc2.mp4",
+        "overlay_title": true,
+        "score": 593,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufqkc2.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.3,
+          "max_volume_db": -0.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              7.5600000000000005
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufqkc2_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uf294k",
+        "title": "Life when you're surrounded by beloved friends",
+        "selftext": "",
+        "top_comments": [
+          "Lucky Bros..",
+          "Interspecies friendship is always the sweetest thing ever",
+          "The perfect partner",
+          "Good friends can make even ordinary days feel special.",
+          "Awww. Gentle giant"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1uf294k/life_when_youre_surrounded_by_beloved_friends/",
+        "source_url": "https://v.redd.it/sog3omojid9h1",
+        "subreddit": "Awww",
+        "author": "RemarkableBudget5277",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uf294k.mp4",
+        "overlay_title": true,
+        "score": 7332,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1uf294k.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -52.7,
+          "max_volume_db": -39.8,
+          "silence_ratio": 0.99566756791554,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uf294k_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ufczqu",
+        "title": "Passenger princess matching outfits with her dad \ud83d\udc95\ud83d\ude0d",
+        "selftext": "",
+        "top_comments": [
+          "She needs a matching seatbelt.",
+          "Princess Donut would jealous of all those hats.",
+          "I love this duo omg <3",
+          "Ill wear the seat belt.",
+          "i love how they were matching!!!"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1ufczqu/passenger_princess_matching_outfits_with_her_dad/",
+        "source_url": "https://v.redd.it/1u1l6q7c4g9h1",
+        "subreddit": "Awww",
+        "author": "versautbutcute",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1ufczqu.mp4",
+        "overlay_title": true,
+        "score": 780,
+        "upvote_ratio": 0.96,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufczqu.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufczqu_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uf647s",
+        "title": "Sibling Rivalry, Cat Edition \ud83d\ude39",
+        "selftext": "",
+        "top_comments": [
+          "Why are they squished onto a single carrier?",
+          "Are we there yet?",
+          "Maybe they're feeling crowded?",
+          "Hahahahahahaha omg",
+          "Aren't they're asking are we there yet mom?"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1uf647s/sibling_rivalry_cat_edition/",
+        "source_url": "https://v.redd.it/qwdqktgbne9h1",
+        "subreddit": "Awww",
+        "author": "Big_Recognition_940",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uf647s.mp4",
+        "overlay_title": true,
+        "score": 1004,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uf647s.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.5,
+          "max_volume_db": -2.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              10.4
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uf647s_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1udu5xz",
+        "title": "The baby elephant politely asked for watermelon \ud83c\udf49",
+        "selftext": "",
+        "top_comments": [
+          "The way he asked for it, adorable",
+          "what a bby",
+          "Why fren shaped if not fren"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1udu5xz/the_baby_elephant_politely_asked_for_watermelon/",
+        "source_url": "https://v.redd.it/bzpfokczo39h1",
+        "subreddit": "Awww",
+        "author": "Lusty_Lullaby",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1udu5xz.mp4",
+        "overlay_title": true,
+        "score": 1011,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1udu5xz.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -20.6,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.17384615384615382,
+          "music_segments": [
+            [
+              10.74,
+              13.0
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udu5xz_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1udlozq",
+        "title": "Looks like he kicked off his shoes and took a nap \ud83e\udd70\ud83d\ude02",
+        "selftext": "",
+        "top_comments": [
+          "I need the back story",
+          "How a kangaroo be taking a nap on your couch .. .",
+          "Sleeping like a human adorable",
+          "Australian dogs really are interesting!",
+          "he had a long day, it was nap time"
+        ],
+        "permalink": "https://www.reddit.com/r/Awww/comments/1udlozq/looks_like_he_kicked_off_his_shoes_and_took_a_nap/",
+        "source_url": "https://v.redd.it/vymhbge8529h1",
+        "subreddit": "Awww",
+        "author": "urfavqueena",
+        "duration_sec": 9,
+        "local_path": "out/animals/normalized_videos/normalized_1udlozq.mp4",
+        "overlay_title": true,
+        "score": 1300,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1udlozq.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -14.7,
+          "max_volume_db": -2.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udlozq_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uif1em",
+        "title": "Max wiggling away while sleeping",
+        "selftext": "",
+        "top_comments": [
+          "Big guy is running around in another universe",
+          "Max is adorable. I wonder if he's dreaming about mud wiggles?",
+          "That must be a fabulous dream.!.",
+          "Chasing those dream squirrels",
+          "Max probably playing fetch and chasing squirrels in his dream."
+        ],
+        "permalink": "https://www.reddit.com/r/aww/comments/1uif1em/max_wiggling_away_while_sleeping/",
+        "source_url": "https://v.redd.it/q8fys5eym4ah1",
+        "subreddit": "aww",
+        "author": "astrohoundstudios",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uif1em.mp4",
+        "overlay_title": true,
+        "score": 920,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uif1em.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.5,
+          "max_volume_db": -3.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              8.22
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uif1em_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhtcd9",
+        "title": "I\u2019ve had her for so long, and this is the first time she\u2019s let me pet her like this.",
+        "selftext": "",
+        "top_comments": [
+          "Go to the doctor.",
+          "Hopital",
+          "You are now a part of the Trust Circle. Well done.",
+          "Congrats on the baby",
+          "had this happen with my cat right after i moved apartments"
+        ],
+        "permalink": "https://www.reddit.com/r/aww/comments/1uhtcd9/ive_had_her_for_so_long_and_this_is_the_first/",
+        "source_url": "https://v.redd.it/k8ez39npyz9h1",
+        "subreddit": "aww",
+        "author": "True_Advantage5119",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1uhtcd9.mp4",
+        "overlay_title": false,
+        "score": 10878,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhtcd9.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -91.0,
+          "max_volume_db": -91.0,
+          "silence_ratio": 0.9999619947022919,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhtcd9_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uh7ohn",
+        "title": "The disappointment because I was filming his marshmallow legs again",
+        "selftext": "",
+        "top_comments": [
+          "How these marshmallows carry his overloaded cuteness",
+          "Little stumps! Haha love it",
+          "Again? Really?!",
+          "![gif](giphy|yyq0WXMv720OcpZvmA)",
+          "I was born this way, Karen said the dog."
+        ],
+        "permalink": "https://www.reddit.com/r/aww/comments/1uh7ohn/the_disappointment_because_i_was_filming_his/",
+        "source_url": "https://v.redd.it/qf0d04nquu9h1",
+        "subreddit": "aww",
+        "author": "Catrecht",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uh7ohn.mp4",
+        "overlay_title": true,
+        "score": 5364,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh7ohn.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh7ohn_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ugp6iu",
+        "title": "Sunshine, our house sparrow, taking a bath in my hand.",
+        "selftext": "",
+        "top_comments": [
+          "Thats worth at least 2 in the bush.",
+          "Cuteee! How much maintenance does it need?",
+          "She knows she has a good thing",
+          "Ohhhh to be so blessed.",
+          "Awwww so cute."
+        ],
+        "permalink": "https://www.reddit.com/r/aww/comments/1ugp6iu/sunshine_our_house_sparrow_taking_a_bath_in_my/",
+        "source_url": "https://v.redd.it/g46hq7yl9q9h1",
+        "subreddit": "aww",
+        "author": "NVAreaMan",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ugp6iu.mp4",
+        "overlay_title": true,
+        "score": 5563,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ugp6iu.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -43.5,
+          "max_volume_db": -7.5,
+          "silence_ratio": 0.5917669922264301,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ugp6iu_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uimxvy",
+        "title": "Derp cat",
+        "selftext": "",
+        "top_comments": [
+          "Everyone saw that coming",
+          "Whoa those sum biggie ears",
+          "Stop this witchcraft human!",
+          "Derphuman..",
+          "\"Have you heard abo \" \"Yes\""
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uimxvy/derp_cat/",
+        "source_url": "https://v.redd.it/ega3ht5dq6ah1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "EightBitCow",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uimxvy.mp4",
+        "overlay_title": true,
+        "score": 1174,
+        "upvote_ratio": 0.95,
+        "source": "reddit",
+        "original_local_path": "downloads/1uimxvy.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.1,
+          "max_volume_db": -1.1,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9802890932982917,
+          "music_segments": [
+            [
+              0.3,
+              15.22
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uimxvy_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uhmnyh",
+        "title": "This Soupbelly Won't Clean Itself",
+        "selftext": "",
+        "top_comments": [
+          "He is doing his best!",
+          "What a cutie with that big fat tummy!",
+          "So much to clean!",
+          "Nummy nummies in my tummy",
+          "Nom nom nom nom"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uhmnyh/this_soupbelly_wont_clean_itself/",
+        "source_url": "https://v.redd.it/u6i3c2zc3y9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "RealRock_n_Rolla",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1uhmnyh.mp4",
+        "overlay_title": true,
+        "score": 2069,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uhmnyh.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -31.4,
+          "max_volume_db": -13.7,
+          "silence_ratio": 0.27949136537643554,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9318568994889267,
+          "music_segments": [
+            [
+              0.8,
+              11.74
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uhmnyh_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uh3ix8",
+        "title": "Grew up with goats and now thinks its one of them.",
+        "selftext": "",
+        "top_comments": [
+          "Looks like the pig fits right in",
+          "Not the weirdest goat I've ever seen",
+          "Credit to Hauser s Homestead: Highlands & Mini Donkeys",
+          "He kinda looks it",
+          "Lil stumpy legs catchin up."
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uh3ix8/grew_up_with_goats_and_now_thinks_its_one_of_them/",
+        "source_url": "https://v.redd.it/i66xykca0u9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "21MayDay21",
+        "duration_sec": 13,
+        "local_path": "out/animals/normalized_videos/normalized_1uh3ix8.mp4",
+        "overlay_title": true,
+        "score": 14939,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh3ix8.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh3ix8_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uh0qea",
+        "title": "Keeping them furrbalz cool at 35C",
+        "selftext": "",
+        "top_comments": [
+          "Heavy duty fan for heavy duty floof",
+          "That's a whole rug",
+          "Aww.. looks exactly like my cat, Pepper!",
+          "Oh, that does look good. :)",
+          "Indeed :)"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uh0qea/keeping_them_furrbalz_cool_at_35c/",
+        "source_url": "https://v.redd.it/yqkfi45xct9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "m15f1t",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uh0qea.mp4",
+        "overlay_title": true,
+        "score": 937,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh0qea.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -48.1,
+          "max_volume_db": -29.1,
+          "silence_ratio": 0.827122668579627,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh0qea_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ug7n90",
+        "title": "This grass had it coming",
+        "selftext": "",
+        "top_comments": [
+          "a tuft opponent",
+          "Love the feeties",
+          "IT ONLY HAD ITSELF TO BLAME",
+          "https://preview.redd.it/0exdp9n4ur9h1.jpeg?width=346&format=pjpg&auto=webp&s=61f89ae695e41b5ce5ada19741b9fbde266ca2f1 You re next!",
+          "10/10 haymaker from the cat"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ug7n90/this_grass_had_it_coming/",
+        "source_url": "https://v.redd.it/oqmy3hv1vm9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "RealRock_n_Rolla",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1ug7n90.mp4",
+        "overlay_title": true,
+        "score": 11927,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ug7n90.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -53.9,
+          "max_volume_db": -25.4,
+          "silence_ratio": 0.9943310056986917,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ug7n90_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ugiso3",
+        "title": "It only lasted five minutes from delivery to liberation",
+        "selftext": "",
+        "top_comments": [
+          "Get the cat away from the lilies!!",
+          "5 whole minutes???",
+          "THE GRAVITY IS BROKEN!",
+          "A cat that isn't afraid of a balloon? That's a witch.",
+          "https://preview.redd.it/14kpjxyrtt9h1.jpeg?width=325&format=pjpg&auto=webp&s=73b0b32bec2a29be2c02f1e23a375c0082b5d1da"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ugiso3/it_only_lasted_five_minutes_from_delivery_to/",
+        "source_url": "https://v.redd.it/79ghfccmxo9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "davidjschloss",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ugiso3.mp4",
+        "overlay_title": true,
+        "score": 1219,
+        "upvote_ratio": 0.95,
+        "source": "reddit",
+        "original_local_path": "downloads/1ugiso3.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -44.7,
+          "max_volume_db": -10.6,
+          "silence_ratio": 0.8471492552135054,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ugiso3_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ufnvx1",
+        "title": "Horse pretending to drink water",
+        "selftext": "",
+        "top_comments": [
+          "He's just horsing around",
+          "You can never make them drink......",
+          "Horse play",
+          "Maybe he s just washing his lips?",
+          "He just likes the way it feels, okay??"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ufnvx1/horse_pretending_to_drink_water/",
+        "source_url": "https://v.redd.it/7cuo0qyl3i9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "jelly_bean_gangbang",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1ufnvx1.mp4",
+        "overlay_title": true,
+        "score": 9017,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufnvx1.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": null,
+          "max_volume_db": null,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": null,
+          "music_segments": null,
+          "detector_used": "none"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufnvx1_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uf87r8",
+        "title": "When you are too tired to stand up, but also too hungry to stop eating.",
+        "selftext": "",
+        "top_comments": [
+          "Feel you, foal",
+          "Everyone in the UK rn",
+          "ive seen my cat do this with her food bowl",
+          "**My spirit animal on a Sunday morning. Breakfast in bed!**",
+          "Been there"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uf87r8/when_you_are_too_tired_to_stand_up_but_also_too/",
+        "source_url": "https://v.redd.it/2pq1ghnq6f9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "Many-Tackle-5829",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1uf87r8.mp4",
+        "overlay_title": true,
+        "score": 5353,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uf87r8.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -28.3,
+          "max_volume_db": -4.9,
+          "silence_ratio": 0.3031009058147463,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.2074363992172211,
+          "music_segments": [
+            [
+              0.0,
+              2.12
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uf87r8_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uex3ag",
+        "title": "Learning to play catch is hard sometimes",
+        "selftext": "",
+        "top_comments": [
+          "Maybe you d better explain the concept of catch . Again.",
+          "The body of a dog and the mind of a cat.",
+          "https://preview.redd.it/vutr29p8pc9h1.jpeg?width=431&format=pjpg&auto=webp&s=136edf043acf1e0e275f6aebb50dba022f386655",
+          "\"Why are you throwing stuff at me?\"",
+          "This is my husband if he was a dog"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uex3ag/learning_to_play_catch_is_hard_sometimes/",
+        "source_url": "https://v.redd.it/u9medp0o7c9h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "brockington",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1uex3ag.mp4",
+        "overlay_title": true,
+        "score": 1429,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uex3ag.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -25.2,
+          "max_volume_db": -0.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uex3ag_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uedmko",
+        "title": "Cat reflexes not found",
+        "selftext": "",
+        "top_comments": [
+          "Mistakes were made... https://preview.redd.it/977jphcdk89h1.jpeg?width=2100&format=pjpg&auto=webp&s=9c3e39f2013f8d151d7e8b15f9acc4255f27a964",
+          "https://preview.redd.it/l3zamrvtl99h1.png?width=456&format=png&auto=webp&s=7f537b3a19072e96b0d08ee61485a093725ccc33",
+          "Double bonk",
+          "Cat-like reflexes doesn t say much does it",
+          "2 cats 1 ball"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uedmko/cat_reflexes_not_found/",
+        "source_url": "https://v.redd.it/z3vnxmnig89h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "thelonelyasshole",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1uedmko.mp4",
+        "overlay_title": true,
+        "score": 8388,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uedmko.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -44.1,
+          "max_volume_db": -10.9,
+          "silence_ratio": 0.9484923504867872,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uedmko_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uecuyb",
+        "title": "When their dog snores it sounds like they are at a construction site.",
+        "selftext": "",
+        "top_comments": [
+          "That's the fluffiest jackhammer I've ever seen",
+          "Get that dog a cpap asap",
+          "Yeah like he doesnt snore like that too lol",
+          "That little guy has sleep apnea. Get him a sleep study.",
+          "Credit to Lindsay D."
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uecuyb/when_their_dog_snores_it_sounds_like_they_are_at/",
+        "source_url": "https://v.redd.it/gis8j1swa89h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "21MayDay21",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1uecuyb.mp4",
+        "overlay_title": true,
+        "score": 1839,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uecuyb.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -19.6,
+          "max_volume_db": -0.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.7367706919945727,
+          "music_segments": [
+            [
+              0.0,
+              8.14
+            ],
+            [
+              12.02,
+              14.74
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uecuyb_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uctjza",
+        "title": "When your dog likes water too much.",
+        "selftext": "",
+        "top_comments": [
+          "Lmao that's not a dog but a submarine at this point",
+          "He is swimming his dog",
+          "Well, they're following the leash laws, so why not! Lol!",
+          "Gotta be a black lab.",
+          "Aquaderp"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uctjza/when_your_dog_likes_water_too_much/",
+        "source_url": "https://v.redd.it/7zpvtpd8tv8h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "21MayDay21",
+        "duration_sec": 13,
+        "local_path": "out/animals/normalized_videos/normalized_1uctjza.mp4",
+        "overlay_title": true,
+        "score": 16249,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uctjza.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.7,
+          "max_volume_db": -0.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uctjza_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1uc0n4s",
+        "title": "ThunderDog! My poor dog hides from thunder",
+        "selftext": "",
+        "top_comments": [
+          "Poor baby, he must be so scared DX",
+          "Poor baby :(",
+          "Poor terrified baby, the baby needs a Anxiety/ThunderShirt.",
+          "Nice little dog cave she has",
+          "Ear muffs when it happening helps a lot"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1uc0n4s/thunderdog_my_poor_dog_hides_from_thunder/",
+        "source_url": "https://v.redd.it/8nwyfhs76p8h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "EmergencyVast5018",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1uc0n4s.mp4",
+        "overlay_title": true,
+        "score": 1170,
+        "upvote_ratio": 0.98,
+        "source": "reddit",
+        "original_local_path": "downloads/1uc0n4s.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -37.1,
+          "max_volume_db": -16.9,
+          "silence_ratio": 0.5127765987350668,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uc0n4s_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ubwvi9",
+        "title": "Puppy v. Swiffer",
+        "selftext": "",
+        "top_comments": [
+          "Awww look at his 1 widdle white paw",
+          "This is Lucky! https://www.reddit.com/r/puppies/s/M25XdxF8fD",
+          "Should ve named him Michael Pawson with that one white paw https://preview.redd.it/ugk3o7cz8v8h1.jpeg?width=634&format=pjpg&auto=webp&s=7b63e75bd80e97c2fcb3a9c69cd8d83eea6cf77a"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ubwvi9/puppy_v_swiffer/",
+        "source_url": "https://v.redd.it/utfyaof0fo8h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "Jackpot510",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1ubwvi9.mp4",
+        "overlay_title": true,
+        "score": 870,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ubwvi9.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -22.4,
+          "max_volume_db": -0.4,
+          "silence_ratio": 0.5584908766523397,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ubwvi9_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ubdlu4",
+        "title": "Kangaroo trying to swat a bird away like it\u2019s a giant mosquito. \ud83e\udd98\ud83e\udd9c",
+        "selftext": "",
+        "top_comments": [
+          "Pok mon fight IRL",
+          "Pretty sure that's a wallaby.",
+          "Those wittle wiggly paws",
+          "The 2 adversaries finally met: kangaroo vs magpie",
+          "Pre-boxing training!!"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingDerps/comments/1ubdlu4/kangaroo_trying_to_swat_a_bird_away_like_its_a/",
+        "source_url": "https://v.redd.it/p3ufwa7zkj8h1",
+        "subreddit": "AnimalsBeingDerps",
+        "author": "Many-Tackle-5829",
+        "duration_sec": 7,
+        "local_path": "out/animals/normalized_videos/normalized_1ubdlu4.mp4",
+        "overlay_title": true,
+        "score": 755,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ubdlu4.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -25.6,
+          "max_volume_db": -0.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.7085561497326203,
+          "music_segments": [
+            [
+              0.0,
+              5.3
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ubdlu4_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1uh0f00",
+        "title": "More feeder startled",
+        "selftext": "",
+        "top_comments": [
+          "At least he didnt over react",
+          "Same energy as the toaster popping up and making me jump",
+          "little dude was lost in the sauce oml",
+          "Awwww poor kitten",
+          "Absolute orange cat behavior"
+        ],
+        "permalink": "https://www.reddit.com/r/StartledCats/comments/1uh0f00/more_feeder_startled/",
+        "source_url": "https://v.redd.it/syxrexky9t9h1",
+        "subreddit": "StartledCats",
+        "author": "-Alexella-",
+        "duration_sec": 5,
+        "local_path": "out/animals/normalized_videos/normalized_1uh0f00.mp4",
+        "overlay_title": true,
+        "score": 3783,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1uh0f00.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -20.4,
+          "max_volume_db": -0.6,
+          "silence_ratio": 0.5782080696202532,
+          "has_sustained_audio": false,
+          "music_likely": true,
+          "music_ratio": 0.45238095238095233,
+          "music_segments": [
+            [
+              1.6,
+              3.88
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1uh0f00_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ubxicc",
+        "title": "angry blep",
+        "selftext": "went from trying to tear me apart to  b l e p",
+        "top_comments": [
+          ". >=",
+          "Oh no, I love him!",
+          "So funnyyy. Cats are the best",
+          "Better get the f away from this particular blep",
+          "Not a single, uh..."
+        ],
+        "permalink": "https://www.reddit.com/r/Blep/comments/1ubxicc/angry_blep/",
+        "source_url": "https://v.redd.it/47pfspqjjo8h1",
+        "subreddit": "Blep",
+        "author": "tshhrr",
+        "duration_sec": 6,
+        "local_path": "out/animals/normalized_videos/normalized_1ubxicc.mp4",
+        "overlay_title": true,
+        "score": 998,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ubxicc.mp4",
+        "audio_analysis": {
+          "has_audio": false,
+          "mean_volume_db": -62.5,
+          "max_volume_db": -33.4,
+          "silence_ratio": 0.9998393969190429,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ubxicc_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ucaqtj",
+        "title": "Baby Swallows being fed by mama bird",
+        "selftext": "I probably have about 6 Swallow nests surround my house. Most of them have baby birds who just hatched a couple days ago but today I found this nest. The four birds were just sitting in their nest and I went to record a video to show my mom when all of a sudden, right as I hit play, this happens. At first I didn\u2019t realize what happened then I rewatched it and they were waiting for mama to feed them! So cute",
+        "top_comments": [
+          "Sweet sweet SWEEEET",
+          "That s so fascinating"
+        ],
+        "permalink": "https://www.reddit.com/r/AnimalsBeingMoms/comments/1ucaqtj/baby_swallows_being_fed_by_mama_bird/",
+        "source_url": "https://v.redd.it/qu27lsp5ir8h1",
+        "subreddit": "AnimalsBeingMoms",
+        "author": "ResponsibilityDry874",
+        "duration_sec": 3,
+        "local_path": "out/animals/normalized_videos/normalized_1ucaqtj.mp4",
+        "overlay_title": true,
+        "score": 520,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ucaqtj.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -32.3,
+          "max_volume_db": -14.3,
+          "silence_ratio": 0.7487744020685199,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ucaqtj_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1ui3w44",
+        "title": "He chose peace over chaos",
+        "selftext": "",
+        "top_comments": [
+          "I think he might have slipped some nip before the procedure",
+          "I have evolved beyond the need for overstimulation.",
+          "Why you did this to me Dimmy ?",
+          "Meow-ooooooooom",
+          "Catsus"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ui3w44/he_chose_peace_over_chaos/",
+        "source_url": "https://v.redd.it/06buzaxza2ah1",
+        "subreddit": "funnycats",
+        "author": "No-Chair8861",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1ui3w44.mp4",
+        "overlay_title": true,
+        "score": 1524,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ui3w44.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -17.2,
+          "max_volume_db": -2.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              8.66
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ui3w44_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ug52sm",
+        "title": "How to keep a kitten entertained",
+        "selftext": "",
+        "top_comments": [
+          "I think I need one of those for my kitten !",
+          "The mission is very clear, catch the glowing thing.",
+          "Cats love mysterious lights.",
+          "Proves that Greebles are real! Get em champ!",
+          "Bad music. Should have been Abba..."
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ug52sm/how_to_keep_a_kitten_entertained/",
+        "source_url": "https://v.redd.it/ztp3376mbm9h1",
+        "subreddit": "funnycats",
+        "author": "RemarkableBudget5277",
+        "duration_sec": 8,
+        "local_path": "out/animals/normalized_videos/normalized_1ug52sm.mp4",
+        "overlay_title": true,
+        "score": 4457,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ug52sm.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -22.0,
+          "max_volume_db": -6.7,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              8.620000000000001
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ug52sm_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ufyn36",
+        "title": "Where did that come from",
+        "selftext": "",
+        "top_comments": [
+          "If I don t look, it doesn t exist",
+          "Love British shorthairs and their super dense fur!",
+          "This is so adorable!",
+          "\"He don't look anything like me!\"",
+          "How a grey cat grey rocks."
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ufyn36/where_did_that_come_from/",
+        "source_url": "https://v.redd.it/2lx38kxnkk9h1",
+        "subreddit": "funnycats",
+        "author": "Illustrious_Big7639",
+        "duration_sec": 15,
+        "local_path": "out/animals/normalized_videos/normalized_1ufyn36.mp4",
+        "overlay_title": true,
+        "score": 764,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufyn36.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.3,
+          "max_volume_db": -1.9,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 1.0,
+          "music_segments": [
+            [
+              0.0,
+              15.3
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufyn36_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ufgcm0",
+        "title": "I have my own style.",
+        "selftext": "",
+        "top_comments": [
+          "Very clever cat.",
+          "Ah, so this is where all the braincells went to",
+          "This is my Ginger boy...he just seems to understand how things work...",
+          "\"I'm hooman now\"",
+          "This is why all the other oranges need to be bubble wrapped"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ufgcm0/i_have_my_own_style/",
+        "source_url": "https://v.redd.it/dwdlidsvpg9h1",
+        "subreddit": "funnycats",
+        "author": "lopsided_contents",
+        "duration_sec": 11,
+        "local_path": "out/animals/normalized_videos/normalized_1ufgcm0.mp4",
+        "overlay_title": true,
+        "score": 2315,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1ufgcm0.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -14.9,
+          "max_volume_db": -1.6,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9404761904761904,
+          "music_segments": [
+            [
+              0.46,
+              11.52
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ufgcm0_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1ue3kwz",
+        "title": "He loves our peek a boo game",
+        "selftext": "",
+        "top_comments": [
+          "Boop",
+          "TAG! You re it!",
+          "YOU'RE it!!!",
+          "So gentle",
+          "Stupid music needs to be removed"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1ue3kwz/he_loves_our_peek_a_boo_game/",
+        "source_url": "https://v.redd.it/xzlgwtdgs59h1",
+        "subreddit": "funnycats",
+        "author": "LilyBook6382",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1ue3kwz.mp4",
+        "overlay_title": true,
+        "score": 1566,
+        "upvote_ratio": 0.99,
+        "source": "reddit",
+        "original_local_path": "downloads/1ue3kwz.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -16.8,
+          "max_volume_db": -4.7,
+          "silence_ratio": 0.07112766750535832,
+          "has_sustained_audio": true,
+          "music_likely": true,
+          "music_ratio": 0.9272388059701492,
+          "music_segments": [
+            [
+              0.0,
+              9.94
+            ]
+          ],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1ue3kwz_rendered.mp4",
+        "render_path_kind": "no_commentary_source_no_audio"
+      },
+      {
+        "id": "1udj0qa",
+        "title": "Never let them know your next move \ud83d\ude02",
+        "selftext": "",
+        "top_comments": [
+          "Wahooooooooooo",
+          "Woah did not expect that move",
+          "This is why we need plan B",
+          "That cat knows where the magnets are. Smart cat and sick move",
+          "GREAT jump!"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1udj0qa/never_let_them_know_your_next_move/",
+        "source_url": "https://v.redd.it/xqp67xfsn19h1",
+        "subreddit": "funnycats",
+        "author": "Great-Register-8908",
+        "duration_sec": 12,
+        "local_path": "out/animals/normalized_videos/normalized_1udj0qa.mp4",
+        "overlay_title": true,
+        "score": 2502,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1udj0qa.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.5,
+          "max_volume_db": -0.5,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udj0qa_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1udcdvc",
+        "title": "\ud83d\ude3d",
+        "selftext": "",
+        "top_comments": [
+          "The baby is so cute! I can t take it.",
+          "mom: \"wake up! its time to go to kittygarten!\"\\ kitten is eepy",
+          "\"Why are you lying down? Shouldn't you be in college right now?\"",
+          "Why doesn't she let the kitten just sleep bruh",
+          "Bros jus chillin"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1udcdvc/_/",
+        "source_url": "https://v.redd.it/xv3kcomg409h1",
+        "subreddit": "funnycats",
+        "author": "Similar-Print2660",
+        "duration_sec": 10,
+        "local_path": "out/animals/normalized_videos/normalized_1udcdvc.mp4",
+        "overlay_title": true,
+        "score": 940,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1udcdvc.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -18.4,
+          "max_volume_db": -0.8,
+          "silence_ratio": 0.0,
+          "has_sustained_audio": true,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udcdvc_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      },
+      {
+        "id": "1udcjes",
+        "title": "A Quick Friendly Chat \ud83d\ude0a",
+        "selftext": "",
+        "top_comments": [
+          ":3"
+        ],
+        "permalink": "https://www.reddit.com/r/funnycats/comments/1udcjes/a_quick_friendly_chat/",
+        "source_url": "https://v.redd.it/bar1r3r1609h1",
+        "subreddit": "funnycats",
+        "author": "JakeWeber",
+        "duration_sec": 14,
+        "local_path": "out/animals/normalized_videos/normalized_1udcjes.mp4",
+        "overlay_title": true,
+        "score": 717,
+        "upvote_ratio": 1.0,
+        "source": "reddit",
+        "original_local_path": "downloads/1udcjes.mp4",
+        "audio_analysis": {
+          "has_audio": true,
+          "mean_volume_db": -44.7,
+          "max_volume_db": -20.4,
+          "silence_ratio": 0.790627273351177,
+          "has_sustained_audio": false,
+          "music_likely": false,
+          "music_ratio": 0.0,
+          "music_segments": [],
+          "detector_used": "ina"
+        },
+        "rendered_path": "out/animals/rendered_clips/1udcjes_rendered.mp4",
+        "render_path_kind": "no_commentary_source_has_audio"
+      }
+    ],
+    "num_clips": 72,
+    "thumbnail": {
+      "submission_id": "oc4u8s",
+      "path": "thumbnails/oc4u8s_yt.jpg",
+      "original_path": null,
+      "url": "https://external-preview.redd.it/WvJuCSBVdiLerp9Bl_a0g9sZL59C6bGZwdzqTImiCGM.png?auto=webp&s=a6968a46d9e891f61db117764c8be51067853cff"
+    },
+    "output_path": "out/animals/outputs/final.mp4",
+    "youtube_url": "https://www.youtube.com/watch?v=_b_IvUDbENM",
+    "pipeline_errors": [],
+    "channel": "animals"
   }
 ]
