@@ -281,9 +281,10 @@ def render_clip(
     else:
         if has_source_audio:
             path_kind = NO_COMMENTARY_HAS_AUDIO
+            orig_factor = 10 ** (original_volume_db / 20.0)
             filter_complex = (
                 "[0:v]setpts=PTS-STARTPTS,setsar=1[vout];"
-                "[0:a]aresample=48000,asetpts=N/SR/TB[aout]"
+                f"[0:a]volume={orig_factor:.6f},aresample=48000,asetpts=N/SR/TB[aout]"
             )
             cmd = [
                 _ffmpeg_bin(),

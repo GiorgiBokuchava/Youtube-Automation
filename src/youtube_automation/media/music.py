@@ -163,13 +163,23 @@ def _mix_music_into_video(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     video_dur = _probe_duration(video_path)
-    orig_factor = 10 ** (original_duck_db / 20.0)
     music_factor = 10 ** (music_volume_db / 20.0)
 
     music_vol_filter = _build_music_volume_filter(music_factor, audible_segments)
 
+    # In targeted-replacement mode (audible_segments provided), music_likely clips were
+    # already muted at render time — their windows are already silent in the stitched
+    # video.  Applying original_duck_db globally would incorrectly reduce the volume of
+    # every non-music clip.  Only apply ducking in uniform-bed mode (audible_segments=None)
+    # where music and original audio coexist throughout the whole video.
+    if audible_segments is not None:
+        orig_vol_filter = "volume=1.0"
+    else:
+        orig_factor = 10 ** (original_duck_db / 20.0)
+        orig_vol_filter = f"volume={orig_factor:.6f}"
+
     filter_complex = (
-        f"[0:a]volume={orig_factor:.6f},apad[a0];"
+        f"[0:a]{orig_vol_filter},apad[a0];"
         f"[1:a]{music_vol_filter},apad[a1];"
         f"[a0][a1]amix=inputs=2:duration=longest,"
         f"atrim=0:{video_dur}[aout]"
