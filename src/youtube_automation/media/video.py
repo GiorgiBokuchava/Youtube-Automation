@@ -15,6 +15,7 @@ from youtube_automation.reddit.client import create_reddit_client, fetch_feed
 from youtube_automation.storage.sessions import get_used_video_ids
 from youtube_automation.ai.content_policy import is_pg_safe_text
 from youtube_automation.utils.paths import DOWNLOADS
+from youtube_automation.config.env_secrets import get_reddit_cookies_path
 from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 
 logger = logging.getLogger(__name__)
@@ -36,8 +37,8 @@ def _reddit_auth_abort_message(failure_count: int) -> str:
     return (
         f"Reddit video downloads failed {failure_count} times with authentication errors. "
         "yt-dlp reported that account login or cookies are required. "
-        "Check REDDIT_COOKIES_FILE locally or the REDDIT_COOKIES secret in GitHub Actions "
-        "(base64-encoded Netscape cookie file). Expired or wrong-account cookies cause this. "
+        "Check REDDIT_COOKIES in .env (base64 Netscape cookie export). "
+        "Generate with scripts/encode_reddit_cookies_b64.py. "
         "Aborting sourcing early instead of retrying hundreds of posts."
     )
 
@@ -151,7 +152,7 @@ def _yt_dlp_worker(
 ):
     try:
         url = f"https://www.reddit.com{permalink}"
-        cookie_path = os.getenv("REDDIT_COOKIES_FILE")
+        cookie_path = get_reddit_cookies_path()
         opts = {
             "quiet": False,
             "noplaylist": True,
@@ -271,6 +272,9 @@ def source_videos(
     feed_plan: List[Tuple[str, int]] = [
         ("hot", 200),
         ("top_day", 200),
+        ("top_week", 300),
+        ("top_month", 500),
+        ("top_year", 500),
         ("new", 200),
         ("rising", 100),
     ]

@@ -12,12 +12,18 @@ from youtube_automation.sourcing import (
 )
 
 
-def test_instagram_sourcing_enabled_requires_split_and_sources():
+def test_instagram_sourcing_enabled_requires_configured_sources():
     assert not instagram_sourcing_enabled({})
     assert not instagram_sourcing_enabled(
         {
             "source_split": {"instagram": 0.5},
             "instagram": {"hashtags": [], "accounts": []},
+        }
+    )
+    assert instagram_sourcing_enabled(
+        {
+            "source_split": {"instagram": 0},
+            "instagram": {"hashtags": ["cats"]},
         }
     )
     assert instagram_sourcing_enabled(
@@ -52,6 +58,37 @@ def test_source_all_renormalizes_when_instagram_disabled():
     cap_kw = mock_r.call_args_list[0][1]
     assert cap_kw["duration_cap_seconds"] > 0
     mock_i.assert_not_called()
+
+
+def test_source_all_top_up_switches_to_reddit_when_instagram_short():
+    """Zero reddit weight is a suggestion only; Reddit can fill Instagram gaps."""
+    settings = {
+        "channel": {"name": "test"},
+        "final_target_duration": 1,
+        "post": {"over_source_pct": 0},
+        "subreddits": ["pics"],
+        "source_split": {"reddit": 0, "instagram": 1},
+        "instagram": {"hashtags": ["cats"]},
+    }
+
+    instagram_clip = [{"id": "i1", "duration_sec": 10, "source": "instagram"}]
+    reddit_clips = [
+        {"id": "r1", "duration_sec": 25, "source": "reddit"},
+        {"id": "r2", "duration_sec": 30, "source": "reddit"},
+    ]
+
+    with patch("youtube_automation.media.video.source_videos") as mock_r:
+        mock_r.return_value = reddit_clips
+        with patch.object(ig_scraper, "source_instagram_videos") as mock_i:
+            mock_i.side_effect = [instagram_clip, []]
+            clips = source_all_videos(settings)
+
+    ids = [c["id"] for c in clips]
+    assert "i1" in ids
+    assert "r1" in ids
+    assert "r2" in ids
+    assert mock_r.call_count >= 1
+    mock_i.assert_called()
 
 
 def test_source_all_top_up_switches_to_instagram_when_reddit_exhausted():

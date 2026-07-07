@@ -39,6 +39,22 @@ def fetch_feed(subreddit, mode: str, limit: int) -> list:
         return _with_timeout(
             lambda: list(subreddit.top(time_filter="day", limit=limit))
         )
+    if mode == "top_week":
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="week", limit=limit))
+        )
+    if mode == "top_month":
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="month", limit=limit))
+        )
+    if mode == "top_year":
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="year", limit=limit))
+        )
+    if mode == "top_all":
+        return _with_timeout(
+            lambda: list(subreddit.top(time_filter="all", limit=limit))
+        )
     return []
 
 

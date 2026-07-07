@@ -23,8 +23,9 @@ def load_credentials() -> Credentials:
     if not refresh or not client_id or not client_secret:
         raise RuntimeError(
             "Missing or empty YT_REFRESH_TOKEN, YT_CLIENT_ID, or YT_CLIENT_SECRET. "
-            "GitHub Actions: check repository/environment secrets; accidental newlines "
-            "are stripped but values must be non-empty."
+            "GitHub Actions: check DOTENV (full .env) and channel-prefixed keys "
+            "(e.g. ANIMALS_YT_REFRESH_TOKEN); accidental newlines are stripped but "
+            "values must be non-empty."
         )
     return Credentials(
         None,
@@ -53,8 +54,8 @@ def ensure_youtube_refresh_token() -> None:
             "accepted for this client id/secret.\n\n"
             "What to do:\n"
             "1. Re-copy YT_CLIENT_ID, YT_CLIENT_SECRET, and YT_REFRESH_TOKEN from the "
-            "same Google Cloud OAuth 2.0 Client; update GitHub Actions secrets (same "
-            "names on each Environment if you use deployment environments).\n"
+            "same Google Cloud OAuth 2.0 Client; update your .env / DOTENV secret "
+            "(channel-prefixed keys such as ANIMALS_YT_REFRESH_TOKEN).\n"
             "2. In Google Cloud Console → APIs & Services → OAuth consent screen: if "
             "the app is in Testing, refresh tokens often stop working after about seven "
             "days. Publish to Production (or complete verification if Google requires "

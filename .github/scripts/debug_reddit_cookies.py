@@ -1,10 +1,14 @@
-"""Safe Reddit cookie file diagnostics for GitHub Actions (names only, no values)."""
+"""Safe Reddit cookie diagnostics for GitHub Actions (names only, no values)."""
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
+
+import os
+
+from youtube_automation.config.env_secrets import get_reddit_cookies_path, read_b64_env
+from youtube_automation.config.loader import load_env
 
 NETSCAPE_HEADER = "# Netscape HTTP Cookie File"
 
@@ -22,13 +26,19 @@ def _cookie_names(path: Path) -> list[str]:
 
 
 def main() -> None:
-    cookie_file = os.environ.get("REDDIT_COOKIES_FILE", "reddit_cookies.txt")
-    path = Path(cookie_file)
-    print(f"cookie_file={cookie_file}")
-    print(f"exists={path.is_file()}")
-    if not path.is_file():
-        print("::error::Reddit cookie file missing after decode")
+    load_env(os.environ.get("CHANNEL", "animals"))
+    if not read_b64_env("REDDIT_COOKIES"):
+        print("REDDIT_COOKIES unset")
+        sys.exit(0)
+
+    path = get_reddit_cookies_path()
+    if path is None:
+        print("::error::REDDIT_COOKIES set but could not materialize cookie file")
         sys.exit(1)
+
+    print(f"cookie_source=REDDIT_COOKIES")
+    print(f"materialized_path={path}")
+    print(f"exists={path.is_file()}")
 
     data = path.read_bytes()
     print(f"size_bytes={len(data)}")

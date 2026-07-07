@@ -14,7 +14,6 @@ services:
       - ./config:/app/config
       - ./out:/app/out
       - ./downloads:/app/downloads
-      - ./sessions:/app/sessions
       - ./logs:/app/logs
       - ./thumbnails:/app/thumbnails
       - ./assets:/app/assets

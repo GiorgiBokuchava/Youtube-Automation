@@ -33,8 +33,6 @@ jobs:
   run:
     runs-on: ubuntu-latest
 
-    environment: ${{ github.event.inputs.channel || 'animals' }}
-
     concurrency:
       group: youtube-${{ github.event.inputs.channel || 'animals' }}
       cancel-in-progress: false
@@ -47,39 +45,27 @@ jobs:
       # overrides youtube.privacy_status in YAML. If unset, leave empty so CI does
       # not override channel config (same as before YT_PRIVACY was added to this file).
       YT_PRIVACY: ${{ vars.YT_PRIVACY_STATUS }}
-
-      # Reddit API (PRAW)
-      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-      REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
-
-      # YouTube
-      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
-
-      # AI providers
-      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
-      OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
-      NVIDIA_API_KEYS: ${{ secrets.NVIDIA_API_KEYS }}
-      TEXT_GENERATOR_API_KEY: ${{ secrets.TEXT_GENERATOR_API_KEY }}
-
-      # Optional: base64 Netscape cookies in REDDIT_COOKIES (per-environment secret).
-      # When unset, yt-dlp runs without cookies (same as local runs without REDDIT_COOKIES_FILE).
-      REDDIT_COOKIES: ${{ secrets.REDDIT_COOKIES }}
-      REDDIT_COOKIES_FILE: reddit_cookies.txt
       # Optional repo variable REDDIT_PREFLIGHT_URL overrides this default probe URL.
       REDDIT_PREFLIGHT_URL: ${{ vars.REDDIT_PREFLIGHT_URL || 'https://www.reddit.com/r/StartledCats/comments/17cn6g6/' }}
-
-      # Instaloader pickle as single-line standard base64 (no data: URI). Runner has no Firefox profile —
-      # encode your local ``session-<user>`` file (same bytes Instaloader saved). Omit if Instagram sourcing is off.
-      INSTAGRAM_SESSION_B64: ${{ secrets.INSTAGRAM_SESSION_B64 }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           # Full history so the commit step can rebase onto latest main before push.
           fetch-depth: 0
+
+      # Same file as local .env (ANIMALS_*, DASHCAM_*, shared REDDIT_COOKIES, etc.).
+      # Set once: gh secret set DOTENV < .env
+      - name: Materialize .env from repository secret
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -z "${DOTENV}" ]; then
+            echo "::error::Repository secret DOTENV is empty or unset. Copy your local .env: gh secret set DOTENV < .env"
+            exit 1
+          fi
+          printf '%s\n' "${DOTENV}" > .env
+          chmod 600 .env
 
       # ghcr.io/${{ github.repository }}:latest — registry paths must be lowercase.
       - name: Configure container image
@@ -133,7 +119,7 @@ jobs:
           # pip/sync or other root-owned docker steps may have created these on the mount.
           sudo chown -R "$(id -u):$(id -g)" downloads thumbnails out 2>/dev/null || true
 
-      # Same env surface as the app; HOME writable for caches when using --user.
+      # Credentials come from mounted .env via load_env(CHANNEL) — same as local runs.
       - name: Preflight — YouTube OAuth refresh token
         run: |
           docker run --rm \
@@ -144,20 +130,10 @@ jobs:
             -w /app \
             --entrypoint python \
             -e CHANNEL \
-            -e YT_CLIENT_ID \
-            -e YT_CLIENT_SECRET \
-            -e YT_REFRESH_TOKEN \
             "${IMAGE}" \
-            -c "from youtube_automation.youtube.auth import ensure_youtube_refresh_token; ensure_youtube_refresh_token()"
-
-      - name: Write Reddit cookies (decode secret)
-        if: env.REDDIT_COOKIES != ''
-        run: |
-          echo "$REDDIT_COOKIES" | base64 --decode > "$REDDIT_COOKIES_FILE"
-          test -s "$REDDIT_COOKIES_FILE"
+            /app/.github/scripts/preflight_youtube.py
 
       - name: Debug Reddit cookies (safe)
-        if: env.REDDIT_COOKIES != ''
         run: |
           docker run --rm \
             --user "$(id -u):$(id -g)" \
@@ -166,7 +142,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/app" \
             -w /app \
             --entrypoint python \
-            -e REDDIT_COOKIES_FILE \
+            -e CHANNEL \
             "${IMAGE}" \
             /app/.github/scripts/debug_reddit_cookies.py
 
@@ -180,37 +156,31 @@ jobs:
             --entrypoint yt-dlp \
             "${IMAGE}" \
             --version
-          if [ -n "${REDDIT_COOKIES:-}" ] && [ -s "${REDDIT_COOKIES_FILE}" ]; then
-            echo "Cookie preflight: ${REDDIT_COOKIES_FILE} → ${REDDIT_PREFLIGHT_URL}"
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              -e HOME=/tmp \
-              -v "${GITHUB_WORKSPACE}:/app" \
-              -w /app \
-              --entrypoint yt-dlp \
-              "${IMAGE}" \
-              --cookies "/app/${REDDIT_COOKIES_FILE}" --skip-download \
-              "${REDDIT_PREFLIGHT_URL}"
-          else
-            echo "::warning::REDDIT_COOKIES is not set for environment '${CHANNEL}'. Skipping Reddit download preflight — some posts may require cookies and fail during sourcing. Add the REDDIT_COOKIES secret (base64 Netscape cookie file) to this environment if downloads fail."
-          fi
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -e PYTHONPATH=/app/src \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint python \
+            -e CHANNEL \
+            -e REDDIT_PREFLIGHT_URL \
+            "${IMAGE}" \
+            /app/.github/scripts/preflight_reddit_cookies.py
 
       - name: Preflight — Instagram session file (if configured)
         run: |
-          if [ -n "${INSTAGRAM_SESSION_B64:-}" ]; then
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              -e HOME=/tmp \
-              -e PYTHONPATH=/app/src \
-              -v "${GITHUB_WORKSPACE}:/app" \
-              -w /app \
-              --entrypoint python \
-              -e CHANNEL \
-              -e APP_MODE \
-              -e INSTAGRAM_SESSION_B64 \
-              "${IMAGE}" \
-              /app/.github/scripts/preflight_instagram.py
-          fi
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -e PYTHONPATH=/app/src \
+            -v "${GITHUB_WORKSPACE}:/app" \
+            -w /app \
+            --entrypoint python \
+            -e CHANNEL \
+            -e APP_MODE \
+            "${IMAGE}" \
+            /app/.github/scripts/preflight_instagram.py
 
       - name: Run pipeline
         run: |
@@ -224,18 +194,6 @@ jobs:
             -e CHANNEL \
             -e APP_MODE \
             -e YT_PRIVACY \
-            -e REDDIT_CLIENT_ID \
-            -e REDDIT_CLIENT_SECRET \
-            -e REDDIT_USER_AGENT \
-            -e YT_CLIENT_ID \
-            -e YT_CLIENT_SECRET \
-            -e YT_REFRESH_TOKEN \
-            -e GEMINI_API_KEYS \
-            -e OPENROUTER_API_KEYS \
-            -e NVIDIA_API_KEYS \
-            -e TEXT_GENERATOR_API_KEY \
-            -e REDDIT_COOKIES_FILE \
-            -e INSTAGRAM_SESSION_B64 \
             "${IMAGE}" \
             --mode "$APP_MODE" \
             --channel "$CHANNEL" \

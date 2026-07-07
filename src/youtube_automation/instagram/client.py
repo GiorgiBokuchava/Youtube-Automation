@@ -1,45 +1,29 @@
 from __future__ import annotations
 
-import base64
 import logging
 import os
-import pickle
 import time
 from pathlib import Path
 
 import instaloader
-from instaloader.instaloader import (
-    get_default_session_filename,
-    get_legacy_session_filename,
-)
 
-from youtube_automation.config.loader import BASE_DIR
+from youtube_automation.config.env_secrets import (
+    _INSTAGRAM_HELP,
+    get_instagram_session_path,
+    read_b64_env,
+)
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SESSION_PROJECT = Path("sessions") / "instagram.session"
 SESSION_USERNAME_DEFAULT = "instagram"
 
 _SESSION_HELP = (
-    "Instagram session (pickle from Instaloader’s ``save_session``): "
-    "Browser login and Instaloader are different: CLI password login often returns "
-    "``Unexpected null login result`` while instagram.com works. "
-    "Workaround — ``pip install browser_cookie3`` (or ``pip install -e '.[instagram]'`` from the repo root), then "
-    "``python -m instaloader --load-cookies edge`` (Firefox/Chrome use ``firefox`` / ``chrome``). "
-    "Do not pass ``--login`` together with ``--load-cookies``; use the browser profile where you are already logged in. "
-    "Firefox: with multiple profiles, Instaloader may read the wrong one — give ``--cookiefile`` "
-    "(short ``-B``) path to that profile's ``cookies.sqlite`` (Firefox ``about:support`` shows “Profile Folder”). "
-    "On success Instaloader saves ``session-<user>`` under its data directory. "
-    "If you only see graphql 401 / ``wait a few minutes``, wait and retry, try another network; or set "
-    "``INSTAGRAM_SKIP_TEST_LOGIN=1`` to skip the hashtag/profile session probe (downloads may still fail). "
-    "When ``INSTAGRAM_SESSION_B64`` is set (e.g. CI), it is decoded and written to ``sessions/instagram.session`` "
-    "on each run and takes precedence over any existing file there, unless "
-    "``INSTAGRAM_PREFER_DISK_SESSION=1`` — then an existing validated on-disk session is used first. "
-    "If Instagram returns ``checkpoint_required``, complete the in-app or web security challenge, then export a "
-    "fresh session from a trusted network (home/mobile); datacenter IPs often trigger checkpoints. "
-    "Without base64, session path order is: ``INSTAGRAM_SESSION_PATH``, ``sessions/instagram.session``, then "
-    "``%LOCALAPPDATA%\\\\Instaloader\\\\session-<user>`` on Windows. "
-    "YAML ``instagram.session_username`` must match the session’s account."
+    "Instagram requires INSTAGRAM_SESSION_B64 in .env (base64 Instaloader session pickle). "
+    "Generate: python scripts/encode_instagram_session_b64.py --cookies path/to/cookies.txt --env. "
+    "YAML instagram.session_username must match the logged-in account. "
+    "If Instagram returns checkpoint_required, complete the security check in app/web, "
+    "export a fresh session, and update .env. "
+    "INSTAGRAM_SKIP_TEST_LOGIN=1 skips the probe only (downloads may still fail)."
 )
 
 
@@ -47,171 +31,23 @@ def _env_truthy_flag(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
 
 
-def project_session_path() -> Path:
-    """Copy Instaloader’s ``session-<user>`` here for a stable repo-local path."""
-    return BASE_DIR / DEFAULT_SESSION_PROJECT
-
-
-def _validate_instaloader_session_pickled_dict(path: Path) -> None:
-    """
-    Pickle matches ``requests.utils.dict_from_cookiejar``: flat str→str cookies.
-
-    Instaloader loads with ``cookies.get_dict()['csrftoken']``.
-    """
-    try:
-        data = pickle.loads(path.read_bytes())
-    except Exception as exc:
-        raise RuntimeError(
-            f"Session pickle is unreadable: {exc}\n{_SESSION_HELP}"
-        ) from exc
-
-    if not isinstance(data, dict):
-        raise RuntimeError(
-            f"Session pickle must be a dict (Instaloader cookie jar export), "
-            f"got {type(data).__name__}.\n{_SESSION_HELP}"
-        )
-
-    csrftoken = data.get("csrftoken")
-    sessionid = data.get("sessionid")
-    if not str(csrftoken or "").strip():
-        raise RuntimeError(
-            "Invalid session pickle: missing or empty ``csrftoken``. "
-            "Restore a fresh file from ``python -m instaloader --login YOUR_USER``. "
-            f"{_SESSION_HELP}"
-        )
-    if not str(sessionid or "").strip():
-        raise RuntimeError(
-            "Invalid session pickle: empty ``sessionid``. "
-            "Instagram may need cooldown or a fresh Instaloader login. "
-            f"{_SESSION_HELP}"
-        )
-
-
-def _instagram_b64_from_env(env_var: str) -> str:
-    raw = os.environ.get(env_var, "").strip()
-    if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "'\"":
-        raw = raw[1:-1].strip()
-    return "".join(raw.split())
-
-
-def _decode_b64_session_bytes(b64: str) -> bytes:
-    if not b64:
-        raise RuntimeError(f"Empty session base64. {_SESSION_HELP}")
-    errors: list[Exception] = []
-    for validate in (True, False):
-        try:
-            return base64.b64decode(b64, validate=validate)
-        except Exception as exc:
-            errors.append(exc)
-    raise RuntimeError(
-        f"INSTAGRAM_SESSION_B64 is not valid base64 ({errors[-1]}). {_SESSION_HELP}"
-    ) from errors[-1]
-
-
-def decode_session(*, env_var: str = "INSTAGRAM_SESSION_B64") -> Path:
-    """Decode B64 and write ``sessions/instagram.session`` (same as resolve when B64 is set)."""
-    b64 = _instagram_b64_from_env(env_var)
-    if not b64:
-        raise RuntimeError(f"{env_var} is unset or empty. {_SESSION_HELP}")
-    return _materialize_b64_to_project_session(b64)
-
-
-def _materialize_b64_to_project_session(b64: str) -> Path:
-    decoded = _decode_b64_session_bytes(b64)
-    dest = project_session_path()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(decoded)
-    try:
-        os.chmod(dest, 0o600)
-    except OSError:
-        pass
-    _validate_instaloader_session_pickled_dict(dest)
-    logger.info(
-        "Wrote Instaloader session to %s (%d bytes)",
-        dest,
-        len(decoded),
-    )
-    return dest
-
-
-def _disk_candidates(username: str) -> list[Path]:
-    paths: list[Path] = []
-    custom = os.environ.get("INSTAGRAM_SESSION_PATH", "").strip()
-    if custom:
-        paths.append(Path(os.path.expandvars(os.path.expanduser(custom))))
-    paths.append(project_session_path())
-    paths.append(Path(get_default_session_filename(username)))
-    paths.append(Path(get_legacy_session_filename(username)))
-    paths.append(Path.cwd() / f"session-{username}")
-    seen: set[str] = set()
-    out: list[Path] = []
-    for p in paths:
-        key = str(p.resolve()) if p.is_absolute() else str(p)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(p)
-    return out
-
-
 def resolve_instagram_session_path(
     *,
     env_var: str = "INSTAGRAM_SESSION_B64",
     session_username: str | None = None,
 ) -> Path:
-    """
-    Path Instaloader can ``load_session_from_file`` from.
-
-    **Precedence**: when ``INSTAGRAM_SESSION_B64`` is set, decode and write ``sessions/instagram.session``
-    (overwriting any stale file), unless ``INSTAGRAM_PREFER_DISK_SESSION=1`` and a validated on-disk file exists first.
-    Without base64: first validated path from ``INSTAGRAM_SESSION_PATH``, project ``sessions/instagram.session``,
-    then Instaloader defaults.
-    """
-    b64 = _instagram_b64_from_env(env_var)
-    uname = (session_username or SESSION_USERNAME_DEFAULT).strip() or SESSION_USERNAME_DEFAULT
-
-    if b64 and _env_truthy_flag("INSTAGRAM_PREFER_DISK_SESSION"):
-        for candidate in _disk_candidates(uname):
-            if candidate.is_file():
-                logger.info(
-                    "Instagram: INSTAGRAM_PREFER_DISK_SESSION — using on-disk session %s (%d bytes) "
-                    "(skipping %s overwrite)",
-                    candidate,
-                    candidate.stat().st_size,
-                    env_var,
-                )
-                _validate_instaloader_session_pickled_dict(candidate)
-                return candidate
-        logger.warning(
-            "Instagram: INSTAGRAM_PREFER_DISK_SESSION set but no valid on-disk session — falling back to %s",
-            env_var,
-        )
-
-    if b64:
-        logger.info(
-            "Instagram: %s set — materializing session to %s (%d-char b64)",
-            env_var,
-            project_session_path(),
-            len(b64),
-        )
-        return _materialize_b64_to_project_session(b64)
-
-    for candidate in _disk_candidates(uname):
-        if candidate.is_file():
-            logger.info(
-                "Instagram: using on-disk session file %s (%d bytes)",
-                candidate,
-                candidate.stat().st_size,
-            )
-            _validate_instaloader_session_pickled_dict(candidate)
-            return candidate
-
-    raise RuntimeError(
-        "No Instagram session file found and "
-        f"{env_var} is unset or empty. Checked: "
-        + ", ".join(str(p) for p in _disk_candidates(uname))
-        + f". {_SESSION_HELP}"
-    )
+    """Return ephemeral session path decoded from ``INSTAGRAM_SESSION_B64`` in .env."""
+    del session_username  # kept for API compatibility; username comes from YAML at load time
+    if env_var != "INSTAGRAM_SESSION_B64":
+        raise RuntimeError(f"Unsupported env_var {env_var!r}; use INSTAGRAM_SESSION_B64.")
+    if not read_b64_env(env_var):
+        raise RuntimeError(f"{env_var} is unset or empty. {_INSTAGRAM_HELP}")
+    try:
+        path = get_instagram_session_path()
+    except RuntimeError as exc:
+        raise RuntimeError(f"{exc}\n{_SESSION_HELP}") from exc
+    logger.info("Instagram: session ready from %s (%d bytes b64)", env_var, len(read_b64_env(env_var)))
+    return path
 
 
 def _bare_instaloader(download_dir: Path | None) -> instaloader.Instaloader:
@@ -381,10 +217,9 @@ def _load_session_and_probe(
             )
         if "401" in detail or "unauthorized" in detail or "few minutes" in detail:
             hints.append(
-                "Instagram 401 / wait — cool down and retry with a refreshed Instaloader session file "
-                "or INSTAGRAM_SESSION_B64. From datacenter IPs (e.g. GitHub Actions) graphql may stay "
-                "blocked; try refreshing the session from your home network, or set "
-                "INSTAGRAM_SKIP_TEST_LOGIN=1 to skip the probe (downloads can still fail)."
+                "Instagram 401 / wait — cool down and refresh INSTAGRAM_SESSION_B64 in .env. "
+                "Datacenter IPs (GitHub Actions) often struggle; export from home network. "
+                "INSTAGRAM_SKIP_TEST_LOGIN=1 skips the probe only."
             )
         if "checkpoint_required" in detail:
             hints.append(

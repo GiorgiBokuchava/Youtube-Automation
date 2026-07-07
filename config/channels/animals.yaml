@@ -53,18 +53,19 @@ subreddits:
 
 post:
   min_duration: 1
-  max_duration: 15
+  max_duration: 7
   min_score: 350
   min_ratio: 0.8
 
-# Blend Reddit + Instagram for animals channel (Instagram requires session env).
+# Suggested Reddit/Instagram mix (initial budget + interleave). Either source may
+# fill remaining duration when the other falls short (Instagram requires session env).
 source_split:
-  reddit: 0.85
-  instagram: 0.15
+  reddit: 0
+  instagram: 1
 
 instagram:
   min_duration: 1
-  max_duration: 15
+  max_duration: 7
   min_likes: 2500
   # Must match `python -m instaloader --login ...` handle (Instaloader session is per-user).
   session_username: argon54637

@@ -29,6 +29,10 @@ def load_env(channel: str | None = None) -> None:
     if ch_nested.is_file():
         load_dotenv(ch_nested, override=True)
 
+    from youtube_automation.config.env_secrets import materialize_env_secrets
+
+    materialize_env_secrets()
+
 
 def _load_yaml(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as f:

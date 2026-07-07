@@ -10,10 +10,7 @@ INSTAGRAM_UNAVAILABLE_KEY = "__instagram_unavailable__"
 
 
 def _instagram_config_active(settings: dict) -> bool:
-    """True when YAML requests Instagram (positive split and hashtags or accounts)."""
-    split = float((settings.get("source_split") or {}).get("instagram", 0.0))
-    if split <= 0:
-        return False
+    """True when YAML configures Instagram hashtags or accounts."""
     ig = settings.get("instagram") or {}
     hashtags = [h for h in (ig.get("hashtags") or []) if str(h).strip()]
     accounts = [
@@ -121,8 +118,9 @@ def _interleave_weighted(
 
 def source_all_videos(settings: dict) -> List[dict]:
     """
-    Merge Reddit and Instagram clips according to ``source_split`` and shared
-    duration/over-source settings.
+    Merge Reddit and Instagram clips. ``source_split`` suggests the initial
+    per-source budget and final interleave mix; any configured source may fill
+    remaining duration when another falls short.
     """
     from youtube_automation.instagram.scraper import source_instagram_videos
     from youtube_automation.media.video import source_videos
@@ -208,8 +206,8 @@ def source_all_videos(settings: dict) -> List[dict]:
 
     total_duration = _duration(clips_r) + _duration(clips_i)
     remaining = max(0, effective_target - total_duration)
-    can_reddit = bool(r_w > 0 and subs)
-    can_ig = bool(i_w > 0 and instagram_sourcing_enabled(settings))
+    can_reddit = bool(subs)
+    can_ig = bool(instagram_sourcing_enabled(settings))
 
     # Top-up pass: if one source cannot satisfy its split, fill the remaining
     # target duration by trying the other available source(s).

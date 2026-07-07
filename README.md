@@ -1,224 +1,131 @@
 # Youtube-Automation
 
-Automated pipeline for YouTube compilations: pull short clips from Reddit (and optionally Instagram), optionally generate AI commentary with TTS, normalize and render each clip, stitch with background music, and upload via the YouTube Data API. A separate **shorts** mode builds vertical uploads from the same stack.
+Builds YouTube compilation videos from Reddit and Instagram clips: download, normalize, optional commentary, background music, stitch, upload.
 
-## Requirements
+## Setup
 
-- **Python** 3.10+
-- **FFmpeg** and **ffprobe** on `PATH`
-- **Reddit**: PRAW credentials; for many subreddits, a Netscape-format cookie file for yt-dlp
-- **YouTube**: Google Cloud OAuth client with YouTube Data API enabled, plus a refresh token for uploads
-- **AI (optional)** API keys for Gemini, OpenRouter, NVIDIA NIM, or Text Generator, depending on which models you enable
-
-**Runtime split:** develop and run on your machine with a **venv**; **Docker** is the canonical runtime for GitHub Actions (and optional CI parity checks). The same `Dockerfile` defines what runs in CI.
-
-## Local setup (venv)
+**Requires:** Python 3.10+, FFmpeg/ffprobe, credentials in `.env` (see below).
 
 ```bash
-python -m venv .venv
+python -m venv .venv && .venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+pip install -e ".[dev]"
+pip install -e ".[music-detection]"                # optional; config/base.yaml
 ```
 
-Activate the venv (`.\.venv\Scripts\activate` on Windows, `source .venv/bin/activate` on Unix), then:
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Development dependencies (pytest, pytest-mock):
-
-```bash
-python -m pip install -e ".[dev]"
-```
-
-Optional Instaloader cookie loading (`browser_cookie3`) for Instagram:
-
-```bash
-python -m pip install -e ".[instagram]"
-```
-
-Optional CNN-based music/speech detection (`inaSpeechSegmenter`):
-
-```bash
-python -m pip install -e ".[music-detection]"
-```
-
-On **Linux** (including WSL), PyPI pulls GPU TensorFlow extras — use the same CPU workaround as the Dockerfile:
-
-```bash
-python -m pip install -e .
-python -m pip install "tensorflow>=2.15,<2.21" onnxruntime pandas scikit-image pyannote.core Pyro4 pytextgrid soundfile
-python -m pip install "inaSpeechSegmenter>=0.7,<0.8" --no-deps
-```
-
-> **Note:** `inaSpeechSegmenter` pulls in TensorFlow (~500 MB).  Without it the pipeline uses the legacy FFmpeg volume/silence heuristic automatically (controlled by `audio.music_detection.fallback_on_missing` in `base.yaml`).
-
-## Configuration
-
-| Location | Role |
-|----------|------|
-| `config/base.yaml` | Defaults merged into every channel |
-| `config/channels/<name>.yaml` | Per-channel overrides (subreddits, scoring, commentary, publishing) |
-| `config/shorts/<name>.yaml` | Shorts-specific overrides when using shorts mode |
-
-Loading logic is in `youtube_automation.config.loader.load_settings`. Used post IDs are tracked in `config/used_<channel>.json` (pruned using `used_horizon_days`). Add a channel by creating `config/channels/<name>.yaml` and passing `--channel <name>`.
-
-## Music detection
-
-The pipeline analyses each source clip's audio before rendering.  When a clip is classified as *music_likely* its original audio is muted and the safe background music bed is gated in for exactly that segment (controlled by `music.replace_detected_music`).
-
-Two detection backends are available, configured under `audio.music_detection` in any YAML:
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `enabled` | `true` | Set to `false` to disable detection entirely (no muting). |
-| `engine` | `ina` | `ina` uses inaSpeechSegmenter; `ffmpeg` uses the legacy heuristic. |
-| `vad_engine` | `smn` | `smn` = speech/music/noise; `sm` = speech/music only (faster). |
-| `music_ratio_threshold` | `0.3` | Minimum fraction of the clip that must be labelled *music* to flag it. |
-| `fallback_on_missing` | `true` | Use FFmpeg heuristic when inaSpeechSegmenter is not installed. |
-| `fallback_on_error` | `false` | Use FFmpeg heuristic when the ina detector raises.  Default false: safer to keep original audio on unexpected errors. |
-
-**inaSpeechSegmenter** (`engine: ina`) classifies audio frames as `music`, `speech`, `noise`, or `noEnergy`.  Only frames labelled `music` count toward the ratio — loud speech, barking, engine noise and crowd noise are not muted.  The CNN models are loaded once per run and cached across all clips.
-
-**FFmpeg heuristic** (`engine: ffmpeg`) uses `volumedetect` and `silencedetect` to approximate music likelihood.  It is fast and requires no extra installation but produces more false positives on loud non-music content.
-
-Both engines always record the FFmpeg volume/silence metrics in `AudioAnalysis`; pass `--debug` to see per-clip results including `music_ratio`, `detector_used`, and muting decisions.
-
-## Environment
-
-| Variable | Purpose |
-|----------|---------|
-| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | PRAW |
-| `REDDIT_COOKIES_FILE` | Optional Netscape cookies path for yt-dlp (local) |
-| `REDDIT_COOKIES` | Optional GitHub Environment secret: base64 Netscape cookie file → `reddit_cookies.txt` in CI |
-| `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | YouTube OAuth for uploads (values are trimmed) |
-| `YT_PRIVACY` | Optional: `public`, `private`, or `unlisted`; overrides YAML `youtube.privacy_status` (e.g. in CI) |
-| `GEMINI_API_KEYS`, `OPENROUTER_API_KEYS`, `TEXT_GENERATOR_API_KEY` | Text/TTS providers |
-
-Resolution order: `.env` → channel-prefixed vars (e.g. `ANIMALS_YT_CLIENT_ID`) → `.env.<channel>` → `.env.channels/<channel>.env`.
-
-## CLI
+## Usage
 
 ```bash
 python -m youtube_automation.app --mode pipeline --channel animals
+python -m youtube_automation.app --mode pipeline --channel animals --dry-run --debug
 ```
 
-| Mode | Behavior |
-|------|-----------|
-| `pipeline` | Source → render → optional upload |
-| `videos` | Source clips only (Reddit + Instagram per `source_split`; same budgeting/filters as pipeline) |
-| `thumbnail` | Generate thumbnail only |
-| `shorts` | Shorts pipeline (requires shorts config) |
-| `ai-preview` | Call real AI for YouTube title/description/hashtags only; print the full metadata prompt and model output. No downloads, commentary, render, or upload. |
+| Mode | Description |
+|------|-------------|
+| `pipeline` | Full run (`--dry-run` skips upload) |
+| `videos` | Download clips only |
+| `shorts` | Vertical shorts |
+| `thumbnail` / `ai-preview` | Thumbnail or metadata only |
 
-Useful flags: `--dry-run` (no upload), `--cleanup` (remove generated media after a successful run), `--target-duration-minutes`, `--no-commentary`, `--no-music`, `--no-ai-metadata`, `--core-only`, `--debug`.
+Flags: `--cleanup`, `--no-music`, `--no-commentary`, `--target-duration-minutes`, `--debug`.
 
-Tune metadata prompts (API keys required). By default, preview uses channel YAML only (no clip titles). To mirror a real compile, paste sourced post titles into `publishing.ai_preview.sample_clips` (optional; the pipeline never uses this block):
+Config: `config/base.yaml` + `config/channels/<name>.yaml`. Run with `--channel <name>`.
+
+## Credentials (`.env`)
+
+Load order: `.env` → channel prefix mapping → `.env.<channel>`.
+
+**Channel prefixes:** vars like `ANIMALS_REDDIT_CLIENT_ID` become `REDDIT_CLIENT_ID` when you run `--channel animals`. Same pattern for `DASHCAM_*`. Shared vars (`REDDIT_COOKIES`, `INSTAGRAM_SESSION_B64`) stay unprefixed.
+
+### Reddit API (listing posts — PRAW)
+
+Used to browse subreddits and read metadata. **Not** enough to download videos.
+
+1. [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) → **create app** → type **script**
+2. Set in `.env` (per channel or global):
+
+```env
+ANIMALS_REDDIT_CLIENT_ID=...
+ANIMALS_REDDIT_CLIENT_SECRET=...
+ANIMALS_REDDIT_USER_AGENT=mybot/1.0 by u/yourusername
+```
+
+### Reddit cookies (downloading videos — yt-dlp)
+
+Required for many video posts (`Account authentication is required` without them). **Separate from PRAW.** Export a Netscape cookie file while logged into [reddit.com](https://www.reddit.com), then base64-encode it for `.env`:
 
 ```bash
-python -m youtube_automation.app --mode ai-preview --channel animals
+python scripts/encode_reddit_cookies_b64.py --cookies path/to/cookies.txt --env --copy
 ```
 
-Output is written to `out/<channel>/ai_preview/latest.txt` (and a timestamped copy). The console only shows model attempts and errors.
+```env
+REDDIT_COOKIES=...   # one line; trailing = is normal, no quotes needed
+```
 
-**Where prompts and settings live**
+Refresh when downloads start failing auth again.
 
-| What | Location |
-|------|----------|
-| System rules, tone tables, output format (`TITLE:` / `DESCRIPTION:` / `HASHTAGS:`) | `src/youtube_automation/publishing/ai_metadata.py` |
-| Tone, audience, CTA, max hashtags | `config/channels/<name>.yaml` → `publishing.ai_metadata` |
-| Optional real clip titles for preview only | `config/channels/<name>.yaml` → `publishing.ai_preview.sample_clips` |
-| Defaults | `config/base.yaml` → `publishing.ai_metadata` |
+### YouTube upload
 
-Edit those YAML fields and re-run; use `--debug` if you need verbose provider logs.
+1. [Google Cloud Console](https://console.cloud.google.com/) → project → enable **YouTube Data API v3**
+2. **APIs & Services → Credentials** → **OAuth 2.0 Client** (Desktop app) → copy client id + secret
+3. Generate a **refresh token** with scope `https://www.googleapis.com/auth/youtube.upload` ([OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) with your client, or a one-off local OAuth script)
+4. Put all three in `.env` (per channel):
 
-Partial failures (commentary, TTS, per-clip render) are logged and stored on the session under `pipeline_errors`.
+```env
+ANIMALS_YT_CLIENT_ID=...
+ANIMALS_YT_CLIENT_SECRET=...
+ANIMALS_YT_REFRESH_TOKEN=...
+```
 
-## GitHub Actions (Docker)
+If upload fails with `invalid_grant`, the OAuth app may still be in **Testing** (tokens expire ~weekly) — publish the consent screen or regenerate the refresh token.
 
-**Order:** run [`.github/workflows/build-image.yml`](.github/workflows/build-image.yml) first so `ghcr.io/<owner>/<repo>:latest` exists, then [`.github/workflows/publish.yml`](.github/workflows/publish.yml). Publish **pulls** that image (no local build, pip, or ffmpeg install on the runner).
+### AI (metadata / commentary)
 
-Publish runs preflight steps and the pipeline **inside the container**, with the repo mounted at `/app` so `config/used_*.json` updates land in the workspace for the commit step. Set repository or environment secrets as documented in the workflow file. Optional Actions variable `YT_PRIVACY_STATUS` overrides YAML privacy when set. Jobs can target per-channel GitHub Environments so credentials stay isolated.
+Only needed if those features are enabled in YAML. Comma-separate multiple keys for rotation.
 
-### Container image on GHCR
+| Variable | Where to get it |
+|----------|-----------------|
+| `GEMINI_API_KEYS` | [Google AI Studio](https://aistudio.google.com/apikey) |
+| `OPENROUTER_API_KEYS` | [openrouter.ai](https://openrouter.ai/) |
+| `NVIDIA_API_KEYS` | [NVIDIA NIM / build](https://build.nvidia.com/) |
+| `TEXT_GENERATOR_API_KEY` | Your Text Generator.io account |
 
-[`.github/workflows/build-image.yml`](.github/workflows/build-image.yml) builds the Dockerfile **`runtime`** stage and pushes to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry):
+Example: `ANIMALS_OPENROUTER_API_KEYS=sk-or-...,sk-or-...`
 
-- `ghcr.io/<owner>/<repo>:latest`
-- `ghcr.io/<owner>/<repo>:<commit-sha>`
+### Instagram
 
-It uses Docker Buildx and GitHub Actions layer caching. It runs on pushes to `main` when image-related files change, or via **Actions → Build Docker image → Run workflow**.
+Enable in channel YAML (`source_split.instagram`, `instagram.hashtags` / `accounts`, `instagram.session_username`).
 
-Local development does not use GHCR. Build on your machine with `docker compose build` or `docker build` (see below).
-
-If CI shows `invalid_grant` on token refresh, typical causes are OAuth app still in **Testing** (refresh tokens expire ~weekly), mismatched client vs refresh token, or stale secrets. The workflow includes a YouTube OAuth preflight so bad tokens fail early.
-
-## Docker (CI / optional parity)
-
-You do not need Docker for day-to-day development. Use it to reproduce the CI environment or debug container-only issues.
-
-Build the runtime image:
+Instaloader uses a **session pickle** built from browser cookies. Base64-encode it for one shared secret (nothing is written under `sessions/`):
 
 ```bash
-docker compose build
-# or: docker build -t youtube-automation:local .
+python scripts/encode_instagram_session_b64.py --cookies path/to/cookies.txt --env --copy
 ```
 
-Run the same CLI as locally (entrypoint is `python -m youtube_automation.app`). On Linux/macOS, match the host user when bind-mounting the repo. On Windows, omit `--user` / `-e HOME=/tmp`.
+```env
+INSTAGRAM_SESSION_B64=...   # one line; trailing = is normal, no quotes needed
+```
+
+Re-run the encode script after `login_required` or a security checkpoint.
+
+## CI
+
+1. **Build Docker image** → `ghcr.io/<owner>/<repo>:latest`
+2. **Publish video** — upload your entire local `.env` as one repository secret:
 
 ```bash
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  -e HOME=/tmp \
-  -v "${PWD}:/app" \
-  -w /app \
-  youtube-automation:local \
-  --mode pipeline --channel animals --dry-run
+gh secret set DOTENV < .env
 ```
 
-[`compose.yaml`](compose.yaml) mirrors CI bind mounts (`config/`, `out/`, `downloads/`, `sessions/`, etc.) for optional local parity:
+The workflow writes that file on the runner and uses the same channel-prefix rules as local (`ANIMALS_*`, `DASHCAM_*`, shared `REDDIT_COOKIES`, `INSTAGRAM_SESSION_B64`). No per-channel GitHub Environments or duplicate secrets.
 
-```bash
-docker compose run --rm app --mode pipeline --channel animals --dry-run
-```
+Optional repo **variables** (not in `.env`): `YT_PRIVACY_STATUS`, `REDDIT_PREFLIGHT_URL`.
 
-To run pytest the same way CI could:
-
-```bash
-docker compose run --rm test
-```
-
-## Troubleshooting
-
-**Some clips fail to render but the video completes** — Individual clip failures are skipped if at least one clip renders. Inspect the latest session JSON (`config/used_<channel>.json`) under `pipeline_errors` for `clip_id`, paths, and FFmpeg stderr when present.
-
-**FFmpeg** — Log lines like `render_clip clip=… path_kind=…` show which render path ran. Errors distinguish preflight (bad input), ffmpeg (non-zero exit), and output validation (empty or no video stream after encode).
-
-**Instagram `checkpoint_required` / 400 on GraphQL** — Meta wants a security check before API use. Complete it in the Instagram app or on the web while logged in as the same account, then export a **fresh** Instaloader session from a normal network (not a datacenter), base64 it into `INSTAGRAM_SESSION_B64`, and re-run. For emergencies only, set `INSTAGRAM_SKIP_TEST_LOGIN=1` to skip the session probe (sourcing may still fail). Optional: `INSTAGRAM_PREFER_DISK_SESSION=1` prefers an existing validated `sessions/instagram.session` over rewriting from the secret.
-
-**Reddit cookies work locally but fail in GitHub Actions** — PRAW (`REDDIT_CLIENT_*`) and yt-dlp cookies (`REDDIT_COOKIES` / `REDDIT_COOKIES_FILE`) are separate. The publish workflow optionally decodes `REDDIT_COOKIES` into `reddit_cookies.txt` and runs a **non-blocking** download preflight against a channel-specific URL (`REDDIT_PREFLIGHT_URL`: dashcam uses a known Roadcam clip, animals uses StartledCats). A preflight warning does not stop the pipeline; individual posts can still fail or succeed during sourcing. Cookies exported on your home PC often work with yt-dlp locally but fail on Actions because Reddit may distrust the **datacenter IP**, treat the session as a new location, or require re-login. Refresh the Netscape cookie file from a normal browser session, re-encode it into the environment `REDDIT_COOKIES` secret, and re-run. If only some subreddits fail, you can omit cookies and rely on public posts (dashcam often works without them). The inspect step in CI prints cookie **names** only, never values.
-
-## Repository layout
-
-- `src/youtube_automation/` — application code
-- `tests/` — unit, contract, integration, and pipeline tests
-- `config/` — YAML defaults and channel definitions
+`docker compose build` && `docker compose run --rm app --mode pipeline --channel animals --dry-run`
 
 ## Tests
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m pytest
-```
-
-By default, tests marked `integration` (live APIs, network) are skipped. To run them:
-
-```bash
-python -m pytest -m integration
-```
-
-Optional CI parity:
-
-```bash
-docker compose run --rm test
+pip install -e ".[dev]"
+pytest
 ```
