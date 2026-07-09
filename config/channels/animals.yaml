@@ -3,7 +3,7 @@ channel:
   niche: funny animals & pets
   youtube_channel_id: UCXXXX
 
-final_target_duration: 12
+final_target_duration: 10
 
 subreddits:
   - rarepuppers
@@ -53,15 +53,15 @@ subreddits:
 
 post:
   min_duration: 1
-  max_duration: 7
+  max_duration: 8
   min_score: 350
   min_ratio: 0.8
 
 # Suggested Reddit/Instagram mix (initial budget + interleave). Either source may
 # fill remaining duration when the other falls short (Instagram requires session env).
 source_split:
-  reddit: 0
-  instagram: 1
+  reddit: 1
+  instagram: 0
 
 instagram:
   min_duration: 1
@@ -205,6 +205,14 @@ music:
   fade_out_sec: 0.8
   track_gap_sec: 2.5 # Gap between music tracks
   max_track_repeats: 1 # Don't repeat same track in one video
+
+  adaptive_volume:
+    enabled: true
+    target_db: -18.0
+    compensation_factor: 0.5
+    min_music_db: -26.0
+    max_music_db: -10.0
+    silence_threshold_db: -50.0
 
 publishing:
   ai_metadata:

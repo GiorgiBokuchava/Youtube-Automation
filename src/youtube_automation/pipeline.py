@@ -315,21 +315,37 @@ def _render_one_clip(idx: int, clip: dict, settings: dict, rendered_dir: Path) -
         }
 
 
+def _adaptive_music_db(
+    clip_mean_db: float,
+    *,
+    music_volume_db: float,
+    target_db: float,
+    compensation_factor: float,
+    min_music_db: float,
+    max_music_db: float,
+) -> float:
+    """Return the music bed level (dB) that compensates for *clip_mean_db*.
+
+    The gap between the clip's measured loudness and *target_db* is partially
+    filled by adjusting the music level.  A *compensation_factor* of 1.0 means
+    the music fully covers the gap; 0.5 means it covers half.  The result is
+    clamped to [min_music_db, max_music_db] so the bed never becomes inaudible
+    or ear-splittingly loud on extreme clips.
+    """
+    gap = target_db - clip_mean_db
+    result = music_volume_db + gap * compensation_factor
+    return max(min_music_db, min(max_music_db, result))
+
+
 def _log_audio_replacement_summary(
     clips: list[dict],
-    music_audible_segments: list[tuple[float, float]] | None,
+    music_audible_segments: list[tuple[float, float, float]] | None,
     replace_detected_music: bool,
 ) -> None:
-    """Emit a structured DEBUG summary of per-clip audio analysis and any replacements made.
-
-    *music_audible_segments* is None when the replacement feature was inactive
-    (music disabled or replace_detected_music=False); it is a (possibly empty)
-    list when the feature ran — each entry maps to a music_likely clip whose
-    source audio was muted and will be replaced by the gated music bed.
-    """
+    """Emit a structured DEBUG summary of per-clip audio analysis."""
     total = len(clips)
     n_music = sum(1 for c in clips if c.get("audio_analysis", {}).get("music_likely", False))
-    feature_active = music_audible_segments is not None  # segments list was computed
+    feature_active = music_audible_segments is not None
 
     logger.debug("=" * 60)
     logger.debug("AUDIO REPLACEMENT SUMMARY")
@@ -344,8 +360,6 @@ def _log_audio_replacement_summary(
     )
     logger.debug("-" * 60)
 
-    seg_iter = iter(music_audible_segments or [])
-
     for i, clip in enumerate(clips):
         aa = clip.get("audio_analysis") or {}
         cid = clip.get("id", f"clip_{i}")
@@ -354,17 +368,19 @@ def _log_audio_replacement_summary(
         silence = aa.get("silence_ratio")
         music_ratio = aa.get("music_ratio")
         detector = aa.get("detector_used", "?")
+        music_bed_db = aa.get("music_bed_db")
 
-        if music_likely and feature_active:
-            seg = next(seg_iter, None)
-            seg_txt = f"{seg[0]:.1f}s–{seg[1]:.1f}s" if seg else "?"
-            action = f"SOURCE MUTED → safe music bed [{seg_txt}]"
-        elif music_likely and not replace_detected_music:
-            action = "music_likely — kept (replace_detected_music=False)"
+        if music_likely and replace_detected_music:
+            bed_txt = f"{music_bed_db:.1f}dB" if music_bed_db is not None else "?"
+            action = f"SOURCE MUTED → music bed [{bed_txt}]"
         elif music_likely:
-            action = "music_likely — kept (music.enabled=False)"
+            action = "music_likely — kept (replace_detected_music=False)"
+        elif music_bed_db is not None:
+            has_audio = aa.get("has_audio", False)
+            kind = "adaptive" if has_audio else "fill"
+            action = f"original audio kept + music bed [{music_bed_db:.1f}dB {kind}]"
         else:
-            action = "original audio kept"
+            action = "original audio kept (no music bed)"
 
         logger.debug(
             "  [%2d] %-35s  mean=%-8s  silence=%-5s  ratio=%-5s  det=%-16s  ml=%-5s  %s",
@@ -380,13 +396,10 @@ def _log_audio_replacement_summary(
 
     logger.debug("-" * 60)
     if feature_active and music_audible_segments:
-        logger.debug(
-            "  Gated music bed windows (%d): %s",
-            len(music_audible_segments),
-            ", ".join(f"{s:.1f}s–{e:.1f}s" for s, e in music_audible_segments),
-        )
+        n_segs = len(music_audible_segments)
+        logger.debug("  Music bed: %d segment(s) across stitched video.", n_segs)
     elif feature_active:
-        logger.debug("  No music_likely clips — music bed skipped (passthrough).")
+        logger.debug("  No segments computed — music bed skipped (passthrough).")
     elif not replace_detected_music:
         logger.debug("  replace_detected_music=False — uniform bed applied (or no music).")
     else:
@@ -637,31 +650,88 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             min_required_source_seconds(settings),
         )
 
-        # Compute the time windows inside the stitched video that correspond to
-        # music_likely clips (whose source audio was muted during render).  The
-        # music bed will be made audible only within these windows so that the
-        # safe replacement track plays exactly where the original music was.
-        # When replace_detected_music is false, pass None so add_background_music
-        # falls back to the original uniform-bed behaviour.
+        # Build per-clip music bed segments.  Each rendered clip in the stitched
+        # video gets a (start, end, factor) entry if it needs a music bed:
+        #   • music_likely + replace_detected_music: source muted at render time,
+        #     music fills the silence at the base music_volume_db level.
+        #   • no usable audio (silent / no stream): music fills at base level.
+        #   • audible source audio + adaptive_volume.enabled: music at a level
+        #     that compensates for the clip's measured loudness — louder music
+        #     for quiet clips, softer music for loud ones.
+        #   • audible source audio + adaptive disabled: no music bed (original
+        #     audio plays unchanged, legacy behaviour).
+        # When neither replace_detected_music nor adaptive_volume is active the
+        # pipeline falls back to passing None → uniform music bed (shorts path).
         music_cfg = settings.get("music", {})
         replace_detected_music = music_cfg.get("replace_detected_music", True)
-        music_audible_segments: list[tuple[float, float]] | None = None
-        if replace_detected_music and music_cfg.get("enabled", False):
-            segments: list[tuple[float, float]] = []
+        adaptive_cfg = music_cfg.get("adaptive_volume", {})
+        adaptive_enabled = bool(adaptive_cfg.get("enabled", False))
+        music_volume_db_val = float(music_cfg.get("music_volume_db", -12))
+        target_db = float(adaptive_cfg.get("target_db", -18.0))
+        compensation_factor = float(adaptive_cfg.get("compensation_factor", 0.5))
+        min_music_db = float(adaptive_cfg.get("min_music_db", -28.0))
+        max_music_db = float(adaptive_cfg.get("max_music_db", -10.0))
+        silence_threshold_db = float(adaptive_cfg.get("silence_threshold_db", -50.0))
+
+        music_audible_segments: list[tuple[float, float, float]] | None = None
+        if music_cfg.get("enabled", False) and (replace_detected_music or adaptive_enabled):
+            segments: list[tuple[float, float, float]] = []
             cursor = 0.0
+            n_muted = n_fill = n_adaptive = n_skipped = 0
             for result in render_results:
                 if result is None or not result["ok"]:
                     continue
                 clip = clips[result["idx"]]
                 clip_dur = probed_media_duration_seconds(result["output_path"])
-                if clip.get("audio_analysis", {}).get("music_likely", False):
-                    segments.append((cursor, cursor + clip_dur))
+                aa = clip.get("audio_analysis", {})
+                music_likely = aa.get("music_likely", False)
+                has_audio = aa.get("has_audio", False)
+                mean_db = aa.get("mean_volume_db")
+
+                seg_music_db: float | None = None
+
+                if music_likely and replace_detected_music:
+                    # Source already muted at render — fill silence with music.
+                    seg_music_db = music_volume_db_val
+                    n_muted += 1
+                elif music_likely:
+                    # replace_detected_music=False: source plays (original music),
+                    # skip adding a bed to avoid music-on-music.
+                    n_skipped += 1
+                elif not has_audio or mean_db is None or mean_db <= silence_threshold_db:
+                    # No usable original audio — fill with music at base level.
+                    seg_music_db = music_volume_db_val
+                    n_fill += 1
+                elif adaptive_enabled:
+                    # Audible source audio — adapt music level to clip loudness.
+                    seg_music_db = _adaptive_music_db(
+                        mean_db,
+                        music_volume_db=music_volume_db_val,
+                        target_db=target_db,
+                        compensation_factor=compensation_factor,
+                        min_music_db=min_music_db,
+                        max_music_db=max_music_db,
+                    )
+                    n_adaptive += 1
+                else:
+                    # Has audio, adaptive disabled — no music for this clip.
+                    n_skipped += 1
+
+                aa["music_bed_db"] = seg_music_db
+                if seg_music_db is not None:
+                    segments.append((cursor, cursor + clip_dur, 10 ** (seg_music_db / 20.0)))
+
                 cursor += clip_dur
+
             music_audible_segments = segments
             logger.info(
-                "Music replacement: %d / %d rendered clips flagged music_likely",
+                "Music bed: %d segments — %d muted-replace, %d silent-fill, "
+                "%d adaptive, %d skipped (no-bed)",
                 len(segments),
-                len(rendered_paths),
+                n_muted,
+                n_fill,
+                n_adaptive,
+                n_skipped,
             )
 
         stitched = stitch_clips(

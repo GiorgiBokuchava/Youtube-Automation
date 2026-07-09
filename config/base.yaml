@@ -127,6 +127,27 @@ music:
 
   pick: random
 
+  # Adaptive volume levelling for non-music clips.
+  # When enabled, every clip receives a music bed whose level compensates for
+  # the clip's own loudness — quiet clips get louder music, loud clips get
+  # softer music — aiming for a consistent perceived volume across the video.
+  # Clips with no usable audio always receive music at the base music_volume_db.
+  adaptive_volume:
+    enabled: false
+    # Loudness target (dBFS mean).  A clip measuring exactly this level gets
+    # music at music_volume_db; clips below/above get proportionally more/less.
+    target_db: -18.0
+    # Fraction of the loudness gap filled by the music bed.
+    # 0.0 = music always at music_volume_db regardless of clip level.
+    # 1.0 = music fully compensates so clip+music always hits target_db.
+    compensation_factor: 0.5
+    # Hard floor/ceiling for the adaptive level (dBFS).
+    min_music_db: -28.0
+    max_music_db: -10.0
+    # Clips whose mean volume is at or below this threshold are treated as
+    # effectively silent and receive music at the base music_volume_db level.
+    silence_threshold_db: -50.0
+
 post_context:
   top_comments: 5
   comment_max_words: 12

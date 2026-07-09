@@ -128,26 +128,26 @@ def _build_music_bed(
 
 def _build_music_volume_filter(
     music_factor: float,
-    audible_segments: Optional[List[Tuple[float, float]]],
+    audible_segments: Optional[List[Tuple[float, float, float]]],
 ) -> str:
     """Return the FFmpeg audio filter string for the music track.
 
-    When *audible_segments* is provided the music is only audible inside those
-    time windows (volume = music_factor); outside them the track is silenced.
-    This is achieved with a per-frame ``volume`` expression so no additional
-    re-encoding pass is required.
+    *audible_segments* is a list of ``(start_sec, end_sec, factor)`` triples.
+    Each segment plays at its own linear volume *factor*; outside all segments
+    the track is silenced.  A nested ``if()`` expression evaluated per-frame
+    selects the right level without any extra re-encode pass.
 
-    When *audible_segments* is None the music plays at a constant level
-    (original uniform-bed behaviour).
+    When *audible_segments* is None the music plays at a constant *music_factor*
+    across the entire video (shorts / legacy uniform-bed mode).
     """
     if audible_segments is None:
         return f"volume={music_factor:.6f}"
 
-    # Build: if(gt(between(t,s1,e1)+between(t,s2,e2)+…, 0), music_factor, 0)
-    conditions = "+".join(
-        f"between(t,{s:.3f},{e:.3f})" for s, e in audible_segments
-    )
-    expr = f"if(gt({conditions},0),{music_factor:.6f},0)"
+    # Build a nested if() chain from inside out so the first matching segment
+    # wins (segments are non-overlapping by construction).
+    expr = "0"
+    for s, e, f in reversed(audible_segments):
+        expr = f"if(gt(between(t,{s:.3f},{e:.3f}),0),{f:.6f},{expr})"
     return f"volume=volume='{expr}':eval=frame"
 
 
@@ -158,7 +158,7 @@ def _mix_music_into_video(
     output_path: Path,
     original_duck_db: float,
     music_volume_db: float,
-    audible_segments: Optional[List[Tuple[float, float]]] = None,
+    audible_segments: Optional[List[Tuple[float, float, float]]] = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -238,21 +238,20 @@ def add_background_music(
     video_path: Path,
     output_path: Path,
     settings: dict,
-    music_audible_segments: Optional[List[Tuple[float, float]]] = None,
+    music_audible_segments: Optional[List[Tuple[float, float, float]]] = None,
 ) -> Path:
     """Mix a safe-music bed into *video_path* and write the result to *output_path*.
 
-    *music_audible_segments* controls when the music bed is actually heard:
+    *music_audible_segments* controls when the music bed is heard and at what level:
 
-    * ``None``  — legacy behaviour: music plays at a constant level across the
-      entire video (used by the shorts pipeline and any caller that does not
-      perform per-clip audio analysis).
-    * ``[]``    — empty list: no clips were flagged as ``music_likely`` so there
-      is nothing to replace; the video is passed through unchanged even when
-      ``music.enabled`` is True.
-    * non-empty list of ``(start_sec, end_sec)`` pairs — music is audible only
-      within those windows (volume expression evaluated per frame by FFmpeg);
-      elsewhere the track is silenced so the original clip audio is heard.
+    * ``None``  — legacy / shorts behaviour: music plays at a constant
+      ``music_volume_db`` level across the entire video.
+    * ``[]``    — empty list: no segment needs music; the video is passed through
+      unchanged even when ``music.enabled`` is True.
+    * non-empty list of ``(start_sec, end_sec, factor)`` triples — music is
+      audible only within each window at the per-segment linear *factor* level.
+      Outside all segments the track is silenced.  Factors are computed by the
+      pipeline and may differ per clip (adaptive volume levelling).
     """
     music_cfg = settings.get("music", {})
     if not music_cfg.get("enabled", False):
