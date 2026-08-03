@@ -259,12 +259,17 @@ def source_videos(
         context_max_words = int(_cmw)
     include_selftext = bool(context_cfg.get("include_selftext", True))
 
-    previously_used_ids = get_used_video_ids(settings)
-    if exclude_ids:
-        previously_used_ids = set(previously_used_ids).union(exclude_ids)
+    historical_used_ids = get_used_video_ids(settings)
+    exclude_set: set[str] = set(exclude_ids) if exclude_ids else set()
     seen_ids: set[str] = set()
     accepted: List[dict] = []
     total_duration = 0
+
+    logger.debug(
+        "Historical used IDs: %d (JSON) + %d (exclude_ids this run)",
+        len(historical_used_ids),
+        len(exclude_set),
+    )
 
     subs = list(settings.get("subreddits", []))
     random.shuffle(subs)
@@ -304,6 +309,7 @@ def source_videos(
 
     skipped_reasons: dict[str, int] = {
         "already_used": 0,
+        "duplicate_in_run": 0,
         "not_video": 0,
         "low_ratio": 0,
         "bad_duration": 0,
@@ -329,7 +335,10 @@ def source_videos(
                     break
 
                 sid = submission.id
-                if sid in seen_ids or sid in previously_used_ids:
+                if sid in seen_ids:
+                    skipped_reasons["duplicate_in_run"] += 1
+                    continue
+                if sid in historical_used_ids or sid in exclude_set:
                     skipped_reasons["already_used"] += 1
                     continue
                 seen_ids.add(sid)
