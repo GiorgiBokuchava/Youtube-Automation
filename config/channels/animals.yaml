@@ -53,11 +53,9 @@ subreddits:
 
 post:
   min_duration: 1
-  max_duration: 20
+  max_duration: 8
   min_score: 350
   min_ratio: 0.8
-  # Allow the pipeline to proceed when slightly under target rather than aborting with no upload.
-  min_source_duration_ratio: 0.75
 
 # Suggested Reddit/Instagram mix (initial budget + interleave). Either source may
 # fill remaining duration when the other falls short (Instagram requires session env).

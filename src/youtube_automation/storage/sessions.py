@@ -70,6 +70,30 @@ def _cutoff_from_settings(settings: dict) -> Optional[datetime]:
     return None
 
 
+def prune_sessions(settings: dict) -> int:
+    """Remove sessions older than ``used_horizon_days`` from the JSON file.
+
+    Returns the number of sessions pruned.  Safe to call at any point —
+    notably at pipeline startup so stale IDs are freed *before* sourcing,
+    regardless of whether the previous run completed successfully.
+    """
+    cutoff = _cutoff_from_settings(settings)
+    if not cutoff:
+        return 0
+
+    sessions = load_sessions(settings)
+    kept = [s for s in sessions if _is_session_after_cutoff(s, cutoff)]
+    pruned = len(sessions) - len(kept)
+
+    if pruned > 0:
+        used_path = _used_path(settings)
+        used_path.parent.mkdir(exist_ok=True)
+        with open(used_path, "w", encoding="utf-8") as f:
+            json.dump(kept, f, indent=2)
+
+    return pruned
+
+
 def get_used_video_ids(settings: dict) -> Set[str]:
     # Returns all video submission IDs that were already used, respecting `used_horizon_days` if configured.
     sessions = load_sessions(settings)

@@ -26,7 +26,7 @@ from youtube_automation.sourcing import (
 )
 from youtube_automation.media.video_processing import batch_normalize_videos
 from youtube_automation.media.music import add_background_music
-from youtube_automation.storage.sessions import new_session, save_session
+from youtube_automation.storage.sessions import new_session, save_session, prune_sessions
 from youtube_automation.utils.text_sanitize import sanitize_plain_english_tts
 from youtube_automation.youtube.auth import ensure_youtube_refresh_token
 from youtube_automation.youtube.upload import upload_video
@@ -446,6 +446,10 @@ def run_pipeline(settings: dict, dry_run: bool = False, cleanup: bool = False) -
             ensure_youtube_refresh_token()
 
         try_prepare_instagram_session(settings)
+
+        pruned = prune_sessions(settings)
+        if pruned:
+            logger.info("Pruned %d session(s) older than used_horizon_days from used-content file.", pruned)
 
         clips = source_all_videos(settings)
         if not clips:
