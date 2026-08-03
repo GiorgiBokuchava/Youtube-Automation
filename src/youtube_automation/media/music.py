@@ -40,10 +40,15 @@ def _collect_music_tracks(settings: dict) -> List[Path]:
     tags = music_cfg.get("tags", [])
     tracks: List[Path] = []
 
-    for tag in tags:
+    # Shuffle the tag order so no single folder is always favoured first.
+    shuffled_tags = list(tags)
+    random.shuffle(shuffled_tags)
+    for tag in shuffled_tags:
         d = root / tag
         if d.exists():
-            tracks.extend(sorted(d.glob("*.mp3")))
+            tag_tracks = list(d.glob("*.mp3"))
+            random.shuffle(tag_tracks)
+            tracks.extend(tag_tracks)
 
     return tracks
 
@@ -51,18 +56,30 @@ def _collect_music_tracks(settings: dict) -> List[Path]:
 def _select_tracks(
     tracks: List[Path], target_duration: float, max_repeats: int
 ) -> List[Tuple[Path, float]]:
-    random.shuffle(tracks)
+    # Pre-probe all tracks once so we don't re-probe on every repeat pass.
+    probed: List[Tuple[Path, float]] = []
+    for t in tracks:
+        dur = _probe_duration(t)
+        if dur and dur > 0:
+            probed.append((t, dur))
+
+    if not probed:
+        return []
+
     selected: List[Tuple[Path, float]] = []
     total = 0.0
 
-    for t in tracks:
+    # Loop up to max_repeats passes; re-shuffle each pass for variety.
+    for _ in range(max(1, max_repeats)):
         if total >= target_duration:
             break
-        dur = _probe_duration(t)
-        if not dur:
-            continue
-        selected.append((t, dur))
-        total += dur
+        pass_order = probed.copy()
+        random.shuffle(pass_order)
+        for t, dur in pass_order:
+            if total >= target_duration:
+                break
+            selected.append((t, dur))
+            total += dur
 
     return selected
 
@@ -116,10 +133,10 @@ def _build_music_bed(
 
     try:
         p = subprocess.run(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, timeout=600
         )
         if p.returncode != 0:
-            raise RuntimeError(f"Music bed build failed: {p.stderr}")
+            raise RuntimeError(f"Music bed build failed:\n{p.stderr}")
     except subprocess.TimeoutExpired:
         raise RuntimeError("music bed build timed out")
 
@@ -163,6 +180,8 @@ def _mix_music_into_video(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     video_dur = _probe_duration(video_path)
+    if not video_dur or video_dur <= 0:
+        raise RuntimeError(f"Could not probe duration of {video_path}")
     music_factor = 10 ** (music_volume_db / 20.0)
 
     music_vol_filter = _build_music_volume_filter(music_factor, audible_segments)
@@ -210,10 +229,10 @@ def _mix_music_into_video(
 
     try:
         p = subprocess.run(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, timeout=600
         )
         if p.returncode != 0:
-            raise RuntimeError(f"Music mix failed: {p.stderr}")
+            raise RuntimeError(f"Music mix failed:\n{p.stderr}")
     except subprocess.TimeoutExpired:
         raise RuntimeError("music mix timed out")
 
