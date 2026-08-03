@@ -104,12 +104,22 @@ def get_used_thumbnail_ids(settings: Optional[dict] = None) -> Set[str]:
     thumb_ids: Set[str] = set()
 
     channel_name = None
+    cutoff = None
     if settings:
         channel_name = settings.get("channel", {}).get("name")
+        cutoff = _cutoff_from_settings(settings)
 
     for session in sessions:
         if channel_name and session.get("channel") != channel_name:
             continue
+
+        if cutoff:
+            try:
+                created = datetime.fromisoformat(session.get("created_at", ""))
+                if created < cutoff:
+                    continue
+            except Exception:
+                pass
 
         thumb = session.get("thumbnail", {})
         sid = thumb.get("submission_id")
